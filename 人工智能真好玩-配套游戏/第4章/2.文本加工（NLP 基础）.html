@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>文本加工坊 · NLP挑战</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root[data-theme="light"]{
+  --bg:#fffbf0; --bg2:#fff5d6; --card:#fff; --text:#2d2000; --sub:#8b7040;
+  --accent:#f59e0b; --accent-dark:#d97706; --accent2:#10b981; --accent3:#6366f1;
+  --border:#fde68a; --shadow:rgba(245,158,11,.15);
+  --btn:#f59e0b; --btn-text:#fff;
+  --tag-n:#3b82f6; --tag-v:#ef4444; --tag-adj:#10b981; --tag-adv:#a855f7; --tag-p:#f97316;
+  --ent-per:#ef4444; --ent-loc:#10b981; --ent-org:#3b82f6; --ent-time:#a855f7; --ent-o:#94a3b8;
+  --role-s:#3b82f6; --role-v:#ef4444; --role-o:#f59e0b; --role-attr:#10b981; --role-adv:#a855f7; --role-other:#94a3b8;
+  --success:#10b981; --wrong:#ef4444; --warn:#f59e0b;
+  --locked:#d6d3d1;
+}
+:root[data-theme="dark"]{
+  --bg:#1a1000; --bg2:#241700; --card:#2a1a00; --text:#ffd070; --sub:#a07840;
+  --accent:#fbbf24; --accent-dark:#f59e0b; --accent2:#34d399; --accent3:#818cf8;
+  --border:#3a2800; --shadow:rgba(251,191,36,.2);
+  --btn:#fbbf24; --btn-text:#1a1000;
+  --tag-n:#60a5fa; --tag-v:#f87171; --tag-adj:#34d399; --tag-adv:#c084fc; --tag-p:#fb923c;
+  --ent-per:#f87171; --ent-loc:#34d399; --ent-org:#60a5fa; --ent-time:#c084fc; --ent-o:#94a3b8;
+  --role-s:#60a5fa; --role-v:#f87171; --role-o:#fbbf24; --role-attr:#34d399; --role-adv:#c084fc; --role-other:#94a3b8;
+  --success:#34d399; --wrong:#f87171; --warn:#fbbf24;
+  --locked:#4a3800;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:'Nunito',sans-serif; min-height:100vh;
+  transition:background .3s, color .3s;
+  background-image:
+    radial-gradient(ellipse at 10% 0%, rgba(245,158,11,.08), transparent 50%),
+    radial-gradient(ellipse at 90% 100%, rgba(99,102,241,.06), transparent 50%);
+}
+
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;flex-wrap:wrap;gap:10px}
+.logo{font-family:'ZCOOL KuaiLe',cursive;font-size:1.4rem;color:var(--accent);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stage-badge{font-size:.7rem;background:rgba(245,158,11,.18);color:var(--accent);padding:3px 10px;border-radius:20px;font-weight:700;letter-spacing:1px}
+.header-right{display:flex;gap:8px;align-items:center}
+.theme-btn,.home-btn{
+  background:var(--card);border:2px solid var(--border);border-radius:50px;
+  padding:6px 14px;cursor:pointer;font-size:.9rem;color:var(--text);
+  font-family:'Nunito',sans-serif;font-weight:700;transition:all .2s;
+}
+.theme-btn:hover,.home-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.screen{display:none;min-height:85vh;padding:16px}
+.screen.active{display:block;animation:fadeIn .4s ease}
+.screen.center{align-items:center;justify-content:center;flex-direction:column}
+.screen.center.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.intro-card{
+  background:var(--card);border-radius:24px;padding:36px;max-width:640px;width:100%;
+  box-shadow:0 12px 48px var(--shadow);text-align:center;
+}
+.game-number{font-size:.75rem;font-weight:800;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:8px}
+h1{font-family:'ZCOOL KuaiLe',cursive;font-size:2.4rem;color:var(--accent);margin-bottom:8px}
+.tagline{color:var(--sub);margin-bottom:22px;line-height:1.6;font-size:.95rem}
+.pos-legend{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:22px}
+.pos-tag{border-radius:50px;padding:4px 12px;font-size:.78rem;font-weight:800;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.rules-list{text-align:left;margin-bottom:24px;display:grid;gap:10px}
+.rule-item{
+  background:var(--bg);border-radius:12px;padding:12px 16px;display:flex;gap:12px;align-items:flex-start;
+  border-left:3px solid var(--accent);
+}
+.rule-icon{font-size:1.3rem;line-height:1}
+.rule-text{font-size:.88rem;color:var(--sub);line-height:1.55;flex:1}
+.rule-text strong{color:var(--text);font-weight:800}
+.start-btn{
+  background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--btn-text);
+  border:none;border-radius:50px;padding:14px 40px;font-size:1.05rem;font-weight:800;
+  cursor:pointer;font-family:'Nunito',sans-serif;box-shadow:0 6px 24px var(--shadow);
+  transition:transform .15s; letter-spacing:1px;
+}
+.start-btn:hover{transform:translateY(-2px) scale(1.03)}
+
+.level-select-wrap{max-width:900px;margin:0 auto}
+.ls-header{text-align:center;margin-bottom:20px}
+.ls-header h2{font-family:'ZCOOL KuaiLe',cursive;font-size:1.8rem;color:var(--accent);margin-bottom:6px}
+.ls-header p{color:var(--sub);font-size:.92rem}
+.progress-overview{
+  background:var(--card);border-radius:16px;padding:14px 20px;margin-bottom:20px;
+  display:flex;justify-content:space-around;flex-wrap:wrap;gap:10px;
+  box-shadow:0 4px 20px var(--shadow);
+}
+.po-item{text-align:center}
+.po-v{font-size:1.5rem;font-weight:900;color:var(--accent);line-height:1}
+.po-l{font-size:.7rem;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+
+.levels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.level-card{
+  background:var(--card);border-radius:18px;padding:18px;cursor:pointer;
+  box-shadow:0 6px 20px var(--shadow);border:3px solid transparent;
+  transition:all .2s;position:relative;overflow:hidden;
+}
+.level-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:5px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+}
+.level-card.locked{opacity:.55;cursor:not-allowed}
+.level-card.locked::before{background:var(--locked)}
+.level-card:not(.locked):hover{transform:translateY(-4px);border-color:var(--accent)}
+.level-card.completed::before{background:linear-gradient(90deg,var(--accent2),var(--accent))}
+.lc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.lc-num{font-size:.7rem;font-weight:800;color:var(--accent);letter-spacing:2px}
+.lc-status{font-size:.75rem;font-weight:700}
+.lc-status.done{color:var(--success)}
+.lc-status.lock{color:var(--locked)}
+.lc-icon{font-size:2.4rem;margin-bottom:6px;line-height:1}
+.lc-name{font-family:'ZCOOL KuaiLe',cursive;font-size:1.25rem;color:var(--text);margin-bottom:4px}
+.lc-english{font-size:.72rem;color:var(--sub);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.lc-desc{font-size:.82rem;color:var(--sub);line-height:1.5;margin-bottom:10px;min-height:40px}
+.lc-stars{font-size:1rem;letter-spacing:2px;margin-bottom:6px}
+.lc-stars .star-f{color:#fbbf24}
+.lc-stars .star-e{color:var(--border);opacity:.6}
+.lc-progress{display:flex;align-items:center;justify-content:space-between;font-size:.78rem;color:var(--sub);font-weight:700;gap:8px}
+.lc-progress .score{color:var(--success);font-weight:800}
+.lc-sentence-preview{color:var(--sub);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+
+.game-wrap{background:var(--card);border-radius:24px;padding:22px;max-width:840px;width:100%;box-shadow:0 8px 40px var(--shadow);margin:0 auto}
+.game-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;padding-bottom:14px;border-bottom:2px dashed var(--border)}
+.gh-left{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.gh-level-badge{
+  background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+  color:#fff;padding:5px 12px;border-radius:50px;font-size:.8rem;font-weight:800;
+}
+.gh-title{font-family:'ZCOOL KuaiLe',cursive;font-size:1.4rem;color:var(--text)}
+.back-btn{
+  background:var(--bg);border:2px solid var(--border);color:var(--text);
+  border-radius:50px;padding:6px 14px;font-size:.82rem;font-weight:700;cursor:pointer;
+  font-family:'Nunito',sans-serif;transition:all .2s;
+}
+.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.story-box{
+  background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(16,185,129,.08));
+  border-left:4px solid var(--accent);border-radius:0 12px 12px 0;
+  padding:12px 16px;margin-bottom:16px;font-size:.9rem;color:var(--text);line-height:1.6;
+}
+.story-box b{color:var(--accent)}
+
+.flow-pipe{
+  display:flex;align-items:center;gap:6px;overflow-x:auto;
+  background:var(--bg);border-radius:12px;padding:10px 12px;margin-bottom:16px;
+}
+.flow-node{
+  background:var(--card);border-radius:10px;padding:6px 12px;font-size:.75rem;font-weight:700;
+  border:2px solid var(--border);white-space:nowrap;text-align:center;flex-shrink:0;
+  transition:all .3s;
+}
+.flow-node.active{border-color:var(--accent);color:var(--accent);background:rgba(245,158,11,.1)}
+.flow-node.done{border-color:var(--success);color:var(--success);background:rgba(16,185,129,.1)}
+.flow-arrow{color:var(--sub);font-size:1.1rem;flex-shrink:0}
+
+.stage-label{
+  display:flex;align-items:center;gap:8px;
+  font-size:.95rem;font-weight:800;color:var(--accent);
+  letter-spacing:1px;margin-bottom:10px;
+}
+.stage-label::before{content:'';width:4px;height:18px;background:var(--accent);border-radius:2px}
+.stage-hint{font-size:.85rem;color:var(--sub);margin-bottom:14px;line-height:1.6}
+.stage-hint code{background:var(--bg2);padding:1px 6px;border-radius:4px;font-weight:700;color:var(--accent);font-family:'Nunito',sans-serif}
+.stage-hint b{color:var(--text)}
+
+.char-stream-label{
+  font-size:.78rem;color:var(--sub);font-weight:700;margin-bottom:6px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;
+}
+.char-stream-label b{color:var(--text);font-size:1.05rem}
+.char-stream{
+  background:var(--bg);border:2px dashed var(--border);border-radius:14px;
+  padding:18px 14px;margin-bottom:14px;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;
+  min-height:80px;
+}
+.char-box{
+  background:var(--card);border:2px solid var(--border);border-radius:8px;
+  padding:10px 12px;font-size:1.3rem;font-weight:800;color:var(--text);
+  min-width:38px;text-align:center;letter-spacing:1px;
+}
+.gap-btn{
+  width:28px;height:38px;border-radius:6px;border:none;background:transparent;
+  cursor:pointer;font-size:1.1rem;color:var(--sub);opacity:.35;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;font-family:'Nunito',sans-serif;
+}
+.gap-btn:hover:not(:disabled){opacity:1;background:rgba(245,158,11,.15);transform:scale(1.2)}
+.gap-btn.active{
+  opacity:1;color:var(--accent);background:rgba(245,158,11,.18);
+  font-size:1.2rem;animation:pulse .5s ease;
+}
+@keyframes pulse{0%{transform:scale(.6)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+
+.preview-tokens{
+  background:var(--bg2);border-radius:12px;padding:12px 14px;margin-bottom:14px;
+  display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:48px;
+}
+.preview-label{font-size:.78rem;color:var(--sub);font-weight:800;margin-right:6px}
+.preview-token{
+  background:var(--card);border:2px solid var(--accent);border-radius:8px;
+  padding:5px 10px;font-size:.95rem;font-weight:800;color:var(--accent);
+  animation:popIn .2s ease;
+}
+@keyframes popIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+
+.token-area{
+  display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px;min-height:70px;
+  background:var(--bg);border-radius:14px;padding:24px 14px 14px;
+  border:2px solid var(--border);align-items:flex-start;
+}
+.token{
+  border-radius:12px;padding:10px 14px;cursor:pointer;
+  font-weight:800;font-size:1rem;border:2px solid;
+  transition:all .2s;position:relative;min-width:52px;text-align:center;
+  background:var(--card);color:var(--text);border-color:var(--border);
+  user-select:none;
+}
+.token:hover{transform:translateY(-2px)}
+.token.selected{
+  transform:scale(1.08);
+  box-shadow:0 0 0 3px var(--accent),0 4px 16px var(--shadow);
+  animation:selectedPulse 1.2s ease infinite;
+}
+@keyframes selectedPulse{
+  0%,100%{box-shadow:0 0 0 3px var(--accent),0 4px 16px var(--shadow)}
+  50%{box-shadow:0 0 0 5px var(--accent),0 4px 20px var(--shadow)}
+}
+.token .pos-chip{
+  position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+  font-size:.68rem;padding:2px 8px;border-radius:50px;color:#fff;
+  white-space:nowrap;font-weight:800;box-shadow:0 2px 4px rgba(0,0,0,.2);
+}
+
+.label-btns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.label-btn{
+  padding:9px 16px;border-radius:50px;border:2px solid;font-weight:800;
+  font-size:.88rem;cursor:pointer;font-family:'Nunito',sans-serif;
+  transition:all .15s;display:inline-flex;align-items:center;gap:6px;
+}
+.label-btn:hover{opacity:.85;transform:translateY(-1px)}
+.label-btn .label-desc{font-size:.68rem;font-weight:600;opacity:.85}
+
+.coref-sentence{
+  font-size:1.25rem;font-weight:800;color:var(--text);line-height:1.9;
+  background:var(--bg);border-radius:14px;padding:18px 20px;margin-bottom:14px;
+  border:2px solid var(--border);letter-spacing:1px;text-align:center;
+}
+.coref-sentence .pronoun{
+  background:var(--accent);color:#fff;padding:3px 12px;border-radius:8px;
+  display:inline-block;animation:highlight 1.5s ease infinite;margin:0 2px;
+}
+@keyframes highlight{
+  0%,100%{box-shadow:0 2px 8px var(--shadow);transform:scale(1)}
+  50%{box-shadow:0 2px 20px var(--accent);transform:scale(1.05)}
+}
+.coref-question{
+  font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:14px;text-align:center;
+}
+.coref-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.coref-opt{
+  background:var(--card);border:2px solid var(--border);border-radius:14px;
+  padding:18px 14px;cursor:pointer;text-align:center;
+  font-weight:800;font-size:1.05rem;color:var(--text);
+  transition:all .2s;
+}
+.coref-opt:hover:not(.disabled){border-color:var(--accent);transform:translateY(-2px)}
+.coref-opt.correct{border-color:var(--success);background:rgba(16,185,129,.15);color:var(--success)}
+.coref-opt.wrong{border-color:var(--wrong);background:rgba(239,68,68,.12);color:var(--wrong);animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+.coref-opt.disabled{pointer-events:none;opacity:.55}
+.coref-feedback{
+  background:var(--bg);border-radius:12px;padding:14px 16px;margin-bottom:14px;
+  font-size:.9rem;line-height:1.7;color:var(--text);display:none;
+  border-left:3px solid var(--success);
+}
+.coref-feedback.wrong-fb{border-left-color:var(--wrong)}
+.coref-feedback.show{display:block;animation:popIn .3s ease}
+.coref-feedback strong{color:var(--accent)}
+
+.ctrl-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.ctrl-btn{
+  flex:1;min-width:140px;background:var(--bg);border:2px solid var(--border);
+  border-radius:12px;padding:12px;font-size:.95rem;font-weight:800;cursor:pointer;
+  color:var(--text);font-family:'Nunito',sans-serif;transition:all .2s;
+}
+.ctrl-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.ctrl-btn.primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+  color:var(--btn-text);border-color:transparent;
+  box-shadow:0 4px 16px var(--shadow);
+}
+.ctrl-btn.primary:hover:not(:disabled){transform:translateY(-2px);color:var(--btn-text)}
+.ctrl-btn:disabled{opacity:.4;cursor:not-allowed}
+
+.progress-info{display:flex;gap:12px;font-size:.82rem;color:var(--sub);font-weight:700;margin-bottom:12px;flex-wrap:wrap}
+.progress-info span{background:var(--bg);padding:5px 12px;border-radius:50px}
+.progress-info b{color:var(--accent)}
+
+.result-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;z-index:100;padding:16px;
+  overflow-y:auto;
+}
+.result-overlay.show{display:flex;animation:fadeIn .3s}
+.result-card{
+  background:var(--card);border-radius:24px;padding:28px 24px;
+  max-width:480px;width:100%;text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.4);
+  animation:resultIn .5s cubic-bezier(.34,1.56,.64,1);
+  max-height:94vh;overflow-y:auto;
+}
+@keyframes resultIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.result-emoji{font-size:3.2rem;margin-bottom:8px;line-height:1}
+.result-title{font-family:'ZCOOL KuaiLe',cursive;font-size:1.7rem;color:var(--accent);margin-bottom:6px}
+.result-sub{font-size:.88rem;color:var(--sub);margin-bottom:14px;line-height:1.6}
+.result-stars{font-size:1.8rem;letter-spacing:6px;margin-bottom:12px;animation:starBounce .6s ease}
+@keyframes starBounce{0%{transform:scale(0)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+.result-score{font-size:2rem;font-weight:900;color:var(--accent);line-height:1;margin-bottom:2px}
+.result-score-label{font-size:.7rem;color:var(--sub);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:14px}
+.result-detail{
+  background:var(--bg);border-radius:12px;padding:12px 14px;margin-bottom:12px;
+  text-align:left;font-size:.82rem;color:var(--sub);line-height:1.7;
+}
+.result-detail b{color:var(--text);font-weight:800}
+.result-btns{display:flex;gap:8px;flex-wrap:wrap}
+.result-btns .ctrl-btn{min-width:100px;flex:1;font-size:.85rem;padding:10px}
+
+.knowledge-card{
+  background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(16,185,129,.06));
+  border-radius:12px;padding:14px;margin-bottom:12px;text-align:left;
+  border-left:3px solid var(--accent3);
+}
+.knowledge-card h4{color:var(--accent3);font-size:.85rem;margin-bottom:6px;font-weight:800}
+.knowledge-card p{color:var(--sub);font-size:.8rem;line-height:1.65}
+.knowledge-card strong{color:var(--text);font-weight:800}
+
+.final-card{
+  background:var(--card);border-radius:24px;padding:36px 28px;max-width:540px;width:100%;
+  text-align:center;box-shadow:0 20px 60px var(--shadow);
+}
+.final-trophy{font-size:4.5rem;margin-bottom:10px;animation:trophyShine 2s ease infinite}
+@keyframes trophyShine{0%,100%{filter:drop-shadow(0 0 6px gold)}50%{filter:drop-shadow(0 0 20px gold)}}
+.final-title{font-family:'ZCOOL KuaiLe',cursive;font-size:2.2rem;color:var(--accent);margin-bottom:6px}
+.final-sub{color:var(--sub);margin-bottom:20px;line-height:1.6}
+.final-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.fs-item{background:var(--bg);border-radius:12px;padding:12px 8px}
+.fs-v{font-size:1.6rem;font-weight:900;color:var(--accent);line-height:1}
+.fs-l{font-size:.7rem;color:var(--sub);font-weight:700;margin-top:4px;letter-spacing:1px}
+
+.confetti{position:fixed;width:8px;height:14px;top:-20px;z-index:200;pointer-events:none;border-radius:2px}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
+
+@media (max-width:640px){
+  h1{font-size:1.9rem}
+  .intro-card{padding:24px}
+  .game-wrap{padding:16px}
+  .levels-grid{grid-template-columns:1fr}
+  .char-box{font-size:1.15rem;padding:8px 10px;min-width:34px}
+  .gap-btn{width:24px;height:34px}
+  .coref-sentence{font-size:1.05rem;padding:14px 16px;line-height:1.8}
+  .label-btn{font-size:.82rem;padding:8px 12px}
+  .label-btn .label-desc{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">✂️ 文本加工坊</div>
+  <div class="header-right">
+    <button class="home-btn" id="homeBtn" onclick="goToSelect()" style="display:none">🏠 关卡</button>
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+  </div>
+</header>
+
+<div class="screen center active" id="intro">
+  <div class="intro-card">
+    <div class="game-number">NLP · 自然语言处理</div>
+    <h1>✂️ 文本加工坊</h1>
+    <p class="tagline">你将扮演 AI 的「文本处理器」，从切词到理解意思，一步步拆解机器如何读懂人类语言。</p>
+    <div class="pos-legend">
+      <span class="pos-tag" style="background:var(--tag-n)">名词</span>
+      <span class="pos-tag" style="background:var(--tag-v)">动词</span>
+      <span class="pos-tag" style="background:var(--tag-adj)">形容词</span>
+      <span class="pos-tag" style="background:var(--tag-adv)">副词</span>
+      <span class="pos-tag" style="background:var(--tag-p)">助词/标点</span>
+    </div>
+    <div class="rules-list">
+      <div class="rule-item"><span class="rule-icon">🎯</span><div class="rule-text"><strong>6 个关卡由浅入深</strong>：分词 → 词性 → 分词+词性 → 实体识别 → 句法分析 → 指代消解。</div></div>
+      <div class="rule-item"><span class="rule-icon">🤖</span><div class="rule-text"><strong>你就是机器</strong>：每一关都要亲手完成 NLP 的一个真实步骤，像 AI 一样"加工"文本。</div></div>
+      <div class="rule-item"><span class="rule-icon">🔓</span><div class="rule-text">通过一关才会<strong>解锁下一关</strong>。每关可重玩冲刺 3 颗星 ⭐⭐⭐。</div></div>
+    </div>
+    <button class="start-btn" onclick="goToSelect()">🚀 进入加工车间</button>
+  </div>
+</div>
+
+<div class="screen" id="level-select">
+  <div class="level-select-wrap">
+    <div class="ls-header">
+      <h2>🏭 六道工序 · 选择关卡</h2>
+      <p>按顺序解锁，像机器一样一步步加工文本</p>
+    </div>
+    <div class="progress-overview">
+      <div class="po-item"><div class="po-v" id="po-unlocked">1</div><div class="po-l">已解锁关卡</div></div>
+      <div class="po-item"><div class="po-v" id="po-completed">0</div><div class="po-l">已完成</div></div>
+      <div class="po-item"><div class="po-v" id="po-stars">0</div><div class="po-l">总星数 / 18</div></div>
+    </div>
+    <div class="levels-grid" id="levels-grid"></div>
+  </div>
+</div>
+
+<div class="screen" id="game">
+  <div class="game-wrap">
+    <div class="game-header">
+      <div class="gh-left">
+        <span class="gh-level-badge" id="gh-badge">第 1 关</span>
+        <span class="gh-title" id="gh-title">分词基础</span>
+      </div>
+      <button class="back-btn" onclick="goToSelect()">← 返回关卡</button>
+    </div>
+    <div class="flow-pipe" id="flow-pipe"></div>
+    <div class="story-box" id="story-box"></div>
+    <div id="game-content"></div>
+  </div>
+</div>
+
+<div class="screen center" id="final">
+  <div class="final-card">
+    <div class="final-trophy">🏆</div>
+    <div class="final-title">加工坊全通关！</div>
+    <p class="final-sub">你已经亲手完成了 NLP 的完整流水线 — 从一串字符，到理解「谁对谁做了什么」。这就是 AI 读懂人类语言的方式！</p>
+    <div class="final-stats">
+      <div class="fs-item"><div class="fs-v" id="final-stars">0</div><div class="fs-l">总星数</div></div>
+      <div class="fs-item"><div class="fs-v" id="final-avg">0%</div><div class="fs-l">平均正确率</div></div>
+      <div class="fs-item"><div class="fs-v">6/6</div><div class="fs-l">已通关</div></div>
+    </div>
+    <div class="knowledge-card">
+      <h4>🧠 小智说 · 你做的就是 AI 做的</h4>
+      <p>现代的大语言模型（ChatGPT、Claude）把这些步骤整合在了一个神经网络里，但<strong>底层原理和你刚才做的一样</strong>：切词 → 理解词性 → 识别实体 → 分析结构 → 消除歧义。每秒处理数百万字 —— 这就是 AI 理解语言的秘密！</p>
+    </div>
+    <div class="result-btns">
+      <button class="ctrl-btn" onclick="resetAll()">🔄 重新挑战</button>
+      <button class="ctrl-btn primary" onclick="goToSelect()">📚 回到关卡</button>
+    </div>
+  </div>
+</div>
+
+<div class="result-overlay" id="result-overlay">
+  <div class="result-card">
+    <div class="result-emoji" id="result-emoji">🎉</div>
+    <div class="result-title" id="result-title">关卡通过！</div>
+    <div class="result-stars" id="result-stars">⭐⭐⭐</div>
+    <div class="result-score" id="result-score">100%</div>
+    <div class="result-score-label">正确率</div>
+    <div class="result-sub" id="result-sub"></div>
+    <div class="result-detail" id="result-detail"></div>
+    <div class="knowledge-card">
+      <h4>🧠 小智说</h4>
+      <p id="result-knowledge"></p>
+    </div>
+    <div class="result-btns" id="result-btns"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   LEVEL DATA
+============================================================ */
+const LEVELS = [
+  {
+    id: 1, name: '分词基础', english: 'Tokenization', icon: '✂️',
+    desc: '在字符间点「✂️」把句子切成词',
+    type: 'tokenize',
+    sentence: '今天天气真好！',
+    chars: ['今','天','天','气','真','好','！'],
+    correctSeparators: [1, 3, 4, 5],
+    correctTokens: ['今天','天气','真','好','！'],
+    flow: ['字符流','✂️ 分词','词语序列'],
+    story: '机器读进来的句子是一串字符，不是词。第一步就是把它切成词 —— 这就是 <b>Tokenization（分词）</b>。',
+    knowledge: '中文分词比英文难得多！英语有空格分隔，中文没有。AI 要靠<strong>词典 + 规则 + 概率模型</strong>判断词的边界，每秒能处理几百万字。你点的每一刀「✂️」，机器都要做决策：这里该切吗？'
+  },
+  {
+    id: 2, name: '词性标注', english: 'POS Tagging', icon: '🏷️',
+    desc: '给每个词贴上名词/动词等标签',
+    type: 'pos',
+    sentence: '小明喜欢学习人工智能。',
+    tokens: ['小明','喜欢','学习','人工智能','。'],
+    correctLabels: ['名词','动词','动词','名词','标点'],
+    labelColors: {
+      '名词':'--tag-n','动词':'--tag-v','形容词':'--tag-adj',
+      '副词':'--tag-adv','助词':'--tag-p','标点':'--tag-p'
+    },
+    labelOptions: [
+      {id:'名词',name:'名词',short:'N',desc:'人/物/概念',color:'--tag-n'},
+      {id:'动词',name:'动词',short:'V',desc:'动作/状态',color:'--tag-v'},
+      {id:'形容词',name:'形容词',short:'Adj',desc:'描述性质',color:'--tag-adj'},
+      {id:'副词',name:'副词',short:'Adv',desc:'修饰动词',color:'--tag-adv'},
+      {id:'助词',name:'助词',short:'P',desc:'的/地/了',color:'--tag-p'},
+      {id:'标点',name:'标点',short:'。',desc:'。！？，',color:'--tag-p'}
+    ],
+    flow: ['词语','🏷️ 标注词性','带词性的词'],
+    story: '分好词后，AI 还要知道每个词是什么"角色"：名词、动词、还是形容词？这叫 <b>POS Tagging（词性标注）</b>。',
+    knowledge: '词性标注让 AI 区分<strong>谁是主角（名词）</strong>、<strong>谁是动作（动词）</strong>。同一个词在不同句子可能词性不同 —— 比如"学习"可以是动词（我学习）也可以是名词（学习很重要）。现代 AI 用上下文来判断！'
+  },
+  {
+    id: 3, name: '分词 + 词性', english: 'Tokenize + POS', icon: '🔗',
+    desc: '先切词，再标词性（复合关卡）',
+    type: 'combined',
+    sentence: '聪明的机器人快速地奔跑。',
+    chars: ['聪','明','的','机','器','人','快','速','地','奔','跑','。'],
+    correctSeparators: [1, 2, 5, 7, 8, 10],
+    correctTokens: ['聪明','的','机器人','快速','地','奔跑','。'],
+    correctLabels: ['形容词','助词','名词','形容词','助词','动词','标点'],
+    labelColors: {
+      '名词':'--tag-n','动词':'--tag-v','形容词':'--tag-adj',
+      '副词':'--tag-adv','助词':'--tag-p','标点':'--tag-p'
+    },
+    labelOptions: [
+      {id:'名词',name:'名词',short:'N',desc:'人/物',color:'--tag-n'},
+      {id:'动词',name:'动词',short:'V',desc:'动作',color:'--tag-v'},
+      {id:'形容词',name:'形容词',short:'Adj',desc:'描述',color:'--tag-adj'},
+      {id:'副词',name:'副词',short:'Adv',desc:'修饰',color:'--tag-adv'},
+      {id:'助词',name:'助词',short:'P',desc:'的/地/了',color:'--tag-p'},
+      {id:'标点',name:'标点',short:'。',desc:'标点',color:'--tag-p'}
+    ],
+    flow: ['字符流','✂️ 分词','🏷️ 词性标注','完整分析'],
+    story: '真实的 NLP 系统要<b>连续</b>完成分词和词性标注。这一关你要一口气做两步！',
+    knowledge: '分词+词性标注是大部分 NLP 应用的<strong>基础管线（Pipeline）</strong>。搜索引擎、翻译、语音助手都依赖它。词之间的"的""地""了"虽然只是助词，但是理解句子结构的关键信号！'
+  },
+  {
+    id: 4, name: '命名实体识别', english: 'NER', icon: '🏛️',
+    desc: '找出人名、地名、机构、时间',
+    type: 'ner',
+    sentence: '2024年春天，李明在北京清华大学学习人工智能。',
+    tokens: ['2024年春天','，','李明','在','北京','清华大学','学习','人工智能','。'],
+    correctLabels: ['TIME','O','PER','O','LOC','ORG','O','O','O'],
+    labelOptions: [
+      {id:'PER',name:'人名',short:'👤',desc:'人的名字',color:'--ent-per'},
+      {id:'LOC',name:'地名',short:'🏙️',desc:'地方的名字',color:'--ent-loc'},
+      {id:'ORG',name:'机构',short:'🏛️',desc:'学校/公司',color:'--ent-org'},
+      {id:'TIME',name:'时间',short:'🕐',desc:'日期/时刻',color:'--ent-time'},
+      {id:'O',name:'其他',short:'○',desc:'非实体',color:'--ent-o'}
+    ],
+    labelColors: {'PER':'--ent-per','LOC':'--ent-loc','ORG':'--ent-org','TIME':'--ent-time','O':'--ent-o'},
+    flow: ['词语','🏛️ 实体识别','结构化信息'],
+    story: 'AI 要从文本里找出"实体"：谁、在哪、什么时候、在什么机构 —— 这叫 <b>NER（命名实体识别）</b>。',
+    knowledge: 'NER 把文字变成<strong>结构化知识</strong>！每条新闻、每条评论，AI 都在用 NER 抽取"谁、何时、何地"。搜索引擎、知识图谱、自动摘要都依赖它。甚至导航软件识别地名、日历 APP 识别时间，都是 NER 在工作。'
+  },
+  {
+    id: 5, name: '句法成分', english: 'Syntactic Analysis', icon: '🌳',
+    desc: '找出主语、谓语、宾语、修饰语',
+    type: 'syntactic',
+    sentence: '可爱的小猫快速地追蝴蝶。',
+    tokens: ['可爱的','小猫','快速地','追','蝴蝶','。'],
+    correctLabels: ['定语','主语','状语','谓语','宾语','其他'],
+    labelOptions: [
+      {id:'主语',name:'主语',short:'S',desc:'动作发起者',color:'--role-s'},
+      {id:'谓语',name:'谓语',short:'V',desc:'动作本身',color:'--role-v'},
+      {id:'宾语',name:'宾语',short:'O',desc:'动作承受者',color:'--role-o'},
+      {id:'定语',name:'定语',short:'定',desc:'修饰名词',color:'--role-attr'},
+      {id:'状语',name:'状语',short:'状',desc:'修饰动词',color:'--role-adv'},
+      {id:'其他',name:'其他',short:'○',desc:'标点等',color:'--role-other'}
+    ],
+    labelColors: {'主语':'--role-s','谓语':'--role-v','宾语':'--role-o','定语':'--role-attr','状语':'--role-adv','其他':'--role-other'},
+    flow: ['带词性的词','🌳 句法分析','谁做了什么'],
+    story: '要真正"理解"句子，AI 必须知道：<b>谁</b> 对 <b>谁</b> <b>做了什么</b>？这就是<b>句法分析</b>。',
+    knowledge: '句法分析回答"谁做了什么"的核心问题。主语+谓语+宾语构成句子的骨架，定语、状语是修饰性的"装饰"。机器翻译、问答系统、语音助手都必须先搞清楚这个结构才能正确处理！这也叫<strong>依存分析（Dependency Parsing）</strong>。'
+  },
+  {
+    id: 6, name: '指代消解', english: 'Coreference', icon: '🎯',
+    desc: '搞清「他/她/它」指的是谁',
+    type: 'coreference',
+    sentence: '小红把故事书借给小明，因为她已经看完了。',
+    pronoun: '她',
+    question: '句子里的「她」指的是谁？',
+    options: [
+      {text:'小红', correct:true, hint:'✨ 答对了！关键线索：①<strong>「她」是女性代词</strong>，小红是女孩，小明是男孩。②<strong>「借出书的人」才可能「已经看完了」</strong>，所以只能是小红。AI 就是这样综合<strong>语法</strong>（代词性别）和<strong>常识</strong>（借出方=读过的人）来判断的。'},
+      {text:'小明', correct:false, hint:'❌ 不对哦。「她」是女性代词，而「小明」是男孩的名字。另外，小明是"<strong>收到</strong>"书的人，不可能"已经看完了"。'},
+      {text:'故事书', correct:false, hint:'❌ 不对。故事书是物品，中文里物品通常用「它」，而且书不会自己"看完"自己。'},
+      {text:'不能确定', correct:false, hint:'❌ 其实是能确定的！只要结合①「她」是女性代词，②「借出方」才可能「看完了」这两个线索，就能锁定是<strong>小红</strong>。'}
+    ],
+    flow: ['文本','🎯 指代消解','真正的理解'],
+    story: '代词「他、她、它」让语言更简洁，但也让 AI 犯难 —— 到底指谁呢？这是 <b>NLP 最难的任务之一</b>。',
+    knowledge: '指代消解要综合<strong>语法、常识、上下文</strong> —— 人类轻松，AI 却要"深思熟虑"。大语言模型（如 ChatGPT、Claude）因为从海量文本里学到了世界知识，这方面做得相当好。但在长对话、多人场景里，AI 仍会搞混！'
+  }
+];
+
+/* ============================================================
+   STATE
+============================================================ */
+const state = {
+  unlockedLevel: 1,
+  currentLevelId: null,
+  progress: {},
+  separators: null,
+  userLabels: [],
+  selectedTokenIdx: null,
+  currentStage: null,
+  tokensForLabeling: null,
+  corefDone: false,
+  corefAttempts: 0,
+  combinedTokenizeScore: null,
+  finalShown: false
+};
+
+/* ============================================================
+   HELPERS
+============================================================ */
+function getLevel(id){ return LEVELS.find(x => x.id === id); }
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  const homeBtn = document.getElementById('homeBtn');
+  if (homeBtn) homeBtn.style.display = (id==='game' || id==='final') ? 'inline-block' : 'none';
+  window.scrollTo(0, 0);
+}
+
+function goToSelect(){
+  hideResult();
+  renderLevelSelect();
+  showScreen('level-select');
+}
+
+function toggleTheme(){
+  const h = document.documentElement;
+  const d = h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  h.setAttribute('data-theme', d);
+  document.getElementById('themeBtn').textContent = d==='dark' ? '☀️ 日间' : '🌙 夜间';
+}
+
+/* ============================================================
+   LEVEL SELECT
+============================================================ */
+function renderLevelSelect(){
+  const grid = document.getElementById('levels-grid');
+  let completed = 0, totalStars = 0;
+  grid.innerHTML = LEVELS.map(L => {
+    const p = state.progress[L.id];
+    const unlocked = L.id <= state.unlockedLevel;
+    const isComplete = p && p.completed;
+    if (isComplete) { completed++; totalStars += (p.stars || 0); }
+    const stars = p ? p.stars : 0;
+    let starsHtml = '';
+    for (let i = 0; i < 3; i++){
+      starsHtml += i < stars ? '<span class="star-f">⭐</span>' : '<span class="star-e">☆</span>';
+    }
+    const statusHtml = !unlocked ? '<span class="lc-status lock">🔒 未解锁</span>'
+                     : isComplete ? '<span class="lc-status done">✓ 通关</span>'
+                     : '<span class="lc-status" style="color:var(--accent)">▶ 可挑战</span>';
+    const scoreHtml = p ? '<span>最佳 <b class="score">' + p.score + '%</b></span>' : '<span>未尝试</span>';
+    const preview = L.sentence.length > 12 ? L.sentence.slice(0,11) + '…' : L.sentence;
+    const clickAttr = unlocked ? 'onclick="startLevel(' + L.id + ')"' : 'onclick="showLockedHint()"';
+    return '<div class="level-card ' + (!unlocked ? 'locked' : '') + ' ' + (isComplete ? 'completed' : '') + '" ' + clickAttr + '>' +
+      '<div class="lc-head"><span class="lc-num">第 ' + L.id + ' 关</span>' + statusHtml + '</div>' +
+      '<div class="lc-icon">' + L.icon + '</div>' +
+      '<div class="lc-name">' + L.name + '</div>' +
+      '<div class="lc-english">' + L.english + '</div>' +
+      '<div class="lc-desc">' + L.desc + '</div>' +
+      '<div class="lc-stars">' + starsHtml + '</div>' +
+      '<div class="lc-progress"><span class="lc-sentence-preview">' + preview + '</span>' + scoreHtml + '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('po-unlocked').textContent = Math.min(state.unlockedLevel, LEVELS.length);
+  document.getElementById('po-completed').textContent = completed;
+  document.getElementById('po-stars').textContent = totalStars;
+
+  if (completed === LEVELS.length && !state.finalShown){
+    state.finalShown = true;
+    setTimeout(() => showFinal(), 600);
+  }
+}
+
+function showLockedHint(){
+  alert('🔒 请先完成前面的关卡来解锁哦～');
+}
+
+/* ============================================================
+   LEVEL START
+============================================================ */
+function startLevel(id){
+  const L = getLevel(id);
+  if (!L) { console.error('Level not found:', id); return; }
+
+  // Reset all per-level state
+  state.currentLevelId = id;
+  state.separators = new Set();
+  state.selectedTokenIdx = null;
+  state.currentStage = (L.type === 'combined') ? 'tokenize' : null;
+  state.tokensForLabeling = null;
+  state.corefDone = false;
+  state.corefAttempts = 0;
+  state.combinedTokenizeScore = null;
+
+  // Pre-size userLabels based on level type
+  if (L.type === 'tokenize'){
+    state.userLabels = [];
+  } else if (L.type === 'combined'){
+    state.userLabels = new Array(L.correctTokens.length).fill('');
+  } else if (L.type === 'coreference'){
+    state.userLabels = [];
+  } else {
+    state.userLabels = new Array(L.tokens.length).fill('');
+  }
+
+  // Update UI
+  document.getElementById('gh-badge').textContent = '第 ' + L.id + ' 关';
+  document.getElementById('gh-title').textContent = L.icon + ' ' + L.name;
+  document.getElementById('story-box').innerHTML = L.story;
+
+  renderFlow(L, L.type === 'combined' ? 'tokenize' : 'start');
+  hideResult();
+  showScreen('game');
+  renderLevel();
+}
+
+function renderFlow(L, activeStage){
+  const pipe = document.getElementById('flow-pipe');
+  const nodes = L.flow || [];
+  let activeIdx = 1;
+  if (activeStage === 'start') activeIdx = 1;
+  else if (activeStage === 'tokenize') activeIdx = 1;
+  else if (activeStage === 'pos' || activeStage === 'label') activeIdx = (L.type === 'combined') ? 2 : 1;
+  else if (activeStage === 'done') activeIdx = nodes.length - 1;
+
+  pipe.innerHTML = nodes.map((n, i) => {
+    let cls = '';
+    if (activeStage === 'done') cls = 'done';
+    else if (i < activeIdx) cls = 'done';
+    else if (i === activeIdx) cls = 'active';
+    const arrow = (i < nodes.length - 1) ? '<span class="flow-arrow">→</span>' : '';
+    return '<div class="flow-node ' + cls + '">' + n + '</div>' + arrow;
+  }).join('');
+}
+
+function renderLevel(){
+  const L = getLevel(state.currentLevelId);
+  if (!L) return;
+  const type = L.type;
+  if (type === 'tokenize') renderTokenize(L);
+  else if (type === 'pos') renderLabeling(L, 'pos', L.tokens);
+  else if (type === 'combined') renderCombined(L);
+  else if (type === 'ner') renderLabeling(L, 'ner', L.tokens);
+  else if (type === 'syntactic') renderLabeling(L, 'syntactic', L.tokens);
+  else if (type === 'coreference') renderCoreference(L);
+}
+
+/* ============================================================
+   TOKENIZE
+============================================================ */
+function renderTokenize(L){
+  const chars = L.chars;
+  const sepSet = state.separators;
+  let html = '';
+  for (let i = 0; i < chars.length; i++){
+    html += '<div class="char-box">' + chars[i] + '</div>';
+    if (i < chars.length - 1){
+      const isActive = sepSet.has(i);
+      const title = isActive ? '点击取消切分' : '点击在这里切分';
+      html += '<button class="gap-btn ' + (isActive ? 'active' : '') + '" onclick="toggleSeparator(' + i + ')" title="' + title + '">' + (isActive ? '✂️' : '·') + '</button>';
+    }
+  }
+
+  const tokens = computeTokens(chars, sepSet);
+  const isUncut = tokens.length === 1 && tokens[0] === chars.join('');
+  const previewHtml = isUncut
+    ? '<span class="preview-label">当前（未切分）:</span> <span style="color:var(--sub)">还没有切分 — 机器看到的就是一整串字符</span>'
+    : '<span class="preview-label">当前结果:</span>' + tokens.map(t => '<span class="preview-token">' + t + '</span>').join('');
+
+  const content =
+    '<div class="stage-label">🔧 第一步：分词（Tokenize）</div>' +
+    '<p class="stage-hint">机器看到的是一串 <b>字符</b>，不是词。你要告诉机器：哪里该"切一刀"？<br>' +
+    '👉 点击字符<b>之间</b>的 <code>·</code> 位置，它会变成 <code>✂️</code> 代表切分。再次点击可取消。</p>' +
+    '<div class="char-stream-label"><span>📝 句子：<b>' + L.sentence + '</b></span><span>字符数：' + chars.length + '</span></div>' +
+    '<div class="char-stream">' + html + '</div>' +
+    '<div class="preview-tokens">' + previewHtml + '</div>' +
+    '<div class="progress-info">' +
+      '<span>放了 <b>' + sepSet.size + '</b> 把 ✂️</span>' +
+      '<span>得到 <b>' + tokens.length + '</b> 个词</span>' +
+    '</div>' +
+    '<div class="ctrl-row">' +
+      '<button class="ctrl-btn" onclick="clearSeparators()">🗑️ 清空</button>' +
+      '<button class="ctrl-btn primary" onclick="submitTokenize()">✅ 提交分词</button>' +
+    '</div>';
+  document.getElementById('game-content').innerHTML = content;
+}
+
+function computeTokens(chars, sepSet){
+  const tokens = [];
+  let cur = '';
+  for (let i = 0; i < chars.length; i++){
+    cur += chars[i];
+    if (sepSet.has(i)){ tokens.push(cur); cur = ''; }
+  }
+  if (cur) tokens.push(cur);
+  return tokens;
+}
+
+function toggleSeparator(i){
+  if (state.separators.has(i)) state.separators.delete(i);
+  else state.separators.add(i);
+  const L = getLevel(state.currentLevelId);
+  renderTokenize(L);
+}
+
+function clearSeparators(){
+  state.separators = new Set();
+  const L = getLevel(state.currentLevelId);
+  renderTokenize(L);
+}
+
+function submitTokenize(){
+  const L = getLevel(state.currentLevelId);
+  const userSeps = state.separators;
+  const correctSeps = new Set(L.correctSeparators);
+  const totalGaps = L.chars.length - 1;
+  let correctCount = 0;
+  const perGap = [];
+  for (let i = 0; i < totalGaps; i++){
+    const userHas = userSeps.has(i);
+    const shouldHave = correctSeps.has(i);
+    if (userHas === shouldHave) correctCount++;
+    perGap.push({idx:i, userHas, shouldHave, correct: userHas === shouldHave});
+  }
+  const pct = Math.round(correctCount / totalGaps * 100);
+
+  if (L.type === 'combined'){
+    showTokenizeFeedback(L, perGap, pct, correctSeps, function(){
+      state.currentStage = 'pos';
+      state.tokensForLabeling = L.correctTokens.slice();
+      state.userLabels = new Array(L.correctTokens.length).fill('');
+      state.selectedTokenIdx = null;
+      state.combinedTokenizeScore = pct;
+      renderFlow(L, 'pos');
+      renderLabeling(L, 'pos', L.correctTokens);
+    });
+  } else {
+    finishLevel(L, pct, { perGap: perGap, correctSeps: correctSeps });
+  }
+}
+
+function showTokenizeFeedback(L, perGap, pct, correctSeps, onNext){
+  const chars = L.chars;
+  const userSeps = state.separators;
+  let html = '';
+  for (let i = 0; i < chars.length; i++){
+    html += '<div class="char-box">' + chars[i] + '</div>';
+    if (i < chars.length - 1){
+      const userHas = userSeps.has(i);
+      const shouldHave = correctSeps.has(i);
+      let glyph = '·', color = 'var(--sub)', bg = 'transparent', op = '.35';
+      if (shouldHave && userHas){ glyph = '✂️'; color = 'var(--success)'; bg = 'rgba(16,185,129,.18)'; op = '1'; }
+      else if (shouldHave && !userHas){ glyph = '✂️'; color = 'var(--warn)'; bg = 'rgba(245,158,11,.18)'; op = '1'; }
+      else if (!shouldHave && userHas){ glyph = '❌'; color = 'var(--wrong)'; bg = 'rgba(239,68,68,.18)'; op = '1'; }
+      html += '<button class="gap-btn" style="color:' + color + ';background:' + bg + ';opacity:' + op + ';font-size:1rem;cursor:default" disabled>' + glyph + '</button>';
+    }
+  }
+  const correctTokensHtml = L.correctTokens.map(t => '<span class="preview-token" style="border-color:var(--success);color:var(--success)">' + t + '</span>').join('');
+  const userTokensHtml = computeTokens(chars, userSeps).map(t => '<span class="preview-token">' + t + '</span>').join('');
+  const emoji = pct === 100 ? '🎯' : pct >= 70 ? '👍' : '💪';
+
+  const content =
+    '<div class="stage-label">' + emoji + ' 分词结果检验</div>' +
+    '<div class="char-stream">' + html + '</div>' +
+    '<div class="preview-tokens"><span class="preview-label">你的结果：</span>' + userTokensHtml + '</div>' +
+    '<div class="preview-tokens" style="background:rgba(16,185,129,.1)"><span class="preview-label" style="color:var(--success)">✓ 正确答案：</span>' + correctTokensHtml + '</div>' +
+    '<div class="progress-info">' +
+      '<span>分词正确率：<b>' + pct + '%</b></span>' +
+      '<span style="color:var(--success)">绿=对</span>' +
+      '<span style="color:var(--warn)">黄=漏切</span>' +
+      '<span style="color:var(--wrong)">红=多切</span>' +
+    '</div>' +
+    '<div class="ctrl-row">' +
+      '<button class="ctrl-btn primary" id="nextBtn">下一步：标注词性 →</button>' +
+    '</div>';
+  document.getElementById('game-content').innerHTML = content;
+  document.getElementById('nextBtn').onclick = onNext;
+}
+
+/* ============================================================
+   LABELING (POS / NER / Syntactic)
+============================================================ */
+function renderLabeling(L, labelType, tokens){
+  if (!tokens) tokens = L.tokens;
+  state.tokensForLabeling = tokens;
+
+  // Ensure userLabels matches tokens length
+  if (state.userLabels.length !== tokens.length){
+    state.userLabels = new Array(tokens.length).fill('');
+  }
+
+  const stageNames = {
+    pos:'第二步：词性标注（POS）',
+    ner:'命名实体识别（NER）',
+    syntactic:'句法成分分析'
+  };
+  const stageIcons = { pos:'🏷️', ner:'🏛️', syntactic:'🌳' };
+
+  const tokenHtml = tokens.map((t, i) => {
+    const lbl = state.userLabels[i];
+    const colorVar = lbl ? L.labelColors[lbl] : null;
+    const chipHtml = lbl ? ('<span class="pos-chip" style="background:var(' + colorVar + ')">' + getLabelName(L, lbl) + '</span>') : '';
+    const selClass = state.selectedTokenIdx === i ? 'selected' : '';
+    const style = lbl
+      ? ('background:rgba(255,255,255,.04);border-color:var(' + colorVar + ');color:var(' + colorVar + ')')
+      : '';
+    return '<div class="token ' + selClass + '" style="' + style + '" onclick="selectToken(' + i + ')">' + t + chipHtml + '</div>';
+  }).join('');
+
+  const btnsHtml = L.labelOptions.map(op => {
+    const colorVar = op.color;
+    return '<button class="label-btn" style="background:rgba(255,255,255,.02);border-color:var(' + colorVar + ');color:var(' + colorVar + ')" onclick="applyLabel(\'' + op.id + '\')">' +
+      op.short + ' ' + op.name + '<span class="label-desc">(' + op.desc + ')</span>' +
+      '</button>';
+  }).join('');
+
+  const labeledCount = state.userLabels.filter(x => x).length;
+  const total = tokens.length;
+
+  let hint = '';
+  if (labelType === 'pos'){
+    hint = '点击一个词（它会<b>高亮</b>），然后点击下面对应的词性按钮。标完后会自动跳到下一个未标注的词。';
+  } else if (labelType === 'ner'){
+    hint = '找出句子里的<b>实体</b>：人名、地名、机构、时间。不是实体的词标记为<b>「其他」</b>。点击词 → 点击实体类别。';
+  } else if (labelType === 'syntactic'){
+    hint = '分析每个词在句子里的<b>角色</b>：<br>🎯 <b>主语</b>=谁　🔥 <b>谓语</b>=做什么　🎁 <b>宾语</b>=被做的对象<br>🎨 <b>定语</b>=修饰名词　⚡ <b>状语</b>=修饰动词';
+  }
+
+  let combinedHeader = '';
+  if (L.type === 'combined' && state.combinedTokenizeScore !== null){
+    combinedHeader = '<div class="progress-info">' +
+      '<span>✓ 第一步 · 分词完成 <b>' + state.combinedTokenizeScore + '%</b></span>' +
+      '<span>现在是 <b>第二步</b>：给每个词标注词性</span>' +
+    '</div>';
+  }
+
+  const selectedName = (state.selectedTokenIdx !== null && tokens[state.selectedTokenIdx]) ? tokens[state.selectedTokenIdx] : '无';
+  const submitDisabled = labeledCount < total;
+  const submitText = submitDisabled ? ('还剩 ' + (total - labeledCount) + ' 个未标') : '✅ 提交标注';
+
+  const content =
+    '<div class="stage-label">' + stageIcons[labelType] + ' ' + stageNames[labelType] + '</div>' +
+    combinedHeader +
+    '<p class="stage-hint">' + hint + '</p>' +
+    '<div class="token-area">' + tokenHtml + '</div>' +
+    '<div style="font-size:.78rem;color:var(--sub);font-weight:700;margin-bottom:6px">👇 选择标签：</div>' +
+    '<div class="label-btns">' + btnsHtml + '</div>' +
+    '<div class="progress-info">' +
+      '<span>已标注 <b>' + labeledCount + '/' + total + '</b></span>' +
+      '<span>当前选中：<b>' + selectedName + '</b></span>' +
+    '</div>' +
+    '<div class="ctrl-row">' +
+      '<button class="ctrl-btn" onclick="clearLabels()">🗑️ 清空标签</button>' +
+      '<button class="ctrl-btn primary" onclick="submitLabels(\'' + labelType + '\')" ' + (submitDisabled ? 'disabled' : '') + '>' + submitText + '</button>' +
+    '</div>';
+  document.getElementById('game-content').innerHTML = content;
+}
+
+function getLabelName(L, labelId){
+  const op = L.labelOptions.find(x => x.id === labelId);
+  return op ? op.name : labelId;
+}
+
+function selectToken(i){
+  state.selectedTokenIdx = i;
+  const L = getLevel(state.currentLevelId);
+  const labelType = L.type === 'combined' ? 'pos' : L.type;
+  renderLabeling(L, labelType, state.tokensForLabeling);
+}
+
+function applyLabel(labelId){
+  const total = state.tokensForLabeling.length;
+  if (state.selectedTokenIdx === null){
+    const firstUnlabeled = state.userLabels.findIndex(x => !x);
+    if (firstUnlabeled !== -1) state.selectedTokenIdx = firstUnlabeled;
+    else { alert('请先点击一个词，再点击标签按钮哦～'); return; }
+  }
+  state.userLabels[state.selectedTokenIdx] = labelId;
+
+  // Move to next unlabeled token
+  let next = null;
+  for (let offset = 1; offset <= total; offset++){
+    const candidate = (state.selectedTokenIdx + offset) % total;
+    if (!state.userLabels[candidate]){ next = candidate; break; }
+  }
+  state.selectedTokenIdx = next;
+
+  const L = getLevel(state.currentLevelId);
+  const labelType = L.type === 'combined' ? 'pos' : L.type;
+  renderLabeling(L, labelType, state.tokensForLabeling);
+}
+
+function clearLabels(){
+  const L = getLevel(state.currentLevelId);
+  state.userLabels = new Array(state.tokensForLabeling.length).fill('');
+  state.selectedTokenIdx = null;
+  const labelType = L.type === 'combined' ? 'pos' : L.type;
+  renderLabeling(L, labelType, state.tokensForLabeling);
+}
+
+function submitLabels(labelType){
+  const L = getLevel(state.currentLevelId);
+  const correct = L.correctLabels;
+  const user = state.userLabels;
+  let ok = 0;
+  const perToken = state.tokensForLabeling.map((t, i) => {
+    const isOk = user[i] === correct[i];
+    if (isOk) ok++;
+    return { token: t, user: user[i], correct: correct[i], ok: isOk };
+  });
+  const pct = Math.round(ok / perToken.length * 100);
+
+  let finalPct = pct;
+  if (L.type === 'combined'){
+    finalPct = Math.round((state.combinedTokenizeScore + pct) / 2);
+  }
+
+  finishLevel(L, finalPct, { perToken: perToken, posScore: pct, tokenizeScore: state.combinedTokenizeScore });
+}
+
+/* ============================================================
+   COMBINED LEVEL
+============================================================ */
+function renderCombined(L){
+  if (state.currentStage === 'tokenize'){
+    renderTokenize(L);
+  } else {
+    renderLabeling(L, 'pos', L.correctTokens);
+  }
+}
+
+/* ============================================================
+   COREFERENCE LEVEL
+============================================================ */
+function renderCoreference(L){
+  const sent = L.sentence.replace(L.pronoun, '<span class="pronoun">' + L.pronoun + '</span>');
+  const optsHtml = L.options.map((op, i) =>
+    '<div class="coref-opt" id="coref-opt-' + i + '" onclick="chooseCoref(' + i + ')">' + op.text + '</div>'
+  ).join('');
+
+  const content =
+    '<div class="stage-label">🎯 最终挑战：指代消解</div>' +
+    '<p class="stage-hint">仔细读下面的句子，<b>高亮的代词</b>到底指的是谁？这是 NLP <b>最难的任务之一</b> —— 需要综合语法、语义和常识。</p>' +
+    '<div class="coref-sentence">' + sent + '</div>' +
+    '<div class="coref-question">❓ ' + L.question + '</div>' +
+    '<div class="coref-options">' + optsHtml + '</div>' +
+    '<div class="coref-feedback" id="coref-feedback"></div>' +
+    '<div class="ctrl-row" id="coref-ctrl-row" style="display:none">' +
+      '<button class="ctrl-btn primary" onclick="finalizeCoref()">查看评分 →</button>' +
+    '</div>';
+  document.getElementById('game-content').innerHTML = content;
+}
+
+function chooseCoref(idx){
+  if (state.corefDone) return;
+  const L = getLevel(state.currentLevelId);
+  const choice = L.options[idx];
+  state.corefAttempts++;
+  const el = document.getElementById('coref-opt-' + idx);
+  const fb = document.getElementById('coref-feedback');
+  if (!el || !fb) return;
+
+  if (choice.correct){
+    L.options.forEach((op, i) => {
+      const oe = document.getElementById('coref-opt-' + i);
+      if (oe){
+        oe.classList.add('disabled');
+        if (op.correct) oe.classList.add('correct');
+      }
+    });
+    fb.className = 'coref-feedback show';
+    fb.innerHTML = choice.hint;
+    state.corefDone = true;
+    const ctrlRow = document.getElementById('coref-ctrl-row');
+    if (ctrlRow) ctrlRow.style.display = 'flex';
+  } else {
+    el.classList.add('wrong');
+    fb.className = 'coref-feedback show wrong-fb';
+    fb.innerHTML = choice.hint;
+    setTimeout(() => {
+      if (!state.corefDone && el) el.classList.remove('wrong');
+    }, 1500);
+  }
+}
+
+function finalizeCoref(){
+  const L = getLevel(state.currentLevelId);
+  const pct = state.corefAttempts <= 1 ? 100 : state.corefAttempts === 2 ? 70 : 40;
+  finishLevel(L, pct, { attempts: state.corefAttempts });
+}
+
+/* ============================================================
+   FINISH LEVEL & RESULT OVERLAY
+============================================================ */
+function finishLevel(L, pct, details){
+  const stars = pct >= 95 ? 3 : pct >= 75 ? 2 : pct > 0 ? 1 : 0;
+  const prev = state.progress[L.id];
+  const isNewBest = !prev || pct > prev.score;
+  if (isNewBest){
+    state.progress[L.id] = { stars: stars, score: pct, completed: true };
+  } else {
+    state.progress[L.id].completed = true;
+  }
+  if (L.id >= state.unlockedLevel && L.id < LEVELS.length){
+    state.unlockedLevel = L.id + 1;
+  }
+
+  // Stars display
+  let starsHtml = '';
+  for (let i = 0; i < 3; i++){
+    starsHtml += i < stars ? '⭐' : '<span style="opacity:.3">☆</span>';
+  }
+  document.getElementById('result-stars').innerHTML = starsHtml;
+
+  let emoji = '🎉', title = '通关！';
+  if (pct === 100){ emoji = '🏆'; title = '完美通关！'; }
+  else if (pct >= 80){ emoji = '🎊'; title = '做得很棒！'; }
+  else if (pct >= 60){ emoji = '👍'; title = '还不错～'; }
+  else { emoji = '💪'; title = '继续加油！'; }
+
+  document.getElementById('result-emoji').textContent = emoji;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-score').textContent = pct + '%';
+
+  let detailHtml = '';
+  if (L.type === 'tokenize'){
+    const d = details;
+    const totalGaps = L.chars.length - 1;
+    const correctGaps = d.perGap.filter(g => g.correct).length;
+    const missed = d.perGap.filter(g => g.shouldHave && !g.userHas).length;
+    const extra = d.perGap.filter(g => !g.shouldHave && g.userHas).length;
+    detailHtml = '<b>分词位置评估：</b><br>' +
+      '✓ 正确 ' + correctGaps + '/' + totalGaps + ' 处<br>' +
+      '⚠ 漏切 ' + missed + ' 处 · ❌ 多切 ' + extra + ' 处<br>' +
+      '<b>正确切分：</b>' + L.correctTokens.map(t => '「' + t + '」').join('');
+  } else if (L.type === 'pos' || L.type === 'ner' || L.type === 'syntactic'){
+    const d = details.perToken;
+    const wrongs = d.filter(r => !r.ok);
+    detailHtml = '<b>标注评估：</b> ' + d.filter(r => r.ok).length + '/' + d.length + ' 个词标对了<br>';
+    if (wrongs.length > 0){
+      detailHtml += '<b>需要改正：</b><br>' + wrongs.slice(0, 4).map(r =>
+        '• 「' + r.token + '」你标的是<span style="color:var(--wrong)">' + getLabelName(L, r.user) + '</span>，应是<span style="color:var(--success)">' + getLabelName(L, r.correct) + '</span>'
+      ).join('<br>');
+      if (wrongs.length > 4) detailHtml += '<br>…还有 ' + (wrongs.length - 4) + ' 个词。';
+    } else {
+      detailHtml += '🎉 全部正确！你对每个词的分析都精准无误。';
+    }
+  } else if (L.type === 'combined'){
+    detailHtml = '<b>综合评估：</b><br>' +
+      '✂️ 分词：' + details.tokenizeScore + '%<br>' +
+      '🏷️ 词性：' + details.posScore + '%<br>' +
+      '综合得分（平均）：' + pct + '%';
+  } else if (L.type === 'coreference'){
+    detailHtml = '<b>指代消解：</b> 你用了 <b>' + details.attempts + '</b> 次尝试<br>' +
+      (details.attempts === 1 ? '🎯 一次命中！真厉害！' :
+       details.attempts === 2 ? '👍 第二次选对了，下次可以更快哦。' :
+       '💪 多试几次才找到答案 —— 这也说明指代消解确实很难！');
+  }
+  document.getElementById('result-detail').innerHTML = detailHtml;
+  document.getElementById('result-knowledge').innerHTML = L.knowledge;
+
+  let subText = '';
+  if (isNewBest && prev) subText = '🌟 新纪录！之前 ' + prev.score + '%，现在 ' + pct + '%';
+  else if (prev) subText = '（最佳成绩 ' + state.progress[L.id].score + '%）';
+  else subText = '这是你第一次通过本关！';
+  document.getElementById('result-sub').innerHTML = subText;
+
+  // Buttons
+  const btns = [];
+  btns.push('<button class="ctrl-btn" onclick="retryLevel()">🔄 再试一次</button>');
+  if (L.id < LEVELS.length){
+    btns.push('<button class="ctrl-btn primary" onclick="goToNextLevel()">下一关 →</button>');
+  } else {
+    btns.push('<button class="ctrl-btn primary" onclick="viewFinal()">🏆 完结庆祝</button>');
+  }
+  btns.push('<button class="ctrl-btn" onclick="goToSelect()">📚 关卡列表</button>');
+  document.getElementById('result-btns').innerHTML = btns.join('');
+
+  document.getElementById('result-overlay').classList.add('show');
+  if (pct >= 80) launchConfetti();
+  renderFlow(L, 'done');
+}
+
+function hideResult(){
+  const ov = document.getElementById('result-overlay');
+  if (ov) ov.classList.remove('show');
+}
+
+function retryLevel(){
+  hideResult();
+  // Small delay so overlay animation completes cleanly
+  setTimeout(() => startLevel(state.currentLevelId), 50);
+}
+
+function goToNextLevel(){
+  hideResult();
+  const next = state.currentLevelId + 1;
+  setTimeout(() => {
+    if (next <= LEVELS.length) startLevel(next);
+    else goToSelect();
+  }, 50);
+}
+
+function viewFinal(){
+  hideResult();
+  setTimeout(() => showFinal(), 50);
+}
+
+/* ============================================================
+   FINAL SCREEN
+============================================================ */
+function showFinal(){
+  let totalStars = 0, totalScore = 0, n = 0;
+  for (const id in state.progress){
+    const p = state.progress[id];
+    if (p.completed){ totalStars += p.stars; totalScore += p.score; n++; }
+  }
+  document.getElementById('final-stars').textContent = totalStars + '/18';
+  document.getElementById('final-avg').textContent = (n > 0 ? Math.round(totalScore / n) : 0) + '%';
+  showScreen('final');
+  launchConfetti(80);
+}
+
+function resetAll(){
+  if (!confirm('确定要重置所有进度吗？')) return;
+  state.unlockedLevel = 1;
+  state.progress = {};
+  state.finalShown = false;
+  goToSelect();
+}
+
+/* ============================================================
+   CONFETTI
+============================================================ */
+function launchConfetti(count){
+  count = count || 40;
+  const colors = ['#f59e0b','#10b981','#6366f1','#ef4444','#a855f7','#fbbf24'];
+  for (let i = 0; i < count; i++){
+    setTimeout(() => {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + '%';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.animation = 'fall ' + (1.8 + Math.random() * 1.4) + 's ' + (Math.random() * .3) + 's forwards linear';
+      c.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+      document.body.appendChild(c);
+      setTimeout(() => { if (c.parentNode) c.remove(); }, 3600);
+    }, i * 25);
+  }
+}
+</script>
+</body>
+</html>

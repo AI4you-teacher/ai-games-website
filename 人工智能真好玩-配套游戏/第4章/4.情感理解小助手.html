@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情绪显微镜</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #e8f0f7;
+    --bg-deep: #d4e2f0;
+    --surface: #ffffff;
+    --ink: #0f1e35;
+    --ink-soft: #4a5d7a;
+    --primary: #2e5aac;
+    --primary-light: #b8cdef;
+    --joy: #ffa726;
+    --anger: #e53935;
+    --fear: #7b1fa2;
+    --sad: #455a64;
+    --surprise: #00bcd4;
+    --line: #0f1e35;
+    --shadow: rgba(15, 30, 53, 0.1);
+    --correct: #43a047;
+    --wrong: #e53935;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0a1423;
+    --bg-deep: #050a14;
+    --surface: #142238;
+    --ink: #e8f0f7;
+    --ink-soft: #8fa5c0;
+    --primary: #5c8dd8;
+    --primary-light: #2a3f5f;
+    --line: #5c8dd8;
+    --shadow: rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    transition: background 0.4s, color 0.4s;
+    overflow-x: hidden;
+  }
+
+  /* 网格背景 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--bg-deep) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bg-deep) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 顶栏 */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .brand-badge {
+    font-family: 'DM Serif Display', serif;
+    font-size: 0.5rem;
+    background: var(--ink);
+    color: var(--surface);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-style: italic;
+    line-height: 1;
+  }
+
+  [data-theme="dark"] .brand-badge {
+    background: var(--primary);
+    color: var(--surface);
+  }
+
+  .brand-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.8rem;
+    line-height: 1;
+  }
+
+  .brand-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+
+  .theme-toggle {
+    background: var(--surface);
+    border: 2px solid var(--line);
+    width: 48px;
+    height: 48px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    font-size: 1.2rem;
+  }
+
+  .theme-toggle:hover {
+    background: var(--primary);
+    transform: scale(1.1);
+  }
+
+  /* 场景 */
+  .scene { display: none; animation: fadeIn 0.6s ease; }
+  .scene.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 介绍 */
+  .intro-hero {
+    background: var(--surface);
+    border: 3px solid var(--line);
+    padding: 3rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .intro-hero::after {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+    opacity: 0.15;
+    pointer-events: none;
+  }
+
+  .intro-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    color: var(--primary);
+    margin-bottom: 1rem;
+  }
+
+  .intro-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    line-height: 1.05;
+    margin-bottom: 1.5rem;
+  }
+
+  .intro-title i {
+    color: var(--joy);
+  }
+
+  .intro-body {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--ink-soft);
+    max-width: 620px;
+    margin-bottom: 2rem;
+  }
+
+  .intro-body strong { color: var(--ink); }
+
+  /* 情绪样本 */
+  .emotion-preview {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin: 2rem 0;
+  }
+
+  .emo-card {
+    text-align: center;
+    padding: 1rem 0.5rem;
+    background: var(--bg);
+    border: 2px solid var(--line);
+    transition: all 0.3s;
+  }
+
+  .emo-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .emo-face {
+    font-size: 2rem;
+    margin-bottom: 6px;
+  }
+
+  .emo-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .rules-banner {
+    background: var(--bg-deep);
+    border-left: 5px solid var(--primary);
+    padding: 1.2rem 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .rules-banner h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .rules-banner ol {
+    padding-left: 1.2rem;
+    line-height: 1.9;
+    color: var(--ink-soft);
+  }
+
+  .rules-banner ol li::marker {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .cta {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    background: var(--ink);
+    color: var(--surface);
+    border: none;
+    padding: 1rem 2.5rem;
+    cursor: pointer;
+    letter-spacing: 0.15em;
+    transition: all 0.2s;
+    margin-top: 1rem;
+  }
+
+  [data-theme="dark"] .cta {
+    background: var(--primary);
+  }
+
+  .cta:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 0 var(--primary);
+  }
+
+  .cta:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 0 var(--primary);
+  }
+
+  /* 游戏主界面 */
+  .game-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .progress-bar {
+    background: var(--surface);
+    border: 2px solid var(--line);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .prog-info {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  .prog-info strong {
+    color: var(--ink);
+    font-size: 1.1rem;
+  }
+
+  .score-display {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .score-label {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+
+  .score-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.8rem;
+    color: var(--primary);
+    font-style: italic;
+    line-height: 1;
+  }
+
+  /* 句子展示 */
+  .sentence-card {
+    background: var(--surface);
+    border: 3px solid var(--line);
+    padding: 2.5rem 2rem;
+    position: relative;
+  }
+
+  .sentence-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: var(--ink-soft);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+
+  .sentence-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    line-height: 1.5;
+    color: var(--ink);
+    min-height: 4rem;
+  }
+
+  .sentence-text .word {
+    display: inline-block;
+    padding: 0 2px;
+    transition: all 0.4s;
+    position: relative;
+  }
+
+  .sentence-text .word.hit {
+    background: var(--joy);
+    color: #fff;
+    animation: pulse 0.6s ease;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin: 0 2px;
+  }
+
+  .sentence-text .word.hit-neg {
+    background: var(--anger);
+  }
+
+  .sentence-text .word.hit-degree {
+    background: var(--primary);
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+
+  /* 情绪按钮 */
+  .emotion-grid {
+    background: var(--surface);
+    border: 3px solid var(--line);
+    padding: 2rem;
+  }
+
+  .emotion-grid-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+
+  .emotion-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .emo-btn {
+    background: var(--bg);
+    border: 2px solid var(--line);
+    padding: 1.2rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    font-family: 'Noto Sans SC', sans-serif;
+  }
+
+  .emo-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    background: var(--primary-light);
+  }
+
+  .emo-btn:disabled {
+    cursor: not-allowed;
+  }
+
+  .emo-btn.chosen.correct {
+    background: var(--correct);
+    color: #fff;
+    border-color: var(--correct);
+  }
+
+  .emo-btn.chosen.wrong {
+    background: var(--wrong);
+    color: #fff;
+    border-color: var(--wrong);
+    animation: shake 0.4s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .emo-btn.show-correct {
+    background: var(--correct);
+    color: #fff;
+    border-color: var(--correct);
+    border-style: dashed;
+  }
+
+  .emo-btn-face {
+    font-size: 2.2rem;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .emo-btn-name {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  /* AI分析面板 */
+  .ai-panel {
+    background: var(--ink);
+    color: var(--surface);
+    border: 3px solid var(--line);
+    padding: 1.5rem 2rem;
+    display: none;
+  }
+
+  [data-theme="dark"] .ai-panel {
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .ai-panel.show {
+    display: block;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .ai-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid rgba(232, 240, 247, 0.2);
+  }
+
+  [data-theme="dark"] .ai-panel-head {
+    border-bottom-color: rgba(15, 30, 53, 0.2);
+  }
+
+  .ai-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    font-style: italic;
+  }
+
+  .verdict {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    padding: 4px 12px;
+    font-weight: 700;
+  }
+
+  .verdict.correct { background: var(--correct); color: #fff; }
+  .verdict.wrong { background: var(--wrong); color: #fff; }
+
+  .ai-section {
+    margin-bottom: 1rem;
+  }
+
+  .ai-section-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--primary-light);
+    margin-bottom: 0.5rem;
+  }
+
+  [data-theme="dark"] .ai-section-title {
+    color: var(--primary);
+  }
+
+  .ai-section-body {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    opacity: 0.9;
+  }
+
+  .dict-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .dict-chip {
+    background: rgba(255, 167, 38, 0.2);
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    border: 1px solid var(--joy);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .dict-chip.neg { background: rgba(229, 57, 53, 0.2); border-color: var(--anger); }
+  .dict-chip.degree { background: rgba(46, 90, 172, 0.2); border-color: var(--primary); }
+
+  .next-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 1rem;
+    letter-spacing: 0.1em;
+  }
+
+  .next-btn:hover {
+    background: var(--joy);
+  }
+
+  /* 结算 */
+  .finale {
+    background: var(--surface);
+    border: 3px solid var(--line);
+    padding: 3rem 2rem;
+    text-align: center;
+    display: none;
+  }
+
+  .finale.show { display: block; animation: fadeIn 0.6s ease; }
+
+  .finale-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    color: var(--primary);
+    margin-bottom: 1rem;
+  }
+
+  .finale-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .finale-score {
+    font-family: 'DM Serif Display', serif;
+    font-size: 5rem;
+    color: var(--joy);
+    font-style: italic;
+    line-height: 1;
+    margin: 1rem 0 2rem;
+  }
+
+  .kc-box {
+    background: var(--bg);
+    border: 2px solid var(--line);
+    padding: 2rem;
+    text-align: left;
+    margin: 2rem 0;
+  }
+
+  .kc-box h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--primary);
+  }
+
+  .kc-box p {
+    line-height: 1.8;
+    margin-bottom: 0.8rem;
+    color: var(--ink-soft);
+  }
+
+  .kc-box strong { color: var(--ink); }
+
+  .kc-formula {
+    background: var(--primary-light);
+    padding: 1rem;
+    margin: 1rem 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+
+  [data-theme="dark"] .kc-formula {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  @media (max-width: 600px) {
+    .container { padding: 1rem; }
+    .intro-hero { padding: 2rem 1.5rem; }
+    .emotion-preview { grid-template-columns: repeat(3, 1fr); }
+    .brand-badge { width: 20px; height: 20px; font-size: 1.2rem; }
+    .brand-title { font-size: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="brand">
+        <div class="brand-badge">情绪显微镜</div>
+        <div>
+          <div class="brand-title">情绪显微镜</div>
+          <div class="brand-sub">EMOTION · MICROSCOPE</div>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeBtn">🌙</button>
+    </header>
+
+    <section class="scene active" id="sceneIntro">
+      <div class="intro-hero">
+        <div class="intro-label"> NLP 情感分析</div>
+        <h1 class="intro-title">
+          你被任命为<br>
+          情绪<i>显微镜</i> 操作员
+        </h1>
+        <p class="intro-body">
+          实验室里来了十几句奇怪的句子。它们写得很短，却藏着各种情绪——有的开心到冒泡，有的气得想掀桌，有的害怕到发抖。<strong>AI 需要学会看懂这些情绪</strong>，而它的第一个老师，就是你。
+        </p>
+        <p class="intro-body">
+          你的任务：把每句话放进显微镜，观察它用了哪些<strong>情感词</strong>、哪些<strong>程度词</strong>（比如"太""有点"），然后给它贴上情绪标签。AI 会在旁边偷偷学，看你是怎么判断的。
+        </p>
+
+        <div class="emotion-preview">
+          <div class="emo-card"><div class="emo-face">😄</div><div class="emo-name">开心</div></div>
+          <div class="emo-card"><div class="emo-face">😡</div><div class="emo-name">生气</div></div>
+          <div class="emo-card"><div class="emo-face">😱</div><div class="emo-name">害怕</div></div>
+          <div class="emo-card"><div class="emo-face">😢</div><div class="emo-name">悲伤</div></div>
+          <div class="emo-card"><div class="emo-face">😲</div><div class="emo-name">惊讶</div></div>
+        </div>
+
+        <div class="rules-banner">
+          <h3>🔬 实验手册</h3>
+          <ol>
+            <li>显微镜会逐一呈现 <strong>6 句话</strong></li>
+            <li>从 5 种情绪中选一个最贴切的标签</li>
+            <li>选完后，AI 会高亮它看到的"情绪词"和"程度词"，告诉你它是怎么分析的</li>
+            <li>答对得 1 分，全对解锁 <strong>情感分析师勋章</strong> 🏅</li>
+          </ol>
+        </div>
+
+        <button class="cta" onclick="goScene('game')">启动显微镜 →</button>
+      </div>
+    </section>
+
+    <section class="scene" id="sceneGame">
+      <div class="game-layout">
+        <div class="progress-bar">
+          <div class="prog-info">第 <strong id="curNum">1</strong> / <span id="totalNum">6</span> 题</div>
+          <div class="score-display">
+            <span class="score-label">当前得分</span>
+            <span class="score-num" id="scoreNum">0</span>
+          </div>
+        </div>
+
+        <div class="sentence-card">
+          <div class="sentence-label">▸ 样本</div>
+          <div class="sentence-text" id="sentenceText"></div>
+        </div>
+
+        <div class="emotion-grid">
+          <div class="emotion-grid-title">这句话的情绪是……</div>
+          <div class="emotion-buttons" id="emoButtons">
+            <button class="emo-btn" data-emo="joy"><div class="emo-btn-face">😄</div><div class="emo-btn-name">开心</div></button>
+            <button class="emo-btn" data-emo="anger"><div class="emo-btn-face">😡</div><div class="emo-btn-name">生气</div></button>
+            <button class="emo-btn" data-emo="fear"><div class="emo-btn-face">😱</div><div class="emo-btn-name">害怕</div></button>
+            <button class="emo-btn" data-emo="sad"><div class="emo-btn-face">😢</div><div class="emo-btn-name">悲伤</div></button>
+            <button class="emo-btn" data-emo="surprise"><div class="emo-btn-face">😲</div><div class="emo-btn-name">惊讶</div></button>
+          </div>
+        </div>
+
+        <div class="ai-panel" id="aiPanel">
+          <div class="ai-panel-head">
+            <span class="ai-title">🔬 AI 分析报告</span>
+            <span class="verdict" id="verdict"></span>
+          </div>
+
+          <div class="ai-section">
+            <div class="ai-section-title">命中的情感词</div>
+            <div class="dict-chips" id="dictChips"></div>
+          </div>
+
+          <div class="ai-section">
+            <div class="ai-section-title">小智的解释</div>
+            <div class="ai-section-body" id="aiExplain"></div>
+          </div>
+
+          <button class="next-btn" id="nextBtn" onclick="nextQuestion()">下一句 →</button>
+        </div>
+
+        <div class="finale" id="finale">
+          <div class="finale-label">EXPERIMENT · COMPLETE</div>
+          <div class="finale-title">实验完成</div>
+          <div class="finale-score" id="finalScore">0 / 6</div>
+          <div class="kc-box">
+            <h3>🧪 AI 怎么"懂"情绪？</h3>
+            <p>恭喜你完成了 AI 情感分析的第一课！你刚才做的事，正是 AI 每天在做的工作。</p>
+            <p>AI 判断情绪有两件"秘密武器"：</p>
+            <div class="kc-formula">
+              1. 情感词词典<br>
+              &nbsp;&nbsp;→ "开心、愤怒、害怕、悲伤"这类词，每个都打了情绪标签<br>
+              <br>
+              2. 句法结构<br>
+              &nbsp;&nbsp;→ "太……了""有点""真的"这些<strong>程度词</strong>会放大或减弱情绪<br>
+              &nbsp;&nbsp;→ 感叹号"!"、反问句"？！"也是重要线索
+            </div>
+            <p>所以你看评论区 AI 能自动识别"差评/好评"，客服机器人能判断你是不是生气了——背后都是同样的原理：<strong>词典 + 句法</strong>。</p>
+            <p>但 AI 也会出错：它不懂反讽（"真是太棒了呢（呵呵）"），不懂语境。所以你永远比 AI 更会读人。</p>
+          </div>
+          <button class="cta" onclick="restart()">再挑战一次</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+// ===== 数据 =====
+const QUESTIONS = [
+  {
+    text: "天啊！我竟然考了满分，真的太开心了！",
+    emotions: { positive: ['开心', '满分'], degree: ['太', '真的', '竟然'], mark: '！' },
+    correct: 'joy',
+    explain: '命中"开心"这个强正面情感词，再加上"太……了""真的""竟然"三个<strong>程度词</strong>层层叠加，还配了两个感叹号。AI 几乎可以肯定是"开心"情绪。'
+  },
+  {
+    text: "气死我了，他居然又把我的书弄丢了！",
+    emotions: { positive: [], negative: ['气死', '丢'], degree: ['又', '居然'], mark: '！' },
+    correct: 'anger',
+    explain: '"气死"是典型的愤怒词，"居然""又"表示<strong>出乎意料+重复发生</strong>——这种组合通常意味着情绪已经累积了很久。感叹号是最后一锤。'
+  },
+  {
+    text: "一个人走夜路，我听见身后有脚步声，好害怕……",
+    emotions: { positive: [], negative: ['害怕'], degree: ['好'], mark: '……' },
+    correct: 'fear',
+    explain: '"害怕"是直接的恐惧情感词，"好"是程度副词。注意结尾的省略号"……"——它不是兴奋，而是一种<strong>压抑、未完成的感觉</strong>，常伴随恐惧。'
+  },
+  {
+    text: "奶奶再也回不来了，我多希望她还在……",
+    emotions: { positive: [], negative: ['再也', '回不来', '多希望'], degree: ['多'], mark: '……' },
+    correct: 'sad',
+    explain: '"再也……不"是强烈的失落结构，"多希望"表达了渴望但无法实现的痛苦。没有感叹号，而是省略号——情绪是<strong>向内收的</strong>，这是悲伤的典型特征。'
+  },
+  {
+    text: "什么？！你竟然一口气吃完了一整个西瓜？！",
+    emotions: { positive: [], negative: [], degree: ['竟然', '一口气', '一整个'], mark: '？！' },
+    correct: 'surprise',
+    explain: '没有明显的正面或负面情感词，但"竟然""一口气""一整个"层层放大了"不敢相信"的感觉。<strong>"？！"</strong>这个混合标点是惊讶的强信号——既疑问又感叹。'
+  },
+  {
+    text: "今天的天气真好，风轻轻吹过脸颊，我笑了。",
+    emotions: { positive: ['真好', '笑'], negative: [], degree: ['真', '轻轻'], mark: '。' },
+    correct: 'joy',
+    explain: '"真好""笑"是正面情感词，"真"是程度词，"轻轻"传递了温柔放松的氛围。句号结尾——是一种<strong>平静的开心</strong>，不是爆发式的兴奋。AI 也能识别这种"温和的快乐"。'
+  }
+];
+
+let currentIdx = 0;
+let score = 0;
+let selected = null;
+
+// ===== 主题 =====
+const themeBtn = document.getElementById('themeBtn');
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  themeBtn.textContent = t === 'dark' ? '☀️' : '🌙';
+  try { localStorage.setItem('theme22', t); } catch(e) {}
+}
+themeBtn.onclick = () => {
+  const cur = document.documentElement.getAttribute('data-theme');
+  setTheme(cur === 'dark' ? 'light' : 'dark');
+};
+try {
+  const saved = localStorage.getItem('theme22');
+  if (saved) setTheme(saved);
+} catch(e) {}
+
+// ===== 场景 =====
+function goScene(id) {
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  document.getElementById('scene' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (id === 'game') renderQuestion();
+}
+
+// ===== 渲染题目 =====
+function renderQuestion() {
+  const q = QUESTIONS[currentIdx];
+  document.getElementById('curNum').textContent = currentIdx + 1;
+  document.getElementById('totalNum').textContent = QUESTIONS.length;
+  document.getElementById('scoreNum').textContent = score;
+
+  // 渲染句子（不高亮）
+  document.getElementById('sentenceText').innerHTML = q.text;
+
+  // 重置按钮
+  document.querySelectorAll('.emo-btn').forEach(b => {
+    b.classList.remove('chosen', 'correct', 'wrong', 'show-correct');
+    b.disabled = false;
+  });
+
+  // 隐藏AI面板
+  document.getElementById('aiPanel').classList.remove('show');
+  selected = null;
+}
+
+// ===== 点击情绪按钮 =====
+document.querySelectorAll('.emo-btn').forEach(btn => {
+  btn.onclick = () => {
+    if (selected) return;
+    selected = btn.dataset.emo;
+    const q = QUESTIONS[currentIdx];
+    const isCorrect = selected === q.correct;
+
+    // 禁用所有
+    document.querySelectorAll('.emo-btn').forEach(b => b.disabled = true);
+
+    // 标记
+    btn.classList.add('chosen');
+    if (isCorrect) {
+      btn.classList.add('correct');
+      score++;
+      document.getElementById('scoreNum').textContent = score;
+    } else {
+      btn.classList.add('wrong');
+      // 显示正确答案
+      document.querySelector(`.emo-btn[data-emo="${q.correct}"]`).classList.add('show-correct');
+    }
+
+    // 高亮句子里的情感词
+    setTimeout(() => highlightSentence(q), 400);
+
+    // 显示AI分析
+    setTimeout(() => showAI(q, isCorrect), 700);
+  };
+});
+
+function highlightSentence(q) {
+  let text = q.text;
+  const pos = q.emotions.positive || [];
+  const neg = q.emotions.negative || [];
+  const deg = q.emotions.degree || [];
+
+  // 替换标记（先长后短，避免嵌套）
+  const tasks = [
+    ...pos.map(w => ({ w, cls: 'hit' })),
+    ...neg.map(w => ({ w, cls: 'hit hit-neg' })),
+    ...deg.map(w => ({ w, cls: 'hit hit-degree' }))
+  ].sort((a, b) => b.w.length - a.w.length);
+
+  tasks.forEach(({ w, cls }) => {
+    text = text.replace(w, `<span class="word ${cls}">${w}</span>`);
+  });
+
+  document.getElementById('sentenceText').innerHTML = text;
+}
+
+function showAI(q, isCorrect) {
+  const panel = document.getElementById('aiPanel');
+  const verdict = document.getElementById('verdict');
+  verdict.textContent = isCorrect ? '✓ 判断正确' : '✗ 判断有偏差';
+  verdict.className = 'verdict ' + (isCorrect ? 'correct' : 'wrong');
+
+  // 词典命中
+  const chipsEl = document.getElementById('dictChips');
+  chipsEl.innerHTML = '';
+  (q.emotions.positive || []).forEach(w => {
+    const c = document.createElement('span');
+    c.className = 'dict-chip';
+    c.textContent = `+ ${w}`;
+    chipsEl.appendChild(c);
+  });
+  (q.emotions.negative || []).forEach(w => {
+    const c = document.createElement('span');
+    c.className = 'dict-chip neg';
+    c.textContent = `- ${w}`;
+    chipsEl.appendChild(c);
+  });
+  (q.emotions.degree || []).forEach(w => {
+    const c = document.createElement('span');
+    c.className = 'dict-chip degree';
+    c.textContent = `× ${w}`;
+    chipsEl.appendChild(c);
+  });
+  if (q.emotions.mark) {
+    const c = document.createElement('span');
+    c.className = 'dict-chip degree';
+    c.textContent = `标点: ${q.emotions.mark}`;
+    chipsEl.appendChild(c);
+  }
+
+  document.getElementById('aiExplain').innerHTML = q.explain;
+  panel.classList.add('show');
+  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+}
+
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx >= QUESTIONS.length) {
+    showFinale();
+  } else {
+    renderQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function showFinale() {
+  document.querySelector('.progress-bar').style.display = 'none';
+  document.querySelector('.sentence-card').style.display = 'none';
+  document.querySelector('.emotion-grid').style.display = 'none';
+  document.getElementById('aiPanel').style.display = 'none';
+  document.getElementById('finalScore').textContent = `${score} / ${QUESTIONS.length}`;
+  document.getElementById('finale').classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function restart() {
+  currentIdx = 0;
+  score = 0;
+  document.querySelector('.progress-bar').style.display = '';
+  document.querySelector('.sentence-card').style.display = '';
+  document.querySelector('.emotion-grid').style.display = '';
+  document.getElementById('aiPanel').style.display = '';
+  document.getElementById('finale').classList.remove('show');
+  renderQuestion();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

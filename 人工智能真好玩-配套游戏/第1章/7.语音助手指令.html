@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语音助手指令挑战 ✦ NLP 训练营</title>
+    <style>
+        /* ================= 核心变量体系 ================= */
+        :root {
+            /* 默认夜间模式 (赛博极客风 - 适合高中/喜欢科技感的学生) */
+            --bg-color: #0b1121;
+            --card-bg: #151e32;
+            --panel-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #0ea5e9;
+            --primary-hover: #0284c7;
+            --primary-light: rgba(14, 165, 233, 0.15);
+            --correct: #10b981;
+            --correct-light: rgba(16, 185, 129, 0.15);
+            --wrong: #f43f5e;
+            --wrong-light: rgba(244, 63, 94, 0.15);
+            --gold: #fbbf24;
+            --border-color: rgba(14, 165, 233, 0.3);
+            --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body.day-mode {
+            /* 日间模式 (清新护眼风 - 适合小学/初中学生) */
+            --bg-color: #f0fdfa;
+            --card-bg: #ffffff;
+            --panel-bg: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --primary: #0284c7;
+            --primary-hover: #0369a1;
+            --primary-light: #e0f2fe;
+            --correct: #059669;
+            --correct-light: #d1fae5;
+            --wrong: #e11d48;
+            --wrong-light: #ffe4e6;
+            --gold: #d97706;
+            --border-color: rgba(2, 132, 199, 0.2);
+            --shadow: 0 10px 40px rgba(2, 132, 199, 0.1);
+        }
+
+        /* ================= 全局重置与基础样式 ================= */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-main); }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.4s ease, color 0.4s ease;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        /* 隐藏类，用于 JS 控制视图切换 */
+        .hidden { display: none !important; }
+
+        /* 主容器 */
+        .app-container {
+            width: 100%;
+            max-width: 680px;
+            background-color: var(--card-bg);
+            border: 2px solid var(--primary);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            min-height: 85vh;
+        }
+
+        /* ================= 导航条 ================= */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-title { font-weight: 900; font-size: 18px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        
+        .nav-actions { display: flex; gap: 12px; }
+        
+        .nav-btn {
+            background: transparent;
+            border: 1px solid var(--text-muted);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .nav-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* ================= 视图内容区 ================= */
+        .view-content {
+            padding: 24px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        /* ================= 选关界面 (Grade Selector) ================= */
+        .grade-title { font-size: 28px; font-weight: 900; text-align: center; margin-bottom: 10px; margin-top: 20px; }
+        .grade-subtitle { text-align: center; color: var(--text-muted); margin-bottom: 30px; font-size: 15px; }
+
+        .grade-cards { display: flex; flex-direction: column; gap: 16px; }
+        
+        .grade-card {
+            background: var(--panel-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .grade-card:hover { transform: translateX(10px); border-color: var(--primary); box-shadow: 0 4px 20px var(--primary-light); }
+        .grade-icon { font-size: 40px; }
+        .grade-info h3 { font-size: 20px; color: var(--primary); margin-bottom: 6px; }
+        .grade-info p { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+
+        /* ================= 游戏规则界面 ================= */
+        .rule-box {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: slideUp 0.5s ease;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .rule-box h3 { color: var(--gold); margin-bottom: 12px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+        
+        .formula-box {
+            background: var(--primary-light);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 900;
+            font-size: 18px;
+            color: var(--primary);
+            margin: 16px 0;
+            border: 1px dashed var(--primary);
+        }
+        .formula-tag { background: var(--bg-color); padding: 4px 10px; border-radius: 8px; margin: 0 4px; display: inline-block; }
+        .formula-tag.intent { border-bottom: 3px solid var(--primary); }
+        .formula-tag.entity { border-bottom: 3px solid var(--correct); }
+
+        .example-list { list-style: none; padding-left: 0; }
+        .example-list li { margin-bottom: 12px; padding: 12px; border-radius: 8px; background: var(--bg-color); font-size: 15px; }
+        .example-list li.bad { border-left: 4px solid var(--wrong); }
+        .example-list li.good { border-left: 4px solid var(--correct); }
+        .highlight-good { color: var(--correct); font-weight: bold; }
+
+        /* ================= HUD (游戏数据头显) ================= */
+        .hud-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .hud-item {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+        .hud-value { font-size: 26px; font-weight: 900; color: var(--gold); margin-bottom: 4px; font-family: monospace; }
+        .hud-label { font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
+
+        /* ================= 任务面板与清晰度雷达 ================= */
+        .task-container {
+            background: var(--bg-color);
+            border: 2px dashed var(--primary);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .task-tag {
+            position: absolute; top: -12px; left: 24px;
+            background: var(--primary); color: #fff;
+            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;
+        }
+        .task-text { font-size: 18px; font-weight: bold; line-height: 1.6; margin-top: 8px; margin-bottom: 20px; }
+        
+        .radar-box { display: flex; align-items: center; gap: 15px; background: var(--panel-bg); padding: 12px 16px; border-radius: 12px; }
+        .radar-label { font-size: 14px; font-weight: bold; color: var(--text-muted); }
+        .radar-track { flex: 1; height: 14px; background: var(--bg-color); border-radius: 20px; overflow: hidden; }
+        .radar-fill { height: 100%; width: 0%; background: var(--wrong); border-radius: 20px; transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.4s; }
+        .radar-pct { font-size: 16px; font-weight: 900; min-width: 50px; text-align: right; }
+
+        /* ================= 选项列表 ================= */
+        .options-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+        
+        .option-btn {
+            background: var(--panel-bg);
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+            padding: 16px 20px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .option-btn:hover:not(:disabled) { border-color: var(--primary); transform: translateX(5px); background: var(--primary-light); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+        
+        .option-btn.correct { border-color: var(--correct); background: var(--correct-light); opacity: 1; }
+        .option-btn.wrong { border-color: var(--wrong); background: var(--wrong-light); opacity: 1; animation: shakeX 0.4s; }
+        @keyframes shakeX { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+        
+        .option-letter {
+            background: var(--bg-color); color: var(--text-muted);
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: 900; font-size: 14px; flex-shrink: 0;
+        }
+
+        /* ================= 教师反馈面板 ================= */
+        .feedback-box {
+            background: var(--panel-bg);
+            border-left: 6px solid var(--primary);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .fb-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .fb-avatar { font-size: 32px; }
+        .fb-title { font-size: 18px; font-weight: 900; }
+        
+        .fb-params {
+            background: var(--bg-color);
+            color: var(--primary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            margin-bottom: 12px;
+            border: 1px dashed var(--primary);
+        }
+        .fb-content { font-size: 15px; line-height: 1.6; }
+
+        /* ================= 通用大按钮 ================= */
+        .btn-main {
+            width: 100%;
+            padding: 18px;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 14px;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px var(--primary-light);
+            margin-top: auto;
+        }
+        .btn-main:hover { background: var(--primary-hover); transform: translateY(-3px); box-shadow: 0 8px 25px var(--primary-light); }
+
+        /* ================= 结算界面 ================= */
+        .end-header { text-align: center; margin-bottom: 30px; }
+        .end-icon { font-size: 72px; margin-bottom: 10px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        .end-title { font-size: 32px; font-weight: 900; color: var(--correct); margin-bottom: 8px; }
+        
+        .score-display {
+            text-align: center; background: var(--panel-bg); border: 2px solid var(--gold);
+            border-radius: 20px; padding: 24px; margin-bottom: 30px;
+        }
+        .score-num { font-size: 56px; font-weight: 900; color: var(--gold); font-family: monospace; line-height: 1; }
+        
+        .knowledge-summary {
+            background: var(--primary-light); border: 1px solid var(--primary);
+            border-radius: 16px; padding: 20px; margin-bottom: 30px; font-size: 15px; line-height: 1.7;
+        }
+
+        /* ================= 成就弹窗 (Toast) ================= */
+        .toast-container { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 10px; }
+        .toast {
+            background: rgba(16, 185, 129, 0.95); color: #fff;
+            padding: 12px 24px; border-radius: 30px; font-weight: bold; font-size: 14px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            animation: toastEnter 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, toastExit 0.5s ease 2.5s forwards;
+            display: flex; align-items: center; gap: 8px;
+        }
+        @keyframes toastEnter { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastExit { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
+
+        /* ================= 字典模态框 ================= */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        
+        .modal-content {
+            background: var(--card-bg); width: 90%; max-width: 500px;
+            border-radius: 24px; padding: 30px; border: 2px solid var(--primary);
+            transform: translateY(20px); transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        
+        .modal-title { font-size: 24px; font-weight: 900; color: var(--primary); margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+        .dl-item { margin-bottom: 16px; }
+        .dl-term { font-weight: 900; color: var(--gold); font-size: 16px; margin-bottom: 4px; }
+        .dl-desc { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+        .modal-close { margin-top: 20px; background: var(--panel-bg); color: var(--text-main); border: 1px solid var(--border-color); }
+        .modal-close:hover { background: var(--wrong-light); color: var(--wrong); border-color: var(--wrong); }
+
+    </style>
+</head>
+<body class="day-mode">
+
+<div class="app-container">
+    
+    <div class="toast-container" id="toast-box"></div>
+
+    <div class="nav-bar">
+        <div class="nav-title">🎙️ NLP 训练营</div>
+        <div class="nav-actions">
+            <button class="nav-btn" onclick="toggleDictionary()">📖 学习手册</button>
+            <button class="nav-btn" onclick="toggleTheme()" id="themeBtn">🌙 夜间</button>
+        </div>
+    </div>
+
+    <div class="view-content" id="view-root">
+
+        <div id="view-grade" class="screen">
+            <h1 class="grade-title">选择你的挑战级别</h1>
+            <p class="grade-subtitle">系统将根据你的学段，自适应调整人工智能的理解难度。</p>
+            
+            <div class="grade-cards">
+                <div class="grade-card" onclick="selectGrade('elementary')">
+                    <div class="grade-icon">🎒</div>
+                    <div class="grade-info">
+                        <h3>小学通道 (基础篇)</h3>
+                        <p>重点：掌握生活常识、天气、闹钟等基础指令。导师：小白机器人。</p>
+                    </div>
+                </div>
+                
+                <div class="grade-card" onclick="selectGrade('middle')">
+                    <div class="grade-icon">🏫</div>
+                    <div class="grade-info">
+                        <h3>初中通道 (逻辑篇)</h3>
+                        <p>重点：理解语境、复杂计算、多重条件限制。导师：小智学长。</p>
+                    </div>
+                </div>
+                
+                <div class="grade-card" onclick="selectGrade('high')">
+                    <div class="grade-icon">🎓</div>
+                    <div class="grade-info">
+                        <h3>高中通道 (深度篇)</h3>
+                        <p>重点：学术研究、代码逻辑、消除语言歧义。导师：零号系统。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-rules" class="screen hidden">
+            <h1 class="grade-title" id="rule-title">课前必读规则</h1>
+            <p class="grade-subtitle">想要操控 AI，你必须先了解它的“大脑”是如何工作的。</p>
+
+            <div class="rule-box">
+                <h3>💡 核心秘籍：意图 + 实体</h3>
+                <p style="font-size: 15px; line-height: 1.6; color: var(--text-muted);">
+                    AI 没有人类的“读心术”。你必须像填表格一样，把关键信息塞进句子里。
+                </p>
+                <div class="formula-box">
+                    <span class="formula-tag intent">🎯 意图 (干什么)</span> + 
+                    <span class="formula-tag entity">📦 实体 (具体条件)</span>
+                </div>
+                <ul class="example-list">
+                    <li class="bad">
+                        <strong>人类模糊语：</strong> "帮我定个闹钟" <br>
+                        <span style="font-size: 13px; color: var(--text-muted);">AI 困惑：定几点？明天还是后天？</span>
+                    </li>
+                    <li class="good">
+                        <strong>优秀指令：</strong> "帮我定 <span class="highlight-good">[明早 7 点]</span> 的闹钟" <br>
+                        <span style="font-size: 13px; color: var(--text-muted);">AI 狂喜：参数齐全，立刻执行！</span>
+                    </li>
+                </ul>
+            </div>
+
+            <button class="btn-main" onclick="startGameplay()">我已掌握，开始实战！ ➔</button>
+        </div>
+
+        <div id="view-game" class="screen hidden">
+            <div class="hud-grid">
+                <div class="hud-item">
+                    <div class="hud-value" id="hud-score">0</div>
+                    <div class="hud-label">总得分</div>
+                </div>
+                <div class="hud-item">
+                    <div class="hud-value" id="hud-streak">0</div>
+                    <div class="hud-label">连击数</div>
+                </div>
+                <div class="hud-item">
+                    <div class="hud-value" id="hud-round">1/10</div>
+                    <div class="hud-label">当前进度</div>
+                </div>
+            </div>
+
+            <div class="task-container">
+                <div class="task-tag" id="task-tag">场景任务</div>
+                <div class="task-text" id="task-text">加载中...</div>
+                
+                <div class="radar-box">
+                    <div class="radar-label">参数清晰度</div>
+                    <div class="radar-track">
+                        <div class="radar-fill" id="radar-fill"></div>
+                    </div>
+                    <div class="radar-pct" id="radar-pct" style="color: var(--wrong);">0%</div>
+                </div>
+            </div>
+
+            <div class="options-list" id="options-box">
+                </div>
+
+            <div class="feedback-box hidden" id="feedback-panel">
+                <div class="fb-header">
+                    <span class="fb-avatar" id="fb-avatar">🦉</span>
+                    <span class="fb-title" id="fb-title">导师点评：</span>
+                </div>
+                <div class="fb-params" id="fb-params">解析参数...</div>
+                <div class="fb-content" id="fb-content">反馈内容...</div>
+            </div>
+
+            <button class="btn-main hidden" id="next-btn" onclick="handleNextQuestion()">下一题 ➔</button>
+        </div>
+
+        <div id="view-end" class="screen hidden">
+            <div class="end-header">
+                <div class="end-icon" id="end-icon">🏆</div>
+                <div class="end-title" id="end-title">训练圆满完成！</div>
+                <p style="color: var(--text-muted);">本次 NLP 训练的结业成绩</p>
+            </div>
+
+            <div class="score-display">
+                <div class="score-num" id="final-score">0</div>
+                <div style="font-weight: bold; margin-top: 10px; color: var(--gold);" id="final-rank">称号：NLP 新星</div>
+            </div>
+
+            <div class="knowledge-summary">
+                <strong style="color: var(--primary); font-size: 16px;">📚 结业知识点总结：</strong><br><br>
+                在人机交互时代，<strong>“会提问”比“会解答”更重要</strong>（即 Prompt Engineering / 提示词工程）。<br><br>
+                今天你学会了通过提供精准的<strong>【实体参数】</strong>来限制 AI 的发散思维。未来当你使用 ChatGPT、文心一言等大语言模型(LLM)时，请记住：<strong>给定的上下文越清晰，AI 产生的幻觉(Hallucination)就越少！</strong>
+            </div>
+
+            <button class="btn-main" onclick="resetToMenu()">返回主界面，挑战其他难度 ↺</button>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal-overlay" id="dict-modal">
+    <div class="modal-content">
+        <h2 class="modal-title">📖 NLP 核心词典</h2>
+        
+        <div class="dl-item">
+            <div class="dl-term">🔍 NLP (自然语言处理)</div>
+            <div class="dl-desc">让计算机听懂、看懂人类语言的技术。就像是给机器安装了翻译官的大脑。</div>
+        </div>
+        
+        <div class="dl-item">
+            <div class="dl-term">🎯 Intent (意图)</div>
+            <div class="dl-desc">用户想让 AI 做的事情。比如：“买票”、“放音乐”、“查天气”。</div>
+        </div>
+        
+        <div class="dl-item">
+            <div class="dl-term">📦 Entity (实体/参数)</div>
+            <div class="dl-desc">执行意图所必须的具体条件。比如查天气的实体包含：时间(明天)、地点(北京)。</div>
+        </div>
+        
+        <div class="dl-item">
+            <div class="dl-term">👻 Hallucination (幻觉)</div>
+            <div class="dl-desc">当指令太模糊时，AI 会“一本正经地胡说八道”，这种现象在学术上被称为 AI 幻觉。</div>
+        </div>
+
+        <button class="btn-main modal-close" onclick="toggleDictionary()">我知道了</button>
+    </div>
+</div>
+
+<script>
+    /* =========================================================================
+       海量题库系统 (Database) - 包含小学、初中、高中各 10 道深度场景题
+       ========================================================================= */
+    const GAME_DB = {
+        // ========== 小学题库 (注重日常常识) ==========
+        elementary: {
+            tutor: { name: "小白", avatar: "🤖" },
+            questions: [
+                {
+                    task: "你想知道明天去北京旅游需不需要带雨伞",
+                    options: [
+                        { text: "北京天气怎么样？", correct: false, clarity: 33, params: "[地点]", feedback: "缺少【时间】参数！这样我只能告诉你现在的天气，无法预测明天。" },
+                        { text: "天气好吗？", correct: false, clarity: 10, params: "[无参数]", feedback: "太模糊啦！缺少【时间】和【地点】，我完全不知道你要去哪。" },
+                        { text: "明天北京会下雨吗？", correct: true, clarity: 100, params: "[时间] [地点] [具体意图]", feedback: "完美！时间(明天)+地点(北京)+具体意图(是否下雨)，三要素齐全！" }
+                    ]
+                },
+                {
+                    task: "你想让我明天早上 7 点半叫你起床",
+                    options: [
+                        { text: "明天早点叫我起床", correct: false, clarity: 40, params: "[模糊时间]", feedback: "“早点”对我来说太抽象了，无法转化为具体数字。是6点还是8点呢？" },
+                        { text: "设置明天早上 7 点 30 分的闹钟", correct: true, clarity: 100, params: "[动作] [精确时间]", feedback: "太棒了！明确的动作加上精确的时间，我保证准时叫醒你！" },
+                        { text: "7 点半", correct: false, clarity: 20, params: "[时间]", feedback: "缺少【动作意图】！你光说个时间，我是要帮你定闹钟，还是播报新闻？" }
+                    ]
+                },
+                {
+                    task: "你想听没有歌词的安静音乐来专心写作业",
+                    options: [
+                        { text: "播放适合学习时听的轻音乐", correct: true, clarity: 100, params: "[动作] [音乐类型] [场景]", feedback: "优秀！动作、类型、场景都很明确，我这就为你播放专注歌单！" },
+                        { text: "放点音乐", correct: false, clarity: 15, params: "[动作]", feedback: "范围太广！我可能会随机放一首重金属摇滚给你，这会吵到你的。" },
+                        { text: "我要安静", correct: false, clarity: 20, params: "[情绪]", feedback: "这个指令可能会让我直接帮你把手机静音，而不是播放音乐哦。" }
+                    ]
+                },
+                {
+                    task: "你想让智能音箱把客厅的灯光调暗一点",
+                    options: [
+                        { text: "太亮了", correct: false, clarity: 10, params: "[状态描述]", feedback: "这只是你的感受，缺少具体的【动作】和【设备名称】。" },
+                        { text: "把灯关了", correct: false, clarity: 50, params: "[动作] [设备]", feedback: "你只是想调暗，但这个指令会让我直接切断电源，导致屋子全黑。" },
+                        { text: "把客厅的灯光亮度调到 30%", correct: true, clarity: 100, params: "[位置] [设备] [具体数值]", feedback: "非常精准！指明了具体位置和精确的亮度数值，完美控制智能家居。" }
+                    ]
+                },
+                {
+                    task: "你想知道苹果用英语怎么拼写",
+                    options: [
+                        { text: "苹果用英语怎么拼写？", correct: true, clarity: 100, params: "[实体] [目标语言] [动作]", feedback: "表达清晰！我不仅会告诉你读音，还会给你拼出 A-P-P-L-E。" },
+                        { text: "翻译苹果", correct: false, clarity: 40, params: "[动作] [实体]", feedback: "缺少【目标语言】参数！我是该翻译成英语、法语还是日语呢？" },
+                        { text: "英语", correct: false, clarity: 10, params: "[目标语言]", feedback: "完全没有主体！你可能想开启英语学习模式，而不是查单词。" }
+                    ]
+                },
+                {
+                    task: "你想给妈妈打个微信视频电话",
+                    options: [
+                        { text: "给妈妈打电话", correct: false, clarity: 60, params: "[动作] [联系人]", feedback: "缺少【应用名称】参数！这会让我拨打普通的语音电话，而不是微信视频。" },
+                        { text: "用微信给妈妈打视频电话", correct: true, clarity: 100, params: "[应用] [联系人] [具体动作]", feedback: "指令完美！不仅指定了联系人，还明确了使用哪个App的什么功能。" },
+                        { text: "妈妈", correct: false, clarity: 20, params: "[联系人]", feedback: "太模糊了，我会以为你想打开和妈妈的聊天界面，或者查看她的名片。" }
+                    ]
+                },
+                {
+                    task: "你想听一个关于大象的搞笑笑话",
+                    options: [
+                        { text: "讲个关于大象的笑话", correct: true, clarity: 100, params: "[动作] [主题] [体裁]", feedback: "要素齐全！我知道你需要的是喜剧体裁，且主角必须是大象。" },
+                        { text: "讲个故事", correct: false, clarity: 30, params: "[动作] [体裁]", feedback: "缺少【主题】！我可能会给你讲一个白雪公主的童话故事。" },
+                        { text: "大象好笑吗", correct: false, clarity: 20, params: "[实体]", feedback: "这像是一个百科提问，我可能会给你科普大象的智商，而不是讲笑话。" }
+                    ]
+                },
+                {
+                    task: "你想知道怎么去最近的麦当劳",
+                    options: [
+                        { text: "麦当劳", correct: false, clarity: 30, params: "[地点]", feedback: "缺少【意图】！我可能会给你展示麦当劳的菜单或者维基百科介绍。" },
+                        { text: "导航去最近的麦当劳", correct: true, clarity: 100, params: "[动作] [范围限制] [地点]", feedback: "满分！“最近的”这个限制词非常关键，这能避免我带你去十公里外的店。" },
+                        { text: "怎么走", correct: false, clarity: 10, params: "[动作]", feedback: "缺少目的地！我没法给你规划路线。" }
+                    ]
+                },
+                {
+                    task: "你在厨房炖汤，需要 10 分钟后关火提醒",
+                    options: [
+                        { text: "10分钟后提醒我关火", correct: true, clarity: 100, params: "[时间差] [动作] [提醒内容]", feedback: "逻辑清晰！时间、系统动作、自定义提醒内容三者结合，万无一失。" },
+                        { text: "过一会儿叫我", correct: false, clarity: 20, params: "[模糊时间]", feedback: "“一会儿”是多久？5分钟还是1小时？汤可能会被熬干的！" },
+                        { text: "提醒我关火", correct: false, clarity: 40, params: "[动作] [提醒内容]", feedback: "缺少【时间触发器】！我不知道该立刻提醒你，还是明天提醒你。" }
+                    ]
+                },
+                {
+                    task: "你好奇长颈鹿为什么脖子那么长，想查资料",
+                    options: [
+                        { text: "长颈鹿的资料", correct: false, clarity: 50, params: "[实体]", feedback: "这会返回海量数据（身高、体重、分布），你得花很久才能找到关于脖子的部分。" },
+                        { text: "长颈鹿长得真高", correct: false, clarity: 10, params: "[陈述句]", feedback: "这只是一句感叹，我会回复“是的，它们是最高的陆生动物”，但没回答原因。" },
+                        { text: "为什么长颈鹿的脖子那么长？", correct: true, clarity: 100, params: "[提问意图] [实体] [具体特征]", feedback: "提问非常精准！这能让我直接去生物学数据库为你提取进化论相关的答案。" }
+                    ]
+                }
+            ]
+        },
+
+        // ========== 初中题库 (注重逻辑与复杂条件) ==========
+        middle: {
+            tutor: { name: "小智", avatar: "🧑‍🎓" },
+            questions: [
+                {
+                    task: "你想让 AI 帮你安排下周三下午 3 点的数学补习日程",
+                    options: [
+                        { text: "下周三提醒我补习数学", correct: false, clarity: 60, params: "[日期] [内容]", feedback: "缺少具体的【时间点（下午3点）】，我可能只会在周三早上给你个全天提醒。" },
+                        { text: "在日历中添加下周三下午3点的数学补习日程", correct: true, clarity: 100, params: "[动作] [日期] [具体时间] [内容]", feedback: "参数完美闭环！明确了操作应用（日历）、精准时间点和事件内容。" },
+                        { text: "安排补习", correct: false, clarity: 15, params: "[动作] [内容]", feedback: "没有任何时间线索，我无从下手去规划日程表。" }
+                    ]
+                },
+                {
+                    task: "你需要理解物理课上的『牛顿第一定律』，要求通俗易懂",
+                    options: [
+                        { text: "牛顿第一定律", correct: false, clarity: 40, params: "[知识点]", feedback: "我可能会直接扔给你一堆复杂的物理公式和文言文般的百科定义。" },
+                        { text: "用小学生能听懂的话，给我举例解释一下牛顿第一定律", correct: true, clarity: 100, params: "[风格限制] [输出格式] [知识点]", feedback: "极佳的 Prompt！你使用了【角色设定】和【格式要求（举例）】，大大提升了回答质量。" },
+                        { text: "物理好难学", correct: false, clarity: 10, params: "[情绪]", feedback: "我会给你发一些心灵鸡汤来安慰你，但无法解决你的学术问题。" }
+                    ]
+                },
+                {
+                    task: "把中文『好久不见』翻译成最地道的美式日常口语",
+                    options: [
+                        { text: "把'好久不见'翻译成英语", correct: false, clarity: 60, params: "[内容] [目标语言]", feedback: "可能会得到死板的机器翻译 'Long time no see'，不够口语化。" },
+                        { text: "美国年轻人日常怎么表达'好久不见'？", correct: true, clarity: 100, params: "[受众] [语境] [内容]", feedback: "精准的语境限制！我会告诉你类似 'It's been a minute' 这种非常地道的俚语。" },
+                        { text: "好久不见", correct: false, clarity: 10, params: "[内容]", feedback: "缺少【意图】。我可能会以为你要跟我聊天，然后回复你 '确实很久没说话了'。" }
+                    ]
+                },
+                {
+                    task: "你想让智能家居在【你离开房间时】自动【关闭空调】",
+                    options: [
+                        { text: "关空调", correct: false, clarity: 40, params: "[动作] [设备]", feedback: "这只是一个即时指令，无法实现你想要的自动化条件触发。" },
+                        { text: "设置自动化规则：当检测到我离开房间时，关闭空调", correct: true, clarity: 100, params: "[设置动作] [触发条件] [执行动作]", feedback: "完美的条件逻辑（If-Then 语句）！触发条件和执行动作都交代得清清楚楚。" },
+                        { text: "我走了房间很冷", correct: false, clarity: 20, params: "[状态描述]", feedback: "模糊的自然语言。AI 无法把这句话解析成准确的自动化执行脚本。" }
+                    ]
+                },
+                {
+                    task: "朋友过生日，你想让 AI 推荐 100 元以内的创意礼物",
+                    options: [
+                        { text: "送朋友什么生日礼物好？预算 100 元以内，要有趣一点的", correct: true, clarity: 100, params: "[受众] [事件] [预算限制] [风格]", feedback: "要素极为丰富！尤其是【预算】这个硬性参数，能帮我过滤掉 90% 的无效推荐。" },
+                        { text: "生日礼物推荐", correct: false, clarity: 30, params: "[主题]", feedback: "范围过大，我可能会给你推荐一台 5000 块的最新款游戏机。" },
+                        { text: "100块能买什么", correct: false, clarity: 20, params: "[预算限制]", feedback: "没有交代场景，我可能会建议你去超市买 100 块钱的猪肉。" }
+                    ]
+                },
+                {
+                    task: "你想听今天关于『人工智能』领域的最新新闻播客",
+                    options: [
+                        { text: "播放今天关于人工智能的最新新闻音频", correct: true, clarity: 100, params: "[动作] [时间] [主题] [媒体格式]", feedback: "格式（音频）、时间（今天）、主题（人工智能）三者锁定，定位极其准确。" },
+                        { text: "今天的新闻", correct: false, clarity: 30, params: "[时间] [主题]", feedback: "我会给你播报政治、体育等各类社会新闻，浪费你的时间。" },
+                        { text: "人工智能", correct: false, clarity: 10, params: "[主题]", feedback: "缺少动作意图，我会直接开始在屏幕上输出关于 AI 的历史百科。" }
+                    ]
+                },
+                {
+                    task: "让 AI 帮你一步步解一元一次方程 2x + 5 = 15",
+                    options: [
+                        { text: "解方程 2x+5=15，并给出详细的步骤解析", correct: true, clarity: 100, params: "[意图] [数据] [输出要求]", feedback: "完美的学术 Prompt！明确要求“详细步骤”，防止 AI 直接只丢出一个最终答案。" },
+                        { text: "2x+5=15", correct: false, clarity: 50, params: "[数据]", feedback: "虽然能算出答案是 x=5，但缺少【步骤要求】，可能不符合你学习解题思路的需求。" },
+                        { text: "帮我做数学题", correct: false, clarity: 10, params: "[意图]", feedback: "我根本不知道你要做哪道题，请把题目数据输入进来！" }
+                    ]
+                },
+                {
+                    task: "你想让 AI 帮你纠正一篇英语作文里的语法错误",
+                    options: [
+                        { text: "看看这篇作文", correct: false, clarity: 30, params: "[动作]", feedback: "指令不明，我是该帮你打分？翻译？还是续写？" },
+                        { text: "英语作文写得好吗？附文本...", correct: false, clarity: 50, params: "[评价请求] [数据]", feedback: "我会给出类似“写得不错”的主观评价，但不会去详细找错。" },
+                        { text: "请作为英语老师，指出下面这篇英语作文中的语法错误并给出修改建议：[附文本]", correct: true, clarity: 100, params: "[角色设定] [具体任务] [输出要求] [数据]", feedback: "堪称模板的 Prompt！角色设定（英语老师）让 AI 的纠错更加专业严谨。" }
+                    ]
+                },
+                {
+                    task: "跑完 5 公里后，询问 AI 该如何拉伸小腿肌肉",
+                    options: [
+                        { text: "跑步拉伸", correct: false, clarity: 40, params: "[场景] [动作]", feedback: "这是一个泛泛的搜索词，可能会给你一套包含全身 20 个动作的半小时拉伸教程。" },
+                        { text: "腿疼怎么办", correct: false, clarity: 20, params: "[症状]", feedback: "我会建议你去骨科医院挂号看医生，而不是教你拉伸动作。" },
+                        { text: "我刚跑完步，请给我 3 个专门拉伸小腿肌肉的动作教程", correct: true, clarity: 100, params: "[背景] [数量限制] [具体部位]", feedback: "极具约束力的指令！背景明确，目标具体（小腿），数量限制（3个）让回答非常高效。" }
+                    ]
+                },
+                {
+                    task: "周末你想去图书馆，询问是否需要提前在线预约",
+                    options: [
+                        { text: "市图书馆周末去要提前在网上预约吗？", correct: true, clarity: 100, params: "[地点] [时间条件] [具体问题]", feedback: "问题直击痛点。排除了平常日的情况，并精准指向“在线预约”的政策。" },
+                        { text: "周末去图书馆", correct: false, clarity: 30, params: "[时间] [地点]", feedback: "这像是一个日历日程的记录口吻，而不是在提出问题。" },
+                        { text: "图书馆开门吗", correct: false, clarity: 50, params: "[地点] [状态]", feedback: "我会回答你营业时间，但可能不会提到需要预约的隐藏规定，导致你白跑一趟。" }
+                    ]
+                }
+            ]
+        },
+
+        // ========== 高中题库 (注重消除歧义、编程与深度分析) ==========
+        high: {
+            tutor: { name: "系统零", avatar: "💻" },
+            questions: [
+                {
+                    task: "你需要查阅近三年关于『量子纠缠』方向的英文学术文献",
+                    options: [
+                        { text: "量子纠缠的资料", correct: false, clarity: 20, params: "[主题]", feedback: "这会返回维基百科的科普文章，毫无学术深度和时效性。" },
+                        { text: "搜索近三年关于'Quantum Entanglement'的顶级英文期刊综述文章(Review)", correct: true, clarity: 100, params: "[时间限制] [英文术语] [文献类型] [质量限制]", feedback: "完美的学术检索指令！用英文术语和“Review”类型极大提升了检索专业度。" },
+                        { text: "推荐几篇量子物理的论文", correct: false, clarity: 40, params: "[大类] [文献类型]", feedback: "缺少时间限制和细分领域（纠缠），结果会像大海捞针。" }
+                    ]
+                },
+                {
+                    task: "用 Python 编写一个冒泡排序，且必须包含详细注释",
+                    options: [
+                        { text: "写一个冒泡排序", correct: false, clarity: 50, params: "[算法名称]", feedback: "AI 会默认给你一段 C++ 或 Java 的光秃秃的代码，没有语言限制。" },
+                        { text: "用Python实现冒泡排序算法，并为每一行代码添加中文注释，解释其逻辑", correct: true, clarity: 100, params: "[编程语言] [算法] [输出格式限制]", feedback: "严谨的开发指令。锁定语言（Python），强制要求（行级中文注释），无懈可击。" },
+                        { text: "Python怎么排序", correct: false, clarity: 30, params: "[语言] [动作]", feedback: "AI 会教你使用原生的 `list.sort()` 函数，而不是手写底层算法。" }
+                    ]
+                },
+                {
+                    task: "分析人工智能取代人类工作的利与弊，要求结构清晰",
+                    options: [
+                        { text: "以表格形式对比人工智能取代人类工作的利弊，每个维度列出3点核心论点", correct: true, clarity: 100, params: "[输出格式(表格)] [主题] [数量限制]", feedback: "真正掌握了 LLM 的排版能力！强制要求“表格形式”和“3个论点”能防止废话文学。" },
+                        { text: "AI会取代人类吗", correct: false, clarity: 20, params: "[开放式提问]", feedback: "这是一个哲学问题，AI 会给你一篇毫无结构的 800 字散文。" },
+                        { text: "分析AI发展的利弊", correct: false, clarity: 50, params: "[动作] [主题]", feedback: "缺少对【排版结构】的限制，生成的文本可能是一坨密密麻麻的文字，不易阅读。" }
+                    ]
+                },
+                {
+                    task: "你遇到了一段很复杂的代码 Bug，向 AI 求助",
+                    options: [
+                        { text: "我的代码报错了怎么修？", correct: false, clarity: 10, params: "[状态]", feedback: "经典的人类迷惑行为。没有任何错误日志和源代码，神仙也修不好你的 Bug。" },
+                        { text: "运行这段 Python 代码时提示 'IndexError'，请帮我分析原因并给出修复后的代码：[贴入代码]", correct: true, clarity: 100, params: "[语言] [错误类型] [具体要求] [上下文数据]", feedback: "标准的 Debug 范式。提供了环境、错误追踪（Traceback）和上下文，效率极高。" },
+                        { text: "修复这段代码的错误：[贴入代码]", correct: false, clarity: 60, params: "[动作] [上下文数据]", feedback: "虽然贴了代码，但没有提供错误日志。AI 只能靠猜去盲目运行，准确率会降低。" }
+                    ]
+                },
+                {
+                    task: "订购下周五飞往纽约的机票，且明确座位偏好",
+                    options: [
+                        { text: "订下周五去纽约的机票，要靠窗的座位", correct: true, clarity: 100, params: "[时间] [目的地] [座位偏好]", feedback: "消除歧义的最佳示范。时间、地点、附加条件（靠窗）全部通过自然语言精准传递给 API。" },
+                        { text: "下周飞纽约", correct: false, clarity: 40, params: "[模糊时间] [目的地]", feedback: "“下周”具体是哪天？你也没说明是单程还是往返，系统必定会反复向你追问。" },
+                        { text: "帮我买票去美国，靠窗", correct: false, clarity: 30, params: "[大范围地点] [座位]", feedback: "目的地“美国”太宽泛，缺少具体的降落城市和时间参数。" }
+                    ]
+                },
+                {
+                    task: "以『赛博朋克』为背景，写一篇短篇小说大纲",
+                    options: [
+                        { text: "写一个科幻小说", correct: false, clarity: 20, params: "[大类题材]", feedback: "太宽泛。AI 可能会给你写一个非常老套的外星人入侵地球的故事大纲。" },
+                        { text: "赛博朋克风格", correct: false, clarity: 10, params: "[风格]", feedback: "缺少【意图】。AI 可能会给你生成一份关于赛博朋克文化历史的维基百科总结。" },
+                        { text: "构建一个赛博朋克背景的短篇小说大纲。包含：世界观设定、3个主要角色档案、以及核心冲突点。", correct: true, clarity: 100, params: "[风格] [体裁] [结构细化限制]", feedback: "高级创作者 Prompt！不仅给出了方向，还拆解了底层结构（世界观、角色、冲突），生成质量极高。" }
+                    ]
+                },
+                {
+                    task: "需要将一段法文医学文献，翻译为专业中文并总结摘要",
+                    options: [
+                        { text: "第一步：将下方法文翻译为符合医学专业术语的中文。第二步：基于中文翻译，提取200字的执行摘要。[附法文]", correct: true, clarity: 100, params: "[分步逻辑(CoT)] [专业词库限制] [字数限制]", feedback: "绝佳的『思维链 (Chain of Thought)』指令！通过强制分步和字数限制，彻底掌控了 AI 的处理流。" },
+                        { text: "总结这段法文：[附法文]", correct: false, clarity: 40, params: "[动作] [数据]", feedback: "直接跨语言总结会导致信息大量丢失，且无法保证专业医学术语的准确性。" },
+                        { text: "翻译成中文：[附法文]", correct: false, clarity: 60, params: "[动作] [目标语言]", feedback: "虽然能翻译，但缺少【专业领域】限制，AI 可能会用很随意的日常口语来翻译严谨的医学文献。" }
+                    ]
+                },
+                {
+                    task: "对比分析『关系型数据库』与『非关系型数据库』的适用场景",
+                    options: [
+                        { text: "关系型数据库好还是非关系型好？", correct: false, clarity: 30, params: "[比较]", feedback: "典型的非黑即白提问。技术选型没有绝对的好坏，只有适用场景的区别。" },
+                        { text: "什么是关系型数据库？", correct: false, clarity: 20, params: "[定义提问]", feedback: "只问了其中一半，失去了对比分析的意义。" },
+                        { text: "从数据结构、扩展性、一致性三个维度，对比关系型(SQL)与非关系型(NoSQL)数据库，并各给出2个实际应用场景", correct: true, clarity: 100, params: "[对比维度限制] [比较对象] [案例要求]", feedback: "专家级指令。提前锁定了【对比维度（扩展/一致性）】，避免 AI 偏题，同时强制输出案例以增强说服力。" }
+                    ]
+                },
+                {
+                    task: "你需要制定下周的体能训练计划，要求避开周三晚上",
+                    options: [
+                        { text: "给我安排一周的健身计划", correct: false, clarity: 40, params: "[时间范围] [主题]", feedback: "不够个性化。AI 给你安排的高强度训练可能正好撞上你最忙的周三晚上。" },
+                        { text: "制定下周的体能训练日程表，重点是心肺功能，要求必须避开周三晚上，且每天不超过40分钟", correct: true, clarity: 100, params: "[周期] [重点目标] [时间黑名单] [单次时长限制]", feedback: "极其完美的条件约束！『时间黑名单』和『时长上限』是让计划具备可行性的核心参数。" },
+                        { text: "周三晚上我没空，其他时间怎么锻炼", correct: false, clarity: 30, params: "[时间黑名单]", feedback: "缺少核心的【训练目标】（心肺？力量？减脂？），这让 AI 无法定制内容。" }
+                    ]
+                },
+                {
+                    task: "探究『数据隐私保护』在现代APP开发中的最佳实践",
+                    options: [
+                        { text: "作为资深后端架构师，列出现代APP开发中必须遵守的5个数据隐私保护最佳实践，并指出可能违反GDPR的常见开发雷区", correct: true, clarity: 100, params: "[角色赋能] [数量要求] [反向案例(雷区)限制]", feedback: "满分！通过『角色赋能（架构师）』拉高了回答的专业水位，同时引入了具体法规（GDPR）作为参考锚点。" },
+                        { text: "APP怎么保护数据隐私", correct: false, clarity: 40, params: "[模糊提问]", feedback: "这会得到诸如“要对密码加密”这种过于基础、没有干货的废话。" },
+                        { text: "GDPR法规是什么", correct: false, clarity: 30, params: "[名词解释]", feedback: "偏离了核心意图（开发实践），变成了单纯的法条科普。" }
+                    ]
+                }
+            ]
+        }
+    };
+
+    /* =========================================================================
+       游戏状态管理与核心逻辑
+       ========================================================================= */
+    let STATE = {
+        grade: null,         // 'elementary', 'middle', 'high'
+        levelIndex: 0,       // 0 到 9 (共10题)
+        score: 0,            // 总分
+        streak: 0,           // 连击数
+        maxStreak: 0,        // 最大连击
+        perfectCount: 0,     // 选出100%清晰度选项的次数
+        achievements: new Set() // 记录已解锁成就
+    };
+
+    // 音效占位符（此处可用真实Audio API替换）
+    const playSound = (type) => { /* console.log('Playing sound:', type); */ };
+
+    // --- 视图路由切换 ---
+    function switchView(viewId) {
+        const views = ['view-grade', 'view-rules', 'view-game', 'view-end'];
+        views.forEach(v => {
+            const el = document.getElementById(v);
+            if (v === viewId) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        });
+    }
+
+    // --- 主题控制 ---
+    function toggleTheme() {
+        const isDay = document.body.classList.toggle('day-mode');
+        document.getElementById('themeBtn').innerText = isDay ? '🌙 夜间' : '☀️ 日间';
+    }
+
+    // --- 字典模态框控制 ---
+    function toggleDictionary() {
+        const modal = document.getElementById('dict-modal');
+        modal.classList.toggle('active');
+    }
+
+    // --- 重置与重启 ---
+    function resetToMenu() {
+        STATE = { grade: null, levelIndex: 0, score: 0, streak: 0, maxStreak: 0, perfectCount: 0, achievements: new Set() };
+        switchView('view-grade');
+    }
+
+    // --- 步骤1：选择难度 ---
+    function selectGrade(gradeKey) {
+        STATE.grade = gradeKey;
+        // 动态修改规则页的标题，以匹配难度
+        const gradeNames = { elementary: '小学通道', middle: '初中通道', high: '高中通道' };
+        document.getElementById('rule-title').innerText = `课前必读 · ${gradeNames[gradeKey]}`;
+        
+        // 动态配置导师头像
+        document.getElementById('fb-avatar').innerText = GAME_DB[gradeKey].tutor.avatar;
+        
+        switchView('view-rules');
+    }
+
+    // --- 步骤2：开始游戏实战 ---
+    function startGameplay() {
+        STATE.levelIndex = 0;
+        STATE.score = 0;
+        STATE.streak = 0;
+        switchView('view-game');
+        renderQuestion();
+    }
+
+    // --- 渲染题目与选项 ---
+    function renderQuestion() {
+        const currentDB = GAME_DB[STATE.grade].questions;
+        const qData = currentDB[STATE.levelIndex];
+
+        // 刷新 HUD
+        document.getElementById('hud-round').innerText = `${STATE.levelIndex + 1} / ${currentDB.length}`;
+        document.getElementById('hud-score').innerText = STATE.score;
+        document.getElementById('hud-streak').innerText = STATE.streak;
+
+        // 渲染任务文本
+        document.getElementById('task-text').innerText = qData.task;
+        
+        // 重置雷达与反馈面板
+        updateRadar(0, 'var(--wrong)');
+        document.getElementById('feedback-panel').classList.add('hidden');
+        document.getElementById('next-btn').classList.add('hidden');
+
+        // 打乱选项顺序以防背板
+        const shuffledOptions = [...qData.options].sort(() => Math.random() - 0.5);
+
+        // 渲染选项列表
+        const optionsBox = document.getElementById('options-box');
+        optionsBox.innerHTML = '';
+        
+        const labels = ['A', 'B', 'C'];
+        shuffledOptions.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `
+                <div class="option-letter">${labels[idx]}</div>
+                <div>${opt.text}</div>
+            `;
+            btn.onclick = () => handleOptionSelect(opt, btn, shuffledOptions, optionsBox);
+            optionsBox.appendChild(btn);
+        });
+    }
+
+    // --- 处理玩家答题选择 ---
+    function handleOptionSelect(selectedOpt, selectedBtn, allOptions, boxElement) {
+        const buttons = boxElement.querySelectorAll('.option-btn');
+        // 锁定所有按钮防止连点
+        buttons.forEach(b => b.disabled = true);
+
+        // 更新雷达动画
+        let radarColor = 'var(--wrong)';
+        if (selectedOpt.clarity >= 80) radarColor = 'var(--correct)';
+        else if (selectedOpt.clarity >= 40) radarColor = 'var(--gold)';
+        updateRadar(selectedOpt.clarity, radarColor);
+
+        // 逻辑判分
+        let isCorrect = selectedOpt.correct;
+        let fbTitleText = "";
+        
+        if (isCorrect) {
+            playSound('correct');
+            selectedBtn.classList.add('correct');
+            STATE.perfectCount++;
+            
+            // 连击加成计算：基础分100，每连击一次+20额外分
+            let comboBonus = STATE.streak * 20; 
+            STATE.score += (100 + comboBonus);
+            STATE.streak++;
+            if(STATE.streak > STATE.maxStreak) STATE.maxStreak = STATE.streak;
+            
+            fbTitleText = `✅ 正确！(基础分+100${comboBonus > 0 ? ` 连击奖励+${comboBonus}` : ''})`;
+            document.getElementById('feedback-panel').style.borderLeftColor = 'var(--correct)';
+
+            // 检查成就解锁
+            checkAchievements();
+            
+        } else {
+            playSound('wrong');
+            selectedBtn.classList.add('wrong');
+            STATE.streak = 0; // 连击断掉
+            fbTitleText = `❌ 存在歧义哦...`;
+            document.getElementById('feedback-panel').style.borderLeftColor = 'var(--wrong)';
+            
+            // 选错时自动为正确答案加上绿边框，作为教学提示
+            const correctBtnIndex = allOptions.findIndex(o => o.correct);
+            buttons[correctBtnIndex].style.borderColor = 'var(--correct)';
+            buttons[correctBtnIndex].style.background = 'var(--correct-light)';
+        }
+
+        // 实时更新 HUD 数字
+        animateNumber('hud-score', STATE.score);
+        document.getElementById('hud-streak').innerText = STATE.streak;
+
+        // 注入导师解析内容并显示面板
+        const tutorName = GAME_DB[STATE.grade].tutor.name;
+        document.getElementById('fb-title').innerText = `导师 ${tutorName}：` + fbTitleText;
+        document.getElementById('fb-params').innerText = "雷达已捕获：" + selectedOpt.params;
+        document.getElementById('fb-content').innerText = selectedOpt.feedback;
+        document.getElementById('feedback-panel').classList.remove('hidden');
+
+        // 显示下一步按钮逻辑
+        const nextBtn = document.getElementById('next-btn');
+        const totalQ = GAME_DB[STATE.grade].questions.length;
+        if (STATE.levelIndex < totalQ - 1) {
+            nextBtn.innerText = "进入下一题 ➔";
+        } else {
+            nextBtn.innerText = "查看结业学习报告 📊";
+        }
+        nextBtn.classList.remove('hidden');
+    }
+
+    // --- UI 雷达条动画控制 ---
+    function updateRadar(pct, color) {
+        const fill = document.getElementById('radar-fill');
+        const pctText = document.getElementById('radar-pct');
+        fill.style.width = pct + '%';
+        fill.style.backgroundColor = color;
+        pctText.innerText = pct + '%';
+        pctText.style.color = color;
+    }
+
+    // --- 进入下一题 ---
+    function handleNextQuestion() {
+        const totalQ = GAME_DB[STATE.grade].questions.length;
+        STATE.levelIndex++;
+        
+        if (STATE.levelIndex < totalQ) {
+            renderQuestion();
+        } else {
+            finishGame();
+        }
+    }
+
+    // --- 结束游戏与生成结算报告 ---
+    function finishGame() {
+        switchView('view-end');
+        animateNumber('final-score', STATE.score);
+
+        // 评级系统逻辑
+        const totalQ = GAME_DB[STATE.grade].questions.length;
+        const perfectRate = STATE.perfectCount / totalQ;
+        
+        let rankStr = "";
+        let iconStr = "";
+        if (perfectRate === 1) {
+            rankStr = "传奇级 Prompt 架构师"; iconStr = "👑";
+        } else if (perfectRate >= 0.8) {
+            rankStr = "高级 NLP 交互专家"; iconStr = "💎";
+        } else if (perfectRate >= 0.6) {
+            rankStr = "合格的 AI 训练师"; iconStr = "🎖️";
+        } else {
+            rankStr = "见习指令员 (需加强概念理解)"; iconStr = "🔧";
+        }
+
+        document.getElementById('final-rank').innerText = `最终评定称号：【${rankStr}】`;
+        document.getElementById('end-icon').innerText = iconStr;
+    }
+
+    // --- 数字滚动动画工具 ---
+    function animateNumber(elementId, targetValue) {
+        const el = document.getElementById(elementId);
+        const startValue = parseInt(el.innerText) || 0;
+        const duration = 800;
+        const frames = 30;
+        const step = (targetValue - startValue) / frames;
+        let current = startValue;
+        let count = 0;
+
+        const interval = setInterval(() => {
+            current += step;
+            count++;
+            el.innerText = Math.round(current);
+            if (count >= frames) {
+                clearInterval(interval);
+                el.innerText = targetValue;
+            }
+        }, duration / frames);
+    }
+
+    /* =========================================================================
+       游戏化特效系统：成就弹窗 (Toast Notification)
+       ========================================================================= */
+    function showToast(icon, title) {
+        const container = document.getElementById('toast-box');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `<span style="font-size:20px">${icon}</span> ${title}`;
+        container.appendChild(toast);
+        
+        // 自动清理 DOM
+        setTimeout(() => {
+            if(container.contains(toast)) container.removeChild(toast);
+        }, 3000);
+    }
+
+    function checkAchievements() {
+        if (STATE.streak === 3 && !STATE.achievements.has('streak3')) {
+            STATE.achievements.add('streak3');
+            showToast('🔥', '成就解锁：三连击狂潮！');
+        }
+        if (STATE.streak === 5 && !STATE.achievements.has('streak5')) {
+            STATE.achievements.add('streak5');
+            showToast('⚡', '成就解锁：无心犯错 (五连击)！');
+        }
+        if (STATE.perfectCount === 1 && !STATE.achievements.has('firstBlood')) {
+            STATE.achievements.add('firstBlood');
+            showToast('🎯', '成就解锁：初次洞察意图！');
+        }
+        if (STATE.score >= 1000 && !STATE.achievements.has('score1k')) {
+            STATE.achievements.add('score1k');
+            showToast('💰', '成就解锁：千分突破！');
+        }
+    }
+
+    // 初始化检查本地缓存的主题偏好（如果是真实的PWA项目会用到）
+    // window.matchMedia('(prefers-color-scheme: dark)').matches ...
+</script>
+
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>像素笑脸</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{--bg:#fff5f5;--card:#fff;--text:#2d0000;--sub:#8b4040;--accent:#e63946;--accent2:#ffd60a;--border:#ffc5c5;--shadow:rgba(230,57,70,.15);--btn:#e63946;--btn-text:#fff;--pixel-on:#e63946;--pixel-off:#fff5f5;--binary-on:#e63946;--binary-off:#ddd;}
+  :root[data-theme="dark"]{--bg:#1a0000;--card:#2a0505;--text:#ffb0b0;--sub:#a06060;--accent:#ff4d5e;--accent2:#ffd60a;--border:#3a0f0f;--shadow:rgba(255,77,94,.2);--btn:#ff4d5e;--btn-text:#1a0000;--pixel-on:#ff4d5e;--pixel-off:#1a0000;--binary-on:#ff4d5e;--binary-off:#2a0505;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;}
+  header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;}
+  .logo{font-family:'VT323',monospace;font-size:1.4rem;color:var(--accent);}
+  .theme-btn{background:var(--card);border:2px solid var(--border);border-radius:50px;padding:6px 14px;cursor:pointer;font-size:1rem;color:var(--text);}
+  .screen{display:none;min-height:90vh;align-items:center;justify-content:center;flex-direction:column;padding:16px;}
+  .screen.active{display:flex;}
+  .intro-card{background:var(--card);border-radius:24px;padding:36px;max-width:580px;width:100%;box-shadow:0 8px 40px var(--shadow);text-align:center;}
+  .game-number{font-size:.75rem;font-weight:700;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:8px;}
+  h1{font-family:'VT323',monospace;font-size:3rem;color:var(--accent);margin-bottom:8px;}
+  .tagline{color:var(--sub);margin-bottom:20px;font-size:.92rem;}
+  .pixel-demo{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;width:120px;margin:0 auto 20px;border:2px solid var(--border);padding:4px;border-radius:8px;}
+  .pdemo{width:100%;aspect-ratio:1;border-radius:2px;}
+  .rules-list{text-align:left;margin-bottom:24px;display:grid;gap:10px;}
+  .rule-item{background:var(--bg);border-radius:12px;padding:12px 16px;display:flex;gap:10px;}
+  .rule-icon{font-size:1.1rem;}.rule-text{font-size:.85rem;color:var(--sub);line-height:1.5;}
+  .rule-text strong{color:var(--text);}
+  .challenge-strip{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .challenge-btn{background:var(--bg);border:2px solid var(--border);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:.85rem;font-weight:700;color:var(--sub);transition:all .2s;}
+  .challenge-btn.active,.challenge-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .start-btn{background:var(--btn);color:var(--btn-text);border:none;border-radius:50px;padding:14px 36px;font-size:1rem;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;box-shadow:0 4px 20px var(--shadow);}
+
+  /* GAME */
+  .game-wrap{background:var(--card);border-radius:24px;padding:24px;max-width:760px;width:100%;box-shadow:0 8px 40px var(--shadow);}
+  .game-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+  .game-title{font-family:'VT323',monospace;font-size:1.4rem;color:var(--accent);}
+  .prog-badge{background:var(--bg);border-radius:50px;padding:5px 14px;font-weight:700;font-size:.82rem;color:var(--sub);}
+
+  /* MAIN GAME LAYOUT */
+  .pixel-game-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:580px){.pixel-game-layout{grid-template-columns:1fr;}}
+  
+  .grid-area{text-align:center;}
+  .grid-label{font-size:.78rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+  .pixel-grid{display:inline-grid;gap:3px;border:2px solid var(--border);padding:6px;border-radius:10px;background:var(--bg);cursor:crosshair;}
+  .pixel{border-radius:2px;transition:background .1s;user-select:none;}
+  .pixel.on{background:var(--pixel-on);}
+  .pixel.off{background:var(--pixel-off);border:1px solid var(--border);}
+  .pixel.target-on{background:var(--pixel-on);}
+  .pixel.target-off{background:var(--pixel-off);border:1px solid var(--border);}
+
+  /* BINARY TABLE */
+  .binary-area{}
+  .binary-table{background:var(--bg);border-radius:10px;padding:10px;font-family:'VT323',monospace;font-size:1rem;line-height:1.4;letter-spacing:2px;}
+  .binary-row{display:flex;gap:3px;}
+  .bit{width:16px;text-align:center;color:var(--sub);}
+  .bit.one{color:var(--binary-on);font-weight:700;}
+
+  /* ACCURACY */
+  .accuracy-bar-wrap{background:var(--border);border-radius:50px;height:16px;overflow:hidden;margin:8px 0;}
+  .accuracy-bar{height:100%;background:var(--accent);border-radius:50px;transition:width .3s;}
+  .accuracy-text{font-size:.82rem;color:var(--sub);text-align:center;}
+  .binary-table{background:var(--bg);border-radius:10px;padding:10px;font-family:'VT323',monospace;font-size:1rem;line-height:1.4;letter-spacing:2px;display:inline-block;}
+  .binary-row{display:flex;gap:3px;}
+  .bit{width:16px;text-align:center;color:var(--sub);}
+  .bit.one{color:var(--binary-on);font-weight:700;}
+  .bit.zero{color:var(--binary-off);}
+  
+  /* CONTROLS */
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+  .ctrl-btn{flex:1;background:var(--bg);border:2px solid var(--border);border-radius:10px;padding:9px;font-size:.85rem;font-weight:700;cursor:pointer;color:var(--text);font-family:'Nunito',sans-serif;transition:all .2s;}
+  .ctrl-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .ctrl-btn.primary{background:var(--btn);color:var(--btn-text);border-color:var(--btn);}
+
+  /* WIN */
+  .win-banner{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:14px;padding:16px;text-align:center;display:none;margin-top:14px;}
+  .win-banner.show{display:block;}
+  .win-text{font-family:'VT323',monospace;font-size:2rem;color:#fff;}
+  .win-sub{font-size:.85rem;color:rgba(255,255,255,.85);}
+  .knowledge-card{background:var(--card);border-radius:14px;padding:16px;margin-top:14px;border-left:3px solid var(--accent);}
+  .solution-preview{margin-top:14px;text-align:center;}
+  .solution-preview .pixel-grid{margin:0 auto;}
+  .knowledge-card h3{color:var(--accent);font-size:.88rem;margin-bottom:6px;}
+  .knowledge-card p{color:var(--sub);font-size:.82rem;line-height:1.5;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">PIXEL LAB</div>
+  <button class="theme-btn" onclick="toggleTheme()">🌙 夜间</button>
+</header>
+
+<div class="screen active" id="intro">
+  <div class="intro-card">
+    <div class="game-number">阶段：生成与理解</div>
+    <h1>😊 像素笑脸</h1>
+    <p class="tagline">图片在AI眼里只是一串0和1！用像素复原目标图案。</p>
+    <div class="pixel-demo" id="demo-grid"></div>
+    <div class="rules-list">
+      <div class="rule-item"><span class="rule-icon">🖱️</span><div class="rule-text"><strong>操作</strong>：根据右侧的二进制图，用1标记左侧网格中的像素点。</div></div>
+      <div class="rule-item"><span class="rule-icon">📊</span><div class="rule-text">右边显示的0和1，就是AI看到图像的方式。</div></div>
+      <div class="rule-item"><span class="rule-icon">🎯</span><div class="rule-text"><strong>完成后点击“检查答案”</strong>，即可得到是否正确的反馈。</div></div>
+    </div>
+    <div class="challenge-strip">
+      <div class="challenge-btn active" onclick="setChallenge('smile',this)">😊 笑脸 (8×8)</div>
+      <div class="challenge-btn" onclick="setChallenge('heart',this)">❤️ 爱心 (8×8)</div>
+      <div class="challenge-btn" onclick="setChallenge('star',this)">⭐ 星星 (8×8)</div>
+    </div>
+    <button class="start-btn" onclick="showScreen('game')">🎨 开始绘制</button>
+  </div>
+</div>
+
+<div class="screen" id="game">
+  <div class="game-wrap">
+    <div class="game-header">
+      <span class="game-title">🎨 像素编辑器</span>
+      <div class="prog-badge">匹配度: <span id="acc-val">0%</span></div>
+    </div>
+    <div class="accuracy-bar-wrap"><div class="accuracy-bar" id="acc-bar" style="width:0%"></div></div>
+    <p class="accuracy-text" id="acc-text">点击网格开始绘制！</p>
+    <div class="pixel-game-layout">
+      <div class="grid-area">
+        <div class="grid-label">✏️ 你的画布（点击涂色）</div>
+        <div class="pixel-grid" id="my-grid"></div>
+        <div style="margin-top:8px;font-size:.78rem;color:var(--sub)">拖动鼠标可连续涂色</div>
+      </div>
+        <div class="grid-area">
+        <div class="grid-label">📟 目标二进制图</div>
+        <div class="binary-table" id="binary-table"></div>
+        <div style="margin-top:10px;font-size:.82rem;color:var(--sub);line-height:1.5;">请根据1标记左边像素，0则保持空白。点击“检查答案”查看结果。</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="ctrl-btn" onclick="clearCanvas()">🗑️ 清空</button>
+      <button class="ctrl-btn" onclick="checkAnswer()">✅ 检查答案</button>
+      <button class="ctrl-btn primary" onclick="showScreen('intro')">🏠 选图案</button>
+    </div>
+    <div class="win-banner" id="win-banner">
+      <div class="win-text" id="win-text">✨ 结果反馈 ✨</div>
+      <div class="win-sub" id="win-sub-text"></div>
+      <div class="win-sub" id="solution-text" style="margin-top:8px;color:#fff;font-size:.82rem;"></div>
+    </div>
+    <div class="knowledge-card" id="knowledge-card" style="display:none">
+      <h3>🧠 小智说·知识点</h3>
+      <p>每张图片在AI眼里都是一个<strong>数字矩阵</strong>！8×8像素 = 64个数字。AI看「猫的图片」其实是看「成千上万个0-255的数字排列」。这就是为什么AI需要<strong>超级大的数据量</strong>来学习——它要从数字中找到规律！</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const PATTERNS = {
+  smile: [
+    0,0,1,1,1,1,0,0,
+    0,1,0,0,0,0,1,0,
+    1,0,1,0,0,1,0,1,
+    1,0,0,0,0,0,0,1,
+    1,0,1,0,0,1,0,1,
+    1,0,0,1,1,0,0,1,
+    0,1,0,0,0,0,1,0,
+    0,0,1,1,1,1,0,0
+  ],
+  heart: [
+    0,1,1,0,0,1,1,0,
+    1,1,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1,
+    0,1,1,1,1,1,1,0,
+    0,0,1,1,1,1,0,0,
+    0,0,0,1,1,0,0,0,
+    0,0,0,0,0,0,0,0
+  ],
+  star: [
+    0,0,0,1,1,0,0,0,
+    0,0,0,1,1,0,0,0,
+    1,1,1,1,1,1,1,1,
+    0,1,1,1,1,1,1,0,
+    0,0,1,1,1,1,0,0,
+    0,1,1,0,0,1,1,0,
+    1,1,0,0,0,0,1,1,
+    0,0,0,0,0,0,0,0
+  ]
+};
+let currentPattern = 'smile';
+let myCanvas = new Array(64).fill(0);
+let painting = false;
+let autoRow = 0;
+
+// Demo grid
+function buildDemoGrid(){
+  const g = document.getElementById('demo-grid');
+  g.style.gridTemplateColumns = 'repeat(8,1fr)';
+  g.innerHTML = PATTERNS.smile.map(v=>`<div class="pdemo" style="background:${v?'var(--pixel-on)':'var(--pixel-off)'};border:1px solid var(--border)"></div>`).join('');
+}
+
+function setChallenge(name, el){
+  currentPattern = name;
+  document.querySelectorAll('.challenge-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function buildGrids(){
+  const target = PATTERNS[currentPattern];
+  myCanvas = new Array(64).fill(0);
+  const size = 36;
+  renderMyGrid(size);
+  updateBinaryTable();
+  updateAccuracy();
+}
+
+function renderMyGrid(size=36){
+  const mg = document.getElementById('my-grid');
+  mg.style.gridTemplateColumns = `repeat(8,${size}px)`;
+  mg.innerHTML = myCanvas.map((v,i)=>`<div class="pixel ${v?'on':'off'}" style="width:${size}px;height:${size}px" data-i="${i}"></div>`).join('');
+  mg.onmousedown=(e)=>{e.preventDefault();e.stopPropagation();painting=true;togglePixel(e);};
+  mg.onmousemove=(e)=>{if(painting){e.preventDefault();togglePixel(e);}};
+  mg.onmouseup=(e)=>{e.preventDefault();e.stopPropagation();painting=false;};
+  mg.ontouchstart=(e)=>{e.preventDefault();e.stopPropagation();painting=true;togglePixelTouch(e);};
+  mg.ontouchmove=(e)=>{e.preventDefault();e.stopPropagation();togglePixelTouch(e);};
+  mg.ontouchend=(e)=>{e.preventDefault();e.stopPropagation();painting=false;};
+  mg.ontouchcancel=(e)=>{e.preventDefault();e.stopPropagation();painting=false;};
+  document.onmouseup=()=>painting=false;
+  document.ontouchend=(e)=>{e.preventDefault();painting=false;};
+}
+
+function togglePixel(e){
+  const el=e.target.closest('.pixel');
+  if(!el)return;
+  const i=parseInt(el.dataset.i);
+  if(isNaN(i))return;
+  myCanvas[i]=myCanvas[i]?0:1;
+  el.className=`pixel ${myCanvas[i]?'on':'off'}`;
+  el.style.width=el.style.width; el.style.height=el.style.height;
+  updateBinaryTable();
+  updateAccuracy();
+}
+
+function togglePixelTouch(e){
+  const touch=e.touches[0];
+  const el=document.elementFromPoint(touch.clientX,touch.clientY);
+  if(!el||!el.dataset.i)return;
+  const i=parseInt(el.dataset.i);
+  myCanvas[i]=1;
+  el.className='pixel on';
+  updateBinaryTable();
+  updateAccuracy();
+}
+
+function updateBinaryTable(){
+  const target=PATTERNS[currentPattern];
+  const t=document.getElementById('binary-table');
+  let html='';
+  for(let row=0;row<8;row++){
+    html+='<div class="binary-row">';
+    for(let col=0;col<8;col++){
+      const v=target[row*8+col];
+      html+=`<span class="bit ${v?'one':'zero'}">${v}</span>`;
+    }
+    html+='</div>';
+  }
+  t.innerHTML=html;
+}
+
+function updateAccuracy(){
+  const target=PATTERNS[currentPattern];
+  let match=0;
+  for(let i=0;i<64;i++) if(myCanvas[i]===target[i]) match++;
+  const pct=Math.round(match/64*100);
+  document.getElementById('acc-bar').style.width=pct+'%';
+  document.getElementById('acc-val').textContent=pct+'%';
+  if(pct>=90){
+    document.getElementById('acc-text').textContent='你已经接近目标了，点击“检查答案”查看最终结果。注意：匹配度包含你正确保留的空白0像素。';
+  } else {
+    document.getElementById('acc-text').textContent=`已匹配 ${match}/64 个像素（包含正确的0和正确的1），继续！`;
+  }
+}
+
+function checkAnswer(){
+  const target=PATTERNS[currentPattern];
+  let match=0;
+  let wrong=0;
+  for(let i=0;i<64;i++){
+    if(myCanvas[i]===target[i]) match++; else wrong++;
+  }
+  const pct=Math.round(match/64*100);
+  const banner=document.getElementById('win-banner');
+  banner.classList.add('show');
+  document.getElementById('acc-bar').style.width=pct+'%';
+  document.getElementById('acc-val').textContent=pct+'%';
+  if(match===64){
+    document.getElementById('win-text').textContent='🎉 完全正确！';
+    document.getElementById('win-sub-text').textContent=`恭喜你，所有像素都标对了！`;
+    document.getElementById('solution-text').textContent='这是目标图案的真实形状。';
+    document.getElementById('knowledge-card').style.display='block';
+  } else {
+    document.getElementById('win-text').textContent='❌ 结果反馈';
+    document.getElementById('win-sub-text').textContent=`你有 ${match} 个正确，${wrong} 个错误。继续调整后再检查。`;
+    document.getElementById('solution-text').textContent='目标图案仍然保持隐藏，试着根据二进制继续改进。';
+    document.getElementById('knowledge-card').style.display='none';
+  }
+}
+
+function clearCanvas(){
+  myCanvas=new Array(64).fill(0);
+  document.getElementById('win-banner').classList.remove('show');
+  document.getElementById('knowledge-card').style.display='none';
+  autoRow=0;
+  renderMyGrid();
+  updateBinaryTable();
+  updateAccuracy();
+}
+
+function autoFill(){
+  if(autoRow>=8){autoRow=0;return;}
+  const target=PATTERNS[currentPattern];
+  for(let col=0;col<8;col++) myCanvas[autoRow*8+col]=target[autoRow*8+col];
+  autoRow++;
+  renderMyGrid();
+  updateBinaryTable();
+  updateAccuracy();
+  document.getElementById('acc-text').textContent=`✨ 自动填充了第${autoRow}行！`;
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='game'){autoRow=0;buildGrids();document.getElementById('win-banner').classList.remove('show');document.getElementById('knowledge-card').style.display='none';}
+  if(id==='intro')buildDemoGrid();
+}
+
+function toggleTheme(){
+  const h=document.documentElement;
+  h.setAttribute('data-theme',h.getAttribute('data-theme')==='dark'?'light':'dark');
+  document.querySelector('.theme-btn').textContent=h.getAttribute('data-theme')==='dark'?'☀️ 日间':'🌙 夜间';
+}
+buildDemoGrid();
+</script>
+</body>
+</html>

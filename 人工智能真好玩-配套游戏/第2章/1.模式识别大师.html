@@ -1,0 +1,922 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模式识别大师 - AI核心能力训练</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-dark: #0F172A;
+            --bg-deep-blue: #1E3A8A;
+            --neon-blue: #00BFFF;
+            --text-white: #FFFFFF;
+            --success: #10B981;
+            --error: #EF4444;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-white);
+            overflow-x: hidden;
+        }
+        
+        @keyframes slideInFromRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes slideOutToLeft {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-100%);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px var(--neon-blue); }
+            50% { text-shadow: 0 0 20px var(--neon-blue), 0 0 30px var(--neon-blue); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 10px var(--neon-blue); }
+            50% { box-shadow: 0 0 20px var(--neon-blue), inset 0 0 10px var(--neon-blue); }
+        }
+        
+        .page {
+            display: none;
+            min-height: 100vh;
+            animation: slideInFromRight 0.5s ease-out;
+            position: relative;
+        }
+        
+        .page.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .page.exit {
+            animation: slideOutToLeft 0.5s ease-out;
+        }
+        
+        /* 开始页面 */
+        .start-page {
+            background: linear-gradient(135deg, #0F172A 0%, #1a2547 100%);
+        }
+        
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            border-bottom: 2px solid var(--neon-blue);
+            background: var(--bg-deep-blue);
+        }
+        
+        .game-title {
+            font-size: 3em;
+            font-weight: bold;
+            animation: glow 2s ease-in-out infinite;
+            margin-bottom: 10px;
+        }
+        
+        .game-subtitle {
+            font-size: 1.2em;
+            color: var(--neon-blue);
+            letter-spacing: 2px;
+        }
+        
+        .content {
+            flex: 1;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .scenario-card {
+            background: rgba(30, 58, 138, 0.6);
+            border-left: 4px solid var(--neon-blue);
+            padding: 25px;
+            border-radius: 8px;
+            animation: fadeIn 0.8s ease-out;
+            line-height: 1.8;
+        }
+        
+        .difficulty-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .difficulty-card {
+            background: rgba(30, 58, 138, 0.4);
+            border: 2px solid var(--neon-blue);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        .difficulty-card:hover {
+            background: rgba(30, 58, 138, 0.8);
+            box-shadow: 0 0 20px var(--neon-blue);
+            transform: translateY(-5px);
+        }
+        
+        .difficulty-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .difficulty-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .difficulty-desc {
+            font-size: 0.9em;
+            color: #a0aec0;
+        }
+        
+        button {
+            background: var(--bg-deep-blue);
+            border: 2px solid var(--neon-blue);
+            color: var(--text-white);
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        button:hover {
+            background: var(--neon-blue);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px var(--neon-blue);
+            transform: scale(1.05);
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        .button-container {
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        /* 游戏页面 */
+        .game-page {
+            background: linear-gradient(135deg, #0F172A 0%, #1a2547 100%);
+        }
+        
+        .game-header {
+            background: var(--bg-deep-blue);
+            padding: 20px;
+            border-bottom: 2px solid var(--neon-blue);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .level-info {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .level-name {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .level-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        
+        .badge-easy { background: #10B981; }
+        .badge-medium { background: #F59E0B; }
+        .badge-hard { background: #EF4444; }
+        
+        .progress-info {
+            text-align: right;
+            font-size: 0.95em;
+            color: var(--neon-blue);
+        }
+        
+        .game-content {
+            flex: 1;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .question-area {
+            background: rgba(30, 58, 138, 0.4);
+            border: 2px solid var(--neon-blue);
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .question-title {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: var(--neon-blue);
+        }
+        
+        .sequence-display {
+            font-size: 2.5em;
+            letter-spacing: 15px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        .number-sequence {
+            font-size: 1.5em;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+            width: 100%;
+        }
+        
+        .option-card {
+            background: rgba(30, 58, 138, 0.5);
+            border: 2px solid var(--neon-blue);
+            padding: 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.8em;
+            text-align: center;
+            user-select: none;
+        }
+        
+        .option-card:hover {
+            background: rgba(0, 191, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .option-card.selected {
+            background: var(--neon-blue);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+        
+        .option-card.correct {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+            animation: pulse 0.6s ease-out;
+        }
+        
+        .option-card.incorrect {
+            background: var(--error);
+            border-color: var(--error);
+            animation: pulse 0.6s ease-out;
+        }
+        
+        .input-group {
+            margin: 20px 0;
+        }
+        
+        .input-group input {
+            background: rgba(30, 58, 138, 0.6);
+            border: 2px solid var(--neon-blue);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 1.2em;
+            width: 200px;
+            text-align: center;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        .action-buttons button {
+            padding: 12px 30px;
+            font-size: 1em;
+        }
+        
+        .feedback-message {
+            min-height: 30px;
+            color: var(--neon-blue);
+            margin-top: 15px;
+            font-size: 0.95em;
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        .feedback-message.error {
+            color: var(--error);
+        }
+        
+        .feedback-message.success {
+            color: var(--success);
+        }
+        
+        /* 结果页面 */
+        .result-page {
+            background: linear-gradient(135deg, #0F172A 0%, #1a2547 100%);
+        }
+        
+        .result-header {
+            text-align: center;
+            padding: 40px 20px;
+            border-bottom: 2px solid var(--neon-blue);
+            background: var(--bg-deep-blue);
+        }
+        
+        .result-title {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            animation: glow 1.5s ease-in-out infinite;
+        }
+        
+        .score-display {
+            font-size: 2em;
+            color: var(--neon-blue);
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .stars {
+            font-size: 2.5em;
+            letter-spacing: 10px;
+            margin: 15px 0;
+        }
+        
+        .result-content {
+            flex: 1;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .level-result-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .level-result-card {
+            background: rgba(30, 58, 138, 0.6);
+            border: 2px solid var(--neon-blue);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .level-result-card h3 {
+            color: var(--neon-blue);
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .level-score {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .knowledge-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .knowledge-card {
+            background: rgba(30, 58, 138, 0.5);
+            border-left: 4px solid var(--neon-blue);
+            padding: 20px;
+            border-radius: 6px;
+            line-height: 1.7;
+        }
+        
+        .knowledge-card h4 {
+            color: var(--neon-blue);
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 2em;
+            }
+            
+            .sequence-display {
+                font-size: 1.8em;
+                letter-spacing: 8px;
+            }
+            
+            .options-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .game-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .progress-info {
+                text-align: left;
+                width: 100%;
+            }
+            
+            .difficulty-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-buttons button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 开始页面 -->
+    <div id="startPage" class="page start-page active">
+        <div class="header">
+            <div class="game-title">⚡ 模式识别大师</div>
+            <div class="game-subtitle">AI 核心能力训练</div>
+        </div>
+        <div class="content">
+            <div class="scenario-card">
+                <strong>🎯 你的任务：</strong><br>
+                你是一名AI训练师，收到了一个神秘任务：破解三道被加密的数据关卡。这些数据看起来毫无规律，但只要你仔细观察，就能发现隐藏其中的模式。现在，让我们看看你的"模式识别雷达"有多敏锐！
+            </div>
+            <div>
+                <h3 style="text-align: center; margin-bottom: 20px; color: var(--neon-blue);">📊 三关难度说明</h3>
+                <div class="difficulty-cards">
+                    <div class="difficulty-card">
+                        <div class="difficulty-icon">🟢</div>
+                        <div class="difficulty-name">关卡1：图形序列</div>
+                        <div class="difficulty-desc">简单难度 - 寻找重复规律</div>
+                    </div>
+                    <div class="difficulty-card">
+                        <div class="difficulty-icon">🟡</div>
+                        <div class="difficulty-name">关卡2：数字侦探</div>
+                        <div class="difficulty-desc">中等难度 - 发现数学规律</div>
+                    </div>
+                    <div class="difficulty-card">
+                        <div class="difficulty-icon">🔴</div>
+                        <div class="difficulty-name">关卡3：异常猎人</div>
+                        <div class="difficulty-desc">困难难度 - 异常值检测</div>
+                    </div>
+                </div>
+            </div>
+            <div class="scenario-card">
+                <strong>💡 AI 的超能力：</strong><br>
+                AI之所以聪明，正是因为它能从看似杂乱的信息中发现隐藏的规律。人脸识别、语音识别、医疗诊断……这些都离不开模式识别能力！
+            </div>
+        </div>
+        <div class="button-container">
+            <button onclick="startGame()">🚀 开始训练</button>
+        </div>
+    </div>
+
+    <!-- 游戏页面 -->
+    <div id="gamePage" class="page game-page">
+        <div class="game-header">
+            <div class="level-info">
+                <div class="level-name" id="levelName">关卡1：图形序列挑战</div>
+                <span class="level-badge badge-easy" id="difficultyBadge">简单难度</span>
+            </div>
+            <div class="progress-info">
+                第 <span id="currentQuestion">1</span> / 3 题
+            </div>
+        </div>
+        <div class="game-content">
+            <div class="question-area">
+                <div class="question-title" id="questionTitle">观察图形序列，找出下一个应该出现的图形</div>
+                <div id="questionContent"></div>
+                <div class="options-grid" id="optionsGrid"></div>
+                <div class="input-group" id="inputGroup" style="display: none;">
+                    <input type="text" id="answerInput" placeholder="输入你的答案">
+                </div>
+                <div class="action-buttons">
+                    <button id="submitBtn" onclick="submitAnswer()">提交答案</button>
+                    <button id="hintBtn" onclick="showHint()">获取提示</button>
+                </div>
+                <div class="feedback-message" id="feedback"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结果页面 -->
+    <div id="resultPage" class="page result-page">
+        <div class="result-header">
+            <div class="result-title">🎓 训练完成！</div>
+            <div class="score-display">你的成绩：<span id="finalScore">0</span> / 9</div>
+            <div class="stars" id="starsDisplay">⭐⭐⭐⭐⭐</div>
+        </div>
+        <div class="result-content">
+            <div>
+                <h3 style="text-align: center; color: var(--neon-blue); margin-bottom: 20px;">📈 各关表现</h3>
+                <div class="level-result-cards">
+                    <div class="level-result-card">
+                        <h3>关卡1：图形序列</h3>
+                        <div class="level-score" id="score1">0/3</div>
+                    </div>
+                    <div class="level-result-card">
+                        <h3>关卡2：数字侦探</h3>
+                        <div class="level-score" id="score2">0/3</div>
+                    </div>
+                    <div class="level-result-card">
+                        <h3>关卡3：异常猎人</h3>
+                        <div class="level-score" id="score3">0/3</div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3 style="color: var(--neon-blue); margin-bottom: 15px;">📚 知识总结</h3>
+                <div class="knowledge-cards">
+                    <div class="knowledge-card">
+                        <h4>什么是模式？</h4>
+                        模式是重复出现的规律或特征。AI通过识别这些规律，能够做出预测和判断。
+                    </div>
+                    <div class="knowledge-card">
+                        <h4>模式识别的应用</h4>
+                        🔹 人脸识别：提取面部特征模式<br>
+                        🔹 语音识别：发现音节和词汇规律<br>
+                        🔹 医疗诊断：识别疾病特征模式<br>
+                        🔹 推荐系统：发现用户行为模式
+                    </div>
+                    <div class="knowledge-card">
+                        <h4>异常检测的重要性</h4>
+                        AI先学会什么是"正常模式"，再识别出"打破模式"的异常。这样AI就能发现欺诈交易、诊断疾病、保护安全！
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="button-container">
+            <button onclick="restartGame()">🔄 重新开始</button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏数据 - 关卡3用无歧义的题库数据
+        const gameData = {
+            level1: [
+                {
+                    sequence: ['●', '■', '▲', '●', '■', '▲', '●', '■', '?'],
+                    options: ['●', '■', '▲', '◆'],
+                    correct: 2, // ▲
+                    hint: "注意观察图形出现的顺序，是否有重复的模式？"
+                },
+                {
+                    sequence: ['◆', '◆', '●', '◆', '◆', '●', '◆', '◆', '?'],
+                    options: ['◆', '●', '■', '▲'],
+                    correct: 1, // ●
+                    hint: "两个相同的图形后面跟着一个不同的图形"
+                },
+                {
+                    sequence: ['△', '△', '△', '□', '△', '△', '△', '□', '△', '?'],
+                    options: ['△', '□', '◆', '●'],
+                    correct: 0, // △
+                    hint: "三个三角形后接一个方块，再重复"
+                }
+            ],
+            level2: [
+                {
+                    sequence: '3 → 6 → 9 → 12 → ?',
+                    correct: 15,
+                    hint: "每次增加3"
+                },
+                {
+                    sequence: '1 → 2 → 4 → 8 → ?',
+                    correct: 16,
+                    hint: "每次乘以2"
+                },
+                {
+                    sequence: '5 → 8 → 11 → 14 → ?',
+                    correct: 17,
+                    hint: "每次增加3"
+                }
+            ],
+            // ✅ 修复后的关卡3 - 用完全无歧义的数据
+            level3: [
+                {
+                    items: [10, 20, 30, 35, 50, 60, 70, 80],
+                    anomalyIndex: 3, // 35在数组中的索引是3
+                    hint: "大部分都是整十数，找出那个不同的"
+                },
+                {
+                    items: [2, 4, 6, 7, 10, 12, 14, 16],
+                    anomalyIndex: 3, // 7在数组中的索引是3
+                    hint: "大部分都是偶数，找出那个奇数"
+                },
+                {
+                    items: ['□', '□', '□', '□', '○', '□', '□', '□'],
+                    anomalyIndex: 4, // ○在数组中的索引是4
+                    hint: "大部分都是方形，找出那个圆形"
+                }
+            ]
+        };
+
+        let gameState = {
+            currentLevel: 1,
+            currentQuestion: 0,
+            scores: [0, 0, 0],
+            selectedOption: null,
+            answered: false,
+            hintUsed: false
+        };
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function startGame() {
+            gameState = {
+                currentLevel: 1,
+                currentQuestion: 0,
+                scores: [0, 0, 0],
+                selectedOption: null,
+                answered: false,
+                hintUsed: false
+            };
+            showPage('gamePage');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const level = gameState.currentLevel;
+            const questionIndex = gameState.currentQuestion;
+            
+            document.getElementById('currentQuestion').textContent = questionIndex + 1;
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('feedback').className = 'feedback-message';
+            gameState.selectedOption = null;
+            gameState.answered = false;
+            gameState.hintUsed = false;
+            document.getElementById('hintBtn').textContent = '获取提示';
+            document.getElementById('hintBtn').disabled = false;
+
+            if (level === 1) loadLevel1Question();
+            else if (level === 2) loadLevel2Question();
+            else if (level === 3) loadLevel3Question();
+        }
+
+        function loadLevel1Question() {
+            const data = gameData.level1[gameState.currentQuestion];
+            document.getElementById('levelName').textContent = '关卡1：图形序列挑战';
+            document.getElementById('difficultyBadge').textContent = '简单难度';
+            document.getElementById('difficultyBadge').className = 'level-badge badge-easy';
+            document.getElementById('questionTitle').textContent = '观察图形序列，找出下一个应该出现的图形';
+            
+            const sequenceDisplay = data.sequence.join(' ');
+            document.getElementById('questionContent').innerHTML = `<div class="sequence-display">${sequenceDisplay}</div>`;
+            document.getElementById('inputGroup').style.display = 'none';
+            
+            const optionsHtml = data.options.map((option, idx) => 
+                `<div class="option-card" onclick="selectOption(${idx})">${option}</div>`
+            ).join('');
+            document.getElementById('optionsGrid').innerHTML = optionsHtml;
+        }
+
+        function loadLevel2Question() {
+            const data = gameData.level2[gameState.currentQuestion];
+            document.getElementById('levelName').textContent = '关卡2：数字侦探';
+            document.getElementById('difficultyBadge').textContent = '中等难度';
+            document.getElementById('difficultyBadge').className = 'level-badge badge-medium';
+            document.getElementById('questionTitle').textContent = '观察数字序列，填写缺失的数字';
+            
+            document.getElementById('questionContent').innerHTML = `<div class="number-sequence">${data.sequence}</div>`;
+            document.getElementById('optionsGrid').innerHTML = '';
+            document.getElementById('inputGroup').style.display = 'block';
+            document.getElementById('answerInput').value = '';
+            document.getElementById('answerInput').focus();
+        }
+
+        function loadLevel3Question() {
+            const data = gameData.level3[gameState.currentQuestion];
+            document.getElementById('levelName').textContent = '关卡3：异常值猎人';
+            document.getElementById('difficultyBadge').textContent = '困难难度';
+            document.getElementById('difficultyBadge').className = 'level-badge badge-hard';
+            document.getElementById('questionTitle').textContent = '找出那个"不合群"的元素';
+            
+            document.getElementById('questionContent').innerHTML = '<div style="margin: 20px 0; color: var(--neon-blue);">👇 点击你认为是异常值的元素 👇</div>';
+            document.getElementById('inputGroup').style.display = 'none';
+            
+            const optionsHtml = data.items.map((item, idx) => 
+                `<div class="option-card" onclick="selectOption(${idx})" style="font-size: 1.5em;">${item}</div>`
+            ).join('');
+            document.getElementById('optionsGrid').innerHTML = optionsHtml;
+        }
+
+        function selectOption(index) {
+            if (gameState.answered) return;
+            
+            document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
+            document.querySelectorAll('.option-card')[index].classList.add('selected');
+            gameState.selectedOption = index;
+        }
+
+        function submitAnswer() {
+            if (gameState.answered) {
+                nextQuestion();
+                return;
+            }
+
+            const level = gameState.currentLevel;
+            let correct = false;
+
+            if (level === 1 || level === 3) {
+                if (gameState.selectedOption === null) {
+                    document.getElementById('feedback').textContent = '请先选择一个答案';
+                    document.getElementById('feedback').className = 'feedback-message error';
+                    return;
+                }
+                // FIXED: Added parentheses to ensure ?? operator evaluates first
+                correct = gameState.selectedOption === (gameData[`level${level}`][gameState.currentQuestion].anomalyIndex ?? gameData[`level${level}`][gameState.currentQuestion].correct);
+            } else if (level === 2) {
+                const input = document.getElementById('answerInput').value.trim();
+                if (!input) {
+                    document.getElementById('feedback').textContent = '请输入答案';
+                    document.getElementById('feedback').className = 'feedback-message error';
+                    return;
+                }
+                correct = parseInt(input) === gameData.level2[gameState.currentQuestion].correct;
+            }
+
+            gameState.answered = true;
+
+            if (correct) {
+                gameState.scores[level - 1]++;
+                document.getElementById('feedback').textContent = '✓ 正确！太棒了！';
+                document.getElementById('feedback').className = 'feedback-message success';
+                
+                if (level === 1 || level === 3) {
+                    document.querySelectorAll('.option-card').forEach((card, idx) => {
+                        if (idx === gameState.selectedOption) {
+                            card.classList.add('correct');
+                        } else {
+                            card.classList.remove('selected');
+                        }
+                    });
+                }
+            } else {
+                document.getElementById('feedback').textContent = '✗ 答错了，再仔细看看吧！';
+                document.getElementById('feedback').className = 'feedback-message error';
+                
+                if (level === 1 || level === 3) {
+                    document.querySelectorAll('.option-card').forEach((card, idx) => {
+                        if (idx === gameState.selectedOption) {
+                            card.classList.add('incorrect');
+                        }
+                    });
+                }
+            }
+
+            document.getElementById('submitBtn').textContent = '下一题';
+        }
+
+        function nextQuestion() {
+            gameState.currentQuestion++;
+            
+            if (gameState.currentQuestion >= 3) {
+                gameState.currentLevel++;
+                gameState.currentQuestion = 0;
+                
+                if (gameState.currentLevel > 3) {
+                    showResults();
+                    return;
+                }
+            }
+            
+            loadQuestion();
+        }
+
+        function showHint() {
+            if (gameState.answered) return;
+            if (gameState.hintUsed) {
+                document.getElementById('feedback').textContent = '提示已使用过';
+                return;
+            }
+
+            const level = gameState.currentLevel;
+            const hint = gameData[`level${level}`][gameState.currentQuestion].hint;
+            document.getElementById('feedback').textContent = '💡 ' + hint;
+            document.getElementById('feedback').className = 'feedback-message';
+            gameState.hintUsed = true;
+            document.getElementById('hintBtn').textContent = '已使用';
+            document.getElementById('hintBtn').disabled = true;
+        }
+
+        function showResults() {
+            const total = gameState.scores.reduce((a, b) => a + b, 0);
+            document.getElementById('finalScore').textContent = total;
+            document.getElementById('score1').textContent = `${gameState.scores[0]}/3`;
+            document.getElementById('score2').textContent = `${gameState.scores[1]}/3`;
+            document.getElementById('score3').textContent = `${gameState.scores[2]}/3`;
+
+            let stars = '⭐';
+            if (total >= 7) stars = '⭐⭐⭐⭐⭐';
+            else if (total >= 6) stars = '⭐⭐⭐⭐';
+            else if (total >= 5) stars = '⭐⭐⭐';
+            else if (total >= 3) stars = '⭐⭐';
+            
+            document.getElementById('starsDisplay').textContent = stars;
+            showPage('resultPage');
+        }
+
+        function restartGame() {
+            showPage('startPage');
+        }
+
+        loadQuestion();
+    </script>
+<script>window.parent.postMessage({ action: "ready" }, "*"); 
+ 
+window.console = new Proxy(console, {
+  get(target, prop) {
+    if (['log', 'warn', 'error'].includes(prop)) {
+      return new Proxy(target[prop], {
+        apply(fn, thisArg, args) {
+          fn.apply(thisArg, args);
+          window.parent.postMessage({ action: 'console', 
+            type: prop, 
+            args: args.map((arg) => {
+              try {
+                return JSON.stringify(arg).replace(/^["']|["']$/g, '');
+              } catch (e) {
+                return arg;
+              }
+            }) 
+          }, '*');
+        }
+      });
+    }
+    return target[prop];
+  }
+});
+</script></body>
+</html>

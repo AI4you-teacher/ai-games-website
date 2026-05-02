@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>隐私卫士 · Privacy Guardian</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   CSS VARIABLES — DAY / NIGHT
+   ============================================================ */
+:root {
+  --bg:           #0b0f1a;
+  --bg2:          #111827;
+  --bg3:          #1a2235;
+  --surface:      #1e2a3d;
+  --surface2:     #243247;
+  --border:       rgba(99,179,237,0.18);
+  --border-glow:  rgba(99,179,237,0.5);
+  --ink:          #e8f0fe;
+  --ink2:         #9ab0cc;
+  --ink3:         #5d7a99;
+  --accent:       #38bdf8;
+  --accent2:      #818cf8;
+  --danger:       #f87171;
+  --success:      #34d399;
+  --warn:         #fbbf24;
+  --glow-a:       rgba(56,189,248,0.15);
+  --glow-b:       rgba(129,140,248,0.12);
+  --scan-line:    rgba(56,189,248,0.04);
+  --grid-line:    rgba(99,179,237,0.06);
+  --particle:     rgba(56,189,248,0.6);
+  --shield-fill:  rgba(56,189,248,0.1);
+}
+
+[data-theme="light"] {
+  --bg:           #f0f4f8;
+  --bg2:          #e2e8f0;
+  --bg3:          #d1dae8;
+  --surface:      #ffffff;
+  --surface2:     #f7f9fc;
+  --border:       rgba(66,135,200,0.2);
+  --border-glow:  rgba(66,135,200,0.5);
+  --ink:          #1a2540;
+  --ink2:         #3d5278;
+  --ink3:         #6b85ab;
+  --accent:       #0284c7;
+  --accent2:      #4f46e5;
+  --danger:       #dc2626;
+  --success:      #059669;
+  --warn:         #d97706;
+  --glow-a:       rgba(2,132,199,0.08);
+  --glow-b:       rgba(79,70,229,0.06);
+  --scan-line:    rgba(2,132,199,0.03);
+  --grid-line:    rgba(66,135,200,0.08);
+  --particle:     rgba(2,132,199,0.5);
+  --shield-fill:  rgba(2,132,199,0.07);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*,*::before,*::after { box-sizing: border-box; margin:0; padding:0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  overflow-x: hidden;
+  transition: background 0.5s, color 0.5s;
+}
+
+/* Scan-line overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    var(--scan-line) 0px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Grid background */
+body::after {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  transition: background-image 0.5s;
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+.font-display  { font-family: 'ZCOOL XiaoWei', serif; }
+.font-mono     { font-family: 'Share Tech Mono', monospace; }
+
+/* ============================================================
+   LAYOUT SHELL
+   ============================================================ */
+#app {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ============================================================
+   TOP HUD BAR
+   ============================================================ */
+.hud {
+  width: 100%;
+  max-width: 900px;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hud-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hud-logo .shield-icon {
+  width: 36px; height: 36px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.hud-logo .shield-icon svg {
+  width: 100%; height: 100%;
+  filter: drop-shadow(0 0 6px var(--accent));
+}
+
+.hud-title {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.hud-title span {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.hud-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Progress dots */
+.progress-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink3);
+  background: transparent;
+  transition: all 0.4s;
+  position: relative;
+}
+
+.dot.done {
+  background: var(--success);
+  border-color: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+.dot.current {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,100% { transform: scale(1); box-shadow: 0 0 8px var(--accent); }
+  50% { transform: scale(1.3); box-shadow: 0 0 16px var(--accent); }
+}
+
+/* Score */
+.score-display {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  color: var(--accent);
+  background: var(--glow-a);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 12px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.score-display span {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--ink3);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-weight: 300;
+}
+
+/* Theme toggle */
+.theme-btn {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  transition: all 0.3s;
+  color: var(--ink);
+}
+
+.theme-btn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--glow-a);
+  transform: rotate(20deg);
+}
+
+/* ============================================================
+   SCREEN WRAPPER
+   ============================================================ */
+.screen {
+  width: 100%;
+  max-width: 900px;
+  padding: 0 20px 40px;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
+
+.screen.active {
+  display: flex;
+}
+
+/* ============================================================
+   INTRO SCREEN
+   ============================================================ */
+#intro-screen {
+  justify-content: center;
+  min-height: calc(100vh - 80px);
+  text-align: center;
+}
+
+.intro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--glow-a);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 16px;
+  margin-bottom: 28px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.2em;
+}
+
+.intro-badge .blinking {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+.intro-shield {
+  width: 120px; height: 120px;
+  margin: 0 auto 32px;
+  position: relative;
+}
+
+.intro-shield svg {
+  width: 100%; height: 100%;
+  filter: drop-shadow(0 0 20px var(--accent))
+          drop-shadow(0 0 40px var(--glow-a));
+  animation: shield-float 3s ease-in-out infinite;
+}
+
+@keyframes shield-float {
+  0%,100% { transform: translateY(0); filter: drop-shadow(0 0 20px var(--accent)); }
+  50% { transform: translateY(-8px); filter: drop-shadow(0 0 32px var(--accent)); }
+}
+
+.intro-h1 {
+  font-size: clamp(36px, 6vw, 56px);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--ink) 0%, var(--accent) 60%, var(--accent2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.intro-sub {
+  font-size: 16px;
+  color: var(--ink2);
+  max-width: 520px;
+  margin: 0 auto 36px;
+  line-height: 1.8;
+}
+
+.intro-sub strong {
+  color: var(--ink);
+}
+
+/* Mission cards */
+.mission-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto 40px;
+}
+
+.mission-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 14px;
+  text-align: center;
+  transition: border-color 0.3s;
+}
+
+.mission-card:hover {
+  border-color: var(--border-glow);
+}
+
+.mission-card .m-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.mission-card .m-label {
+  font-size: 12px;
+  color: var(--ink2);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.start-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 16px 40px;
+  font-size: 17px;
+  font-weight: 700;
+  font-family: 'Noto Sans SC', sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: all 0.3s;
+  box-shadow: 0 8px 32px rgba(56,189,248,0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.start-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.start-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 48px rgba(56,189,248,0.45);
+}
+
+.start-btn:hover::before { opacity: 1; }
+
+.start-btn:active { transform: translateY(0); }
+
+/* ============================================================
+   GAME SCREEN
+   ============================================================ */
+#game-screen {
+  gap: 20px;
+}
+
+/* Scene card */
+.scene-card {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.5s;
+}
+
+/* Scene illustration strip */
+.scene-visual {
+  height: 5px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  position: relative;
+  overflow: hidden;
+}
+
+.scene-visual::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  to { left: 200%; }
+}
+
+.scene-body {
+  padding: 28px 32px;
+}
+
+.scene-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.scene-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--glow-a);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 10px;
+  letter-spacing: 0.2em;
+}
+
+.scene-tag {
+  font-size: 11px;
+  color: var(--ink3);
+  letter-spacing: 0.1em;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.scene-icon-wrap {
+  width: 72px; height: 72px;
+  background: var(--glow-a);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 20px var(--glow-a);
+  transition: all 0.5s;
+}
+
+.scene-title {
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.4;
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+
+.scene-desc {
+  font-size: 14px;
+  color: var(--ink2);
+  line-height: 1.9;
+  background: var(--bg3);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 14px 18px;
+  position: relative;
+}
+
+.scene-desc::before {
+  content: '场景';
+  position: absolute;
+  top: -10px; left: 14px;
+  font-size: 10px;
+  background: var(--accent);
+  color: white;
+  border-radius: 4px;
+  padding: 1px 8px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+
+.scene-question {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-top: 20px;
+  padding: 14px 18px;
+  background: var(--surface2);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.scene-question::before {
+  content: '⚠';
+  color: var(--warn);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ============================================================
+   OPTIONS GRID
+   ============================================================ */
+.options-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.option-btn {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.25s;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+.option-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--glow-a);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.option-btn:hover:not(:disabled) {
+  border-color: var(--border-glow);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--glow-a);
+}
+
+.option-btn:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.option-btn:disabled {
+  cursor: default;
+}
+
+.option-btn.correct {
+  border-color: var(--success) !important;
+  background: rgba(52,211,153,0.08) !important;
+  box-shadow: 0 0 20px rgba(52,211,153,0.2) !important;
+}
+
+.option-btn.wrong {
+  border-color: var(--danger) !important;
+  background: rgba(248,113,113,0.08) !important;
+}
+
+.option-btn.reveal {
+  border-color: var(--success);
+  background: rgba(52,211,153,0.05);
+  animation: reveal-pulse 0.5s ease;
+}
+
+@keyframes reveal-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.opt-letter {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: var(--bg3);
+  border: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  color: var(--accent);
+  flex-shrink: 0;
+  transition: all 0.3s;
+  z-index: 1;
+}
+
+.option-btn.correct .opt-letter {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+.option-btn.wrong .opt-letter {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: white;
+}
+
+.option-btn.reveal .opt-letter {
+  background: rgba(52,211,153,0.2);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.opt-text {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink2);
+  z-index: 1;
+  transition: color 0.3s;
+  font-weight: 500;
+}
+
+.option-btn.correct .opt-text,
+.option-btn.reveal .opt-text {
+  color: var(--ink);
+}
+
+/* ============================================================
+   FEEDBACK PANEL
+   ============================================================ */
+.feedback-panel {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  display: none;
+  animation: feedback-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.feedback-panel.show { display: block; }
+
+@keyframes feedback-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.feedback-panel.is-correct {
+  background: linear-gradient(135deg, rgba(52,211,153,0.1), rgba(52,211,153,0.05));
+  border: 1.5px solid rgba(52,211,153,0.4);
+}
+
+.feedback-panel.is-wrong {
+  background: linear-gradient(135deg, rgba(248,113,113,0.1), rgba(248,113,113,0.05));
+  border: 1.5px solid rgba(248,113,113,0.3);
+}
+
+.feedback-inner {
+  padding: 22px 26px;
+}
+
+.feedback-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.feedback-emoji {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.feedback-verdict {
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.feedback-panel.is-correct .feedback-verdict { color: var(--success); }
+.feedback-panel.is-wrong .feedback-verdict   { color: var(--danger); }
+
+.feedback-explain {
+  font-size: 13.5px;
+  color: var(--ink2);
+  line-height: 1.85;
+  margin-bottom: 16px;
+}
+
+.feedback-explain strong { color: var(--ink); }
+
+.knowledge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--glow-b);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--accent2);
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.next-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Noto Sans SC', sans-serif;
+  cursor: pointer;
+  transition: all 0.25s;
+  letter-spacing: 0.05em;
+}
+
+.next-btn:hover {
+  background: var(--accent2);
+  transform: translateX(4px);
+}
+
+/* ============================================================
+   RESULT SCREEN
+   ============================================================ */
+#result-screen {
+  justify-content: center;
+  min-height: calc(100vh - 80px);
+  text-align: center;
+  gap: 24px;
+}
+
+.result-rank {
+  position: relative;
+  width: 130px; height: 130px;
+  margin: 0 auto;
+}
+
+.result-rank svg {
+  width: 100%; height: 100%;
+  filter: drop-shadow(0 0 24px var(--accent));
+  animation: shield-float 3s ease-in-out infinite;
+}
+
+.result-rank .rank-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.rank-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.2em;
+}
+
+.rank-score {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.result-title {
+  font-size: 28px;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--ink), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.result-msg {
+  font-size: 15px;
+  color: var(--ink2);
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.8;
+}
+
+/* Result breakdown */
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.result-item {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 10px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.result-item.pass {
+  border-color: var(--success);
+  background: rgba(52,211,153,0.06);
+}
+
+.result-item.fail {
+  border-color: var(--danger);
+  background: rgba(248,113,113,0.06);
+}
+
+.result-item .ri-icon { font-size: 22px; margin-bottom: 6px; }
+.result-item .ri-label { font-size: 10px; color: var(--ink3); line-height: 1.4; }
+.result-item .ri-status {
+  font-size: 18px;
+  margin-top: 4px;
+}
+
+/* Knowledge summary */
+.knowledge-summary {
+  width: 100%;
+  max-width: 680px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ks-header {
+  background: linear-gradient(90deg, var(--glow-a), var(--glow-b));
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+}
+
+.ks-body {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.ks-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ink2);
+  line-height: 1.7;
+}
+
+.ks-item .ks-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.ks-item strong { color: var(--ink); }
+
+/* Replay btn */
+.replay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  color: var(--accent);
+  border: 1.5px solid var(--border-glow);
+  border-radius: 12px;
+  padding: 13px 32px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Noto Sans SC', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s;
+  letter-spacing: 0.05em;
+}
+
+.replay-btn:hover {
+  background: var(--glow-a);
+  border-color: var(--accent);
+  box-shadow: 0 0 20px var(--glow-a);
+}
+
+/* ============================================================
+   TRANSITION OVERLAY
+   ============================================================ */
+.transition-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.transition-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.transition-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  color: var(--accent);
+  letter-spacing: 0.3em;
+  animation: blink 0.8s ease-in-out infinite;
+}
+
+/* ============================================================
+   ANIMATIONS — stagger entrance
+   ============================================================ */
+.stagger-1 { animation: stagger-in 0.5s 0.05s both; }
+.stagger-2 { animation: stagger-in 0.5s 0.15s both; }
+.stagger-3 { animation: stagger-in 0.5s 0.25s both; }
+.stagger-4 { animation: stagger-in 0.5s 0.35s both; }
+.stagger-5 { animation: stagger-in 0.5s 0.45s both; }
+
+@keyframes stagger-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   PARTICLE CANVAS (background decoration)
+   ============================================================ */
+#particle-canvas {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  opacity: 0.4;
+}
+
+[data-theme="light"] #particle-canvas { opacity: 0.15; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 620px) {
+  .options-grid { grid-template-columns: 1fr; }
+  .mission-grid { grid-template-columns: 1fr 1fr; }
+  .result-grid { grid-template-columns: repeat(3, 1fr); }
+  .scene-body { padding: 20px 18px; }
+  .hud { padding: 10px 14px; }
+  .hud-title { font-size: 15px; }
+}
+
+/* ============================================================
+   MISC
+   ============================================================ */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+</style>
+</head>
+<body>
+
+<!-- Particle canvas -->
+<canvas id="particle-canvas"></canvas>
+
+<!-- Transition overlay -->
+<div class="transition-overlay" id="transition">
+  <div class="transition-text">LOADING MISSION...</div>
+</div>
+
+<div id="app">
+  <!-- HUD -->
+  <nav class="hud">
+    <div class="hud-logo">
+      <div class="shield-icon">
+        <svg viewBox="0 0 36 42" fill="none">
+          <path d="M18 2L3 8V20C3 29.9 9.9 39.2 18 42C26.1 39.2 33 29.9 33 20V8L18 2Z"
+                fill="var(--shield-fill)" stroke="var(--accent)" stroke-width="1.5"/>
+          <path d="M12 20.5L16 24.5L24 16.5" stroke="var(--accent)" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="hud-title">
+        隐私卫士
+        <span>PRIVACY GUARDIAN</span>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="progress-dots" id="progress-dots">
+        <!-- filled by JS -->
+      </div>
+      <div class="score-display" id="score-display">
+        0 / 5
+        <span>安全分</span>
+      </div>
+      <button class="theme-btn" onclick="toggleTheme()" title="切换模式" aria-label="切换明暗模式">
+        <span id="theme-icon">☀️</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ======== INTRO SCREEN ======== -->
+  <div class="screen active" id="intro-screen">
+    <div class="intro-badge">
+      <div class="blinking"></div>
+      MISSION BRIEFING · 任务简报
+    </div>
+
+    <div class="intro-shield">
+      <svg viewBox="0 0 120 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M60 6L8 26V66C8 98 30 127 60 138C90 127 112 98 112 66V26L60 6Z"
+              fill="var(--shield-fill)" stroke="var(--accent)" stroke-width="2.5"/>
+        <circle cx="60" cy="70" r="28" fill="rgba(56,189,248,0.08)"
+                stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <path d="M44 70L55 81L78 58" stroke="var(--accent)" stroke-width="3"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="60" cy="28" r="4" fill="var(--accent2)" opacity="0.8"/>
+        <circle cx="30" cy="50" r="3" fill="var(--accent)" opacity="0.6"/>
+        <circle cx="90" cy="50" r="3" fill="var(--accent)" opacity="0.6"/>
+      </svg>
+    </div>
+
+    <h1 class="intro-h1">你是数字世界的<br>隐私卫士</h1>
+
+    <p class="intro-sub">
+      AI时代，你的每一个数字足迹都可能被追踪。<br>
+      <strong>5个真实场景</strong>等待你做出判断——<br>
+      哪种选择能真正保护你的隐私和安全？
+    </p>
+
+    <div class="mission-grid stagger-3">
+      <div class="mission-card">
+        <span class="m-icon">🧬</span>
+        <div class="m-label">生物信息<br>保护</div>
+      </div>
+      <div class="mission-card">
+        <span class="m-icon">🌐</span>
+        <div class="m-label">虚拟世界<br>隐私</div>
+      </div>
+      <div class="mission-card">
+        <span class="m-icon">🔐</span>
+        <div class="m-label">密码安全<br>管理</div>
+      </div>
+      <div class="mission-card">
+        <span class="m-icon">📱</span>
+        <div class="m-label">个人信息<br>分享</div>
+      </div>
+      <div class="mission-card">
+        <span class="m-icon">💻</span>
+        <div class="m-label">公共设备<br>使用</div>
+      </div>
+      <div class="mission-card">
+        <span class="m-icon">🛡️</span>
+        <div class="m-label">做出<br>最优决策</div>
+      </div>
+    </div>
+
+    <button class="start-btn stagger-4" onclick="startGame()">
+      <span>接受任务</span>
+      <span style="font-size:20px">→</span>
+    </button>
+  </div>
+
+  <!-- ======== GAME SCREEN ======== -->
+  <div class="screen" id="game-screen">
+    <!-- Scene card -->
+    <div class="scene-card stagger-1" id="scene-card">
+      <div class="scene-visual"></div>
+      <div class="scene-body">
+        <div class="scene-meta">
+          <div class="scene-num" id="scene-num">CASE 01/05</div>
+          <div class="scene-tag" id="scene-tag">生物信息保护</div>
+        </div>
+        <div class="scene-icon-wrap" id="scene-icon">🧬</div>
+        <div class="scene-title" id="scene-title">人脸识别·刷脸登录的诱惑</div>
+        <div class="scene-desc" id="scene-desc">场景描述加载中...</div>
+        <div class="scene-question" id="scene-question">此时你应该怎么做？</div>
+      </div>
+    </div>
+
+    <!-- Options -->
+    <div class="options-grid stagger-2" id="options-grid">
+      <!-- Filled by JS -->
+    </div>
+
+    <!-- Feedback -->
+    <div class="feedback-panel" id="feedback-panel">
+      <div class="feedback-inner">
+        <div class="feedback-header">
+          <div class="feedback-emoji" id="fb-emoji">✅</div>
+          <div class="feedback-verdict" id="fb-verdict">判断正确！</div>
+        </div>
+        <div class="feedback-explain" id="fb-explain"></div>
+        <div class="knowledge-chip" id="fb-chip">
+          <span>💡</span>
+          <span id="fb-chip-text">知识点</span>
+        </div>
+        <button class="next-btn" id="next-btn" onclick="nextScene()">
+          <span id="next-label">下一个场景</span>
+          <span>→</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== RESULT SCREEN ======== -->
+  <div class="screen" id="result-screen">
+    <div class="result-rank" id="result-rank">
+      <svg viewBox="0 0 130 150" fill="none">
+        <path d="M65 6L10 28V72C10 108 34 135 65 148C96 135 120 108 120 72V28L65 6Z"
+              fill="var(--shield-fill)" stroke="var(--accent)" stroke-width="2.5"/>
+      </svg>
+      <div class="rank-text">
+        <div class="rank-label">SCORE</div>
+        <div class="rank-score" id="final-score">0</div>
+        <div class="rank-label" style="margin-top:2px">/5</div>
+      </div>
+    </div>
+
+    <div class="result-title" id="result-title">隐私守护完成！</div>
+    <p class="result-msg" id="result-msg">你正在成为一名出色的隐私卫士！</p>
+
+    <div class="result-grid" id="result-grid"></div>
+
+    <div class="knowledge-summary">
+      <div class="ks-header">
+        <span>📚</span>
+        <span>隐私保护核心要点</span>
+      </div>
+      <div class="ks-body">
+        <div class="ks-item">
+          <div class="ks-dot"></div>
+          <div><strong>生物信息不可逆：</strong>密码可以修改，但指纹、虹膜、人脸特征一旦泄露，无法更换，需谨慎授权。</div>
+        </div>
+        <div class="ks-item">
+          <div class="ks-dot"></div>
+          <div><strong>公共设备高风险：</strong>公共电脑可能安装键盘记录器，使用后务必清除浏览记录、退出登录。</div>
+        </div>
+        <div class="ks-item">
+          <div class="ks-dot"></div>
+          <div><strong>权限最小化原则：</strong>App只授予必要权限，一款手电筒应用不需要你的通讯录和位置信息。</div>
+        </div>
+        <div class="ks-item">
+          <div class="ks-dot"></div>
+          <div><strong>强密码+双重验证：</strong>不同账号使用不同密码，开启双重认证是最有效的账户保护手段。</div>
+        </div>
+        <div class="ks-item">
+          <div class="ks-dot"></div>
+          <div><strong>数字足迹永久存在：</strong>你在网络上发布的信息、浏览记录可能被长期保存，发布前三思。</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="replay-btn" onclick="restartGame()">
+      <span>🔄</span>
+      <span>再战一次</span>
+    </button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   GAME DATA — 5 SCENARIOS
+   ============================================================ */
+const SCENARIOS = [
+  {
+    id: 1,
+    tag: "生物信息保护",
+    icon: "🧬",
+    title: "人脸识别·刷脸登录的诱惑",
+    desc: `新下载的学习App弹出提示："开启人脸识别登录，快捷又安全！无需记住密码"。你点开隐私政策，发现其中一条写着：<strong>"面部数据可用于改善我们的AI产品，并可能与合作伙伴共享"</strong>。`,
+    question: "你会如何处理这个登录方式的设置？",
+    options: [
+      { text: "立即开启刷脸，方便快捷，反正我又没做坏事", letter: "A" },
+      { text: "拒绝开启人脸，继续用账号密码登录，不授权面部数据共享", letter: "B" },
+      { text: "开启刷脸，同时关掉与合作伙伴共享那一条就行了", letter: "C" },
+      { text: "卸载这个App，换一个不要求人脸的同类App", letter: "D" }
+    ],
+    correct: 1, // index B
+    correctLetter: "B",
+    feedback: {
+      emoji: "🛡️",
+      verdict: "正确决策！保护生物特征是第一优先级",
+      explain: `<strong>生物特征≠普通密码</strong>——密码被盗可以立刻修改，但你的人脸、指纹一旦被收集、泄露，这辈子都无法更换。<br><br>该App隐私条款明确说明面部数据会<strong>与合作伙伴共享</strong>，这意味着你的生物特征可能流向你完全不了解的第三方公司，并被用于AI训练。<br><br>D选项（卸载）也是合理的安全选择，但如果这款App确实有学习价值，B选项是在使用与保护之间最佳的平衡点。`,
+      chip: "生物信息一旦泄露，无法更改，远比密码更敏感"
+    },
+    wrongFeedback: `生物数据不同于普通个人信息——密码被盗可以改，但你的面部特征永远无法更换。该App的隐私条款已明确表示会"与合作伙伴共享"面部数据，这非常危险。`
+  },
+  {
+    id: 2,
+    tag: "公共设备使用",
+    icon: "💻",
+    title: "图书馆公共电脑·遗留的危机",
+    desc: `你在图书馆的公共电脑上登录了学校邮箱查阅资料，临走前赶时间。旁边已经有同学等着用这台电脑了。你的邮箱页面还开着，浏览器还保存了你的登录状态。`,
+    question: "离开前，你必须做的是什么？",
+    options: [
+      { text: "直接离开，反正学校邮箱里没什么私密内容", letter: "A" },
+      { text: "只关掉邮箱标签页，浏览器窗口留着让下一个同学用", letter: "B" },
+      { text: "退出邮箱账号登录，清除浏览器缓存和历史记录，再离开", letter: "C" },
+      { text: "用隐身模式重新打开，把之前的窗口关掉就行", letter: "D" }
+    ],
+    correct: 2, // index C
+    correctLetter: "C",
+    feedback: {
+      emoji: "🔐",
+      verdict: "完美操作！这是使用公共设备的标准流程",
+      explain: `公共设备是隐私泄露的重灾区。<strong>浏览器保存的登录状态</strong>意味着下一个使用者可以直接进入你的邮箱。<br><br>更危险的是：某些公共电脑可能安装了<strong>键盘记录软件</strong>，会记录你输入的每一个字符，包括账号和密码。<br><br><strong>正确离开步骤：</strong><br>① 退出所有账号登录<br>② 清除浏览器历史、缓存、Cookie<br>③ 如果可以，使用隐身模式（下次避免在公共设备输入密码）`,
+      chip: "公共设备退出=退出账号+清除缓存，缺一不可"
+    },
+    wrongFeedback: `关掉标签页并不等于退出登录——下一个用户只需按"后退"键就能重新进入你的账户。正确做法是彻底退出登录并清除浏览历史和Cookie。`
+  },
+  {
+    id: 3,
+    tag: "密码安全管理",
+    icon: "🔑",
+    title: "密码轰炸·你只有一把钥匙吗？",
+    desc: `你的游戏账号被盗了。黑客用游戏账号的用户名和密码，尝试登录你的微信、支付宝和学校平台，结果发现<strong>你所有账号的密码都一样</strong>——都是你的生日加名字缩写。现在你在重新设置密码。`,
+    question: "这次你应该怎样管理自己的密码？",
+    options: [
+      { text: "把旧密码改得更复杂一些，比如加上几个特殊字符，其他账号的密码也统一改成这个", letter: "A" },
+      { text: "重要账号（支付、邮箱）设一个密码，普通账号设另一个，一共两个密码", letter: "B" },
+      { text: "每个重要账号设置独立的强密码，记不住就用密码管理器，并开启双重验证", letter: "C" },
+      { text: "用姓名+不同数字组合，比如账号名+0001、0002……这样好记又不重复", letter: "D" }
+    ],
+    correct: 2, // index C
+    correctLetter: "C",
+    feedback: {
+      emoji: "🏆",
+      verdict: "最优方案！这正是安全专家推荐的做法",
+      explain: `<strong>撞库攻击（Credential Stuffing）</strong>：黑客将从一个平台窃取的账号密码，自动尝试登录其他几百个网站。如果你所有账号密码相同，一次泄露等于全部沦陷。<br><br><strong>为什么D选项也不对？</strong>有规律的密码（如名字+序号）很容易被针对你的定向破解。<br><br><strong>最强密码策略：</strong><br>• 每个账号独立强密码（12位以上，含大小写+数字+符号）<br>• 使用密码管理器（如Bitwarden）统一管理<br>• 重要账号开启短信/验证器双重认证`,
+      chip: "一账号一密码 + 双重验证 = 黑客的噩梦"
+    },
+    wrongFeedback: `所有账号用相同密码或有规律的密码，是安全中的"单点故障"——一个账号被破，其他全部沦陷。每个重要账号都应该有独立的强密码。`
+  },
+  {
+    id: 4,
+    tag: "个人信息分享",
+    icon: "📱",
+    title: "陌生问卷·免费礼品的代价",
+    desc: `你在微信收到一条消息：<em>"参与调查问卷赢取100元购物券！仅需填写：真实姓名、就读学校、家庭住址、家长手机号。已有3000人参与，名额有限！"</em> 发来消息的是一个你只有数字好友关系的"网友"。`,
+    question: "你会怎么对待这条消息？",
+    options: [
+      { text: "填一下，问卷又不是要我的身份证和银行卡，这些信息又不算太私密", letter: "A" },
+      { text: "先问清楚对方是谁、这个活动属于哪个正规机构，核实后再决定", letter: "B" },
+      { text: "直接忽略并删除，同时提醒家长注意这类消息", letter: "C" },
+      { text: "填写时用假名字和假地址，这样就算骗局也没有损失", letter: "D" }
+    ],
+    correct: 2, // C
+    correctLetter: "C",
+    feedback: {
+      emoji: "🚨",
+      verdict: "警觉正确！这是典型的信息收割陷阱",
+      explain: `这条消息具备<strong>网络诈骗的全部特征</strong>：陌生人发起 + 紧迫感制造 + 要求真实个人信息 + 虚假奖励诱惑。<br><br><strong>为什么这些信息很危险？</strong><br>姓名 + 学校 + 家庭住址 + 家长电话，这个组合被称为<strong>"关系链数据"</strong>，诈骗者可以利用它：冒充学校联系家长索要钱财、实施精准诈骗，甚至为人身安全带来威胁。<br><br>B选项思路正确但仍有风险，因为骗子往往能伪造"正规机构"身份。对来源不明的信息，最安全的做法是<strong>直接忽略</strong>。`,
+      chip: "个人信息组合=定向诈骗的武器，陌生请求不填写"
+    },
+    wrongFeedback: `"这些信息不算私密"是非常危险的想法。姓名+学校+住址+家长电话的组合，足以让诈骗者冒充学校或老师联系你的家长实施精准诈骗。陌生来源的信息收集请求，一律不响应。`
+  },
+  {
+    id: 5,
+    tag: "虚拟世界隐私",
+    icon: "🌐",
+    title: "游戏直播·屏幕里的危险细节",
+    desc: `你正在游戏直播平台首次尝试直播自己打游戏。直播开始后，一位"好心观众"在弹幕里说："主播，你桌子上的快递单条码我帮你截了，你要删掉哦，顺丰单号能查到你的真实地址和手机号。" 你才意识到摄像头拍到了桌面。`,
+    question: "这次经历告诉你，直播/发布生活照片前应该怎样检查？",
+    options: [
+      { text: "把直播间设成仅好友可见就行，这样陌生人看不到了", letter: "A" },
+      { text: "直播前检查画面内有无快递单、身份证、门牌号、学校制服等可识别信息，遮挡或移走后再开播", letter: "B" },
+      { text: "相信观众都是好人，有人提醒就感谢然后处理，实时反应就够了", letter: "C" },
+      { text: "只要不说出口，画面里有点信息也问题不大，不用这么紧张", letter: "D" }
+    ],
+    correct: 1, // B
+    correctLetter: "B",
+    feedback: {
+      emoji: "👁️",
+      verdict: "全面到位！画面审查是数字自我保护的基本功",
+      explain: `<strong>数字足迹不只是你主动说出的话</strong>——画面背景里的每个细节都可能泄露你的位置和身份。<br><br><strong>直播/发布照片前需要检查：</strong><br>• 📦 快递单（含收件人姓名、地址、手机号）<br>• 🏠 门牌号、楼栋信息<br>• 🏫 校服、校徽、班级牌<br>• 🪪 任何证件的正面<br>• 💻 屏幕上的账号信息<br><br>仅靠"好友可见"不够安全，好友也可能截图转发。<strong>最好的保护是事前主动检查</strong>，而不是依赖事后提醒。`,
+      chip: "发布前扫描画面细节，数字世界没有橡皮擦"
+    },
+    wrongFeedback: `"实时反应"远比"提前预防"风险更大——一旦包含地址的截图在网上传播，就几乎无法彻底删除。直播前主动检查画面中的可识别信息，才是正确做法。`
+  }
+];
+
+/* ============================================================
+   GAME STATE
+   ============================================================ */
+let state = {
+  current: 0,
+  score: 0,
+  answers: [], // { scenarioId, correct, chosenIdx }
+  answered: false
+};
+
+/* ============================================================
+   PARTICLE SYSTEM
+   ============================================================ */
+(function initParticles() {
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  for (let i = 0; i < 50; i++) {
+    particles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.5 + 0.5,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      alpha: Math.random() * 0.6 + 0.2
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    const color = isDark ? '56,189,248' : '2,132,199';
+
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${color},${p.alpha})`;
+      ctx.fill();
+    });
+
+    // Draw connecting lines
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(${color},${0.08 * (1 - dist / 120)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ============================================================
+   THEME
+   ============================================================ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('theme-icon').textContent = isDark ? '🌙' : '☀️';
+}
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showTransition(cb) {
+  const overlay = document.getElementById('transition');
+  overlay.classList.add('active');
+  setTimeout(() => {
+    cb();
+    setTimeout(() => overlay.classList.remove('active'), 200);
+  }, 320);
+}
+
+/* ============================================================
+   PROGRESS DOTS
+   ============================================================ */
+function renderDots() {
+  const container = document.getElementById('progress-dots');
+  container.innerHTML = '';
+  for (let i = 0; i < SCENARIOS.length; i++) {
+    const dot = document.createElement('div');
+    if (i < state.current) dot.className = 'dot done';
+    else if (i === state.current) dot.className = 'dot current';
+    else dot.className = 'dot';
+    container.appendChild(dot);
+  }
+}
+
+function updateScore() {
+  document.getElementById('score-display').innerHTML =
+    `${state.score} / ${SCENARIOS.length}<span>安全分</span>`;
+}
+
+/* ============================================================
+   GAME LOGIC
+   ============================================================ */
+function startGame() {
+  state = { current: 0, score: 0, answers: [], answered: false };
+  renderDots();
+  updateScore();
+  showTransition(() => {
+    showScreen('game-screen');
+    renderScene(state.current);
+  });
+}
+
+function renderScene(idx) {
+  const s = SCENARIOS[idx];
+  state.answered = false;
+
+  document.getElementById('scene-num').textContent =
+    `CASE ${String(idx + 1).padStart(2, '0')}/${SCENARIOS.length}`;
+  document.getElementById('scene-tag').textContent = s.tag;
+  document.getElementById('scene-icon').textContent = s.icon;
+  document.getElementById('scene-title').textContent = s.title;
+  document.getElementById('scene-desc').innerHTML = s.desc;
+  document.getElementById('scene-question').textContent = s.question;
+
+  // Render options
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  s.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.setAttribute('data-idx', i);
+    btn.innerHTML = `
+      <div class="opt-letter">${opt.letter}</div>
+      <div class="opt-text">${opt.text}</div>
+    `;
+    btn.onclick = () => handleAnswer(i);
+    grid.appendChild(btn);
+  });
+
+  // Hide feedback
+  const fp = document.getElementById('feedback-panel');
+  fp.classList.remove('show', 'is-correct', 'is-wrong');
+
+  // Stagger animation on scene card
+  const card = document.getElementById('scene-card');
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = 'stagger-in 0.5s ease both';
+}
+
+function handleAnswer(chosenIdx) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const s = SCENARIOS[state.current];
+  const isCorrect = chosenIdx === s.correct;
+
+  // Track
+  state.answers.push({ scenarioId: s.id, correct: isCorrect, chosenIdx });
+  if (isCorrect) state.score++;
+  updateScore();
+
+  // Style buttons
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === s.correct && i === chosenIdx) btn.classList.add('correct');
+    else if (i === chosenIdx && !isCorrect) btn.classList.add('wrong');
+    else if (i === s.correct) btn.classList.add('reveal');
+  });
+
+  // Show feedback
+  const fp = document.getElementById('feedback-panel');
+  fp.classList.remove('is-correct', 'is-wrong');
+  fp.classList.add(isCorrect ? 'is-correct' : 'is-wrong');
+
+  if (isCorrect) {
+    document.getElementById('fb-emoji').textContent = s.feedback.emoji;
+    document.getElementById('fb-verdict').textContent = s.feedback.verdict;
+    document.getElementById('fb-explain').innerHTML = s.feedback.explain;
+    document.getElementById('fb-chip-text').textContent = s.feedback.chip;
+  } else {
+    document.getElementById('fb-emoji').textContent = '⚠️';
+    document.getElementById('fb-verdict').textContent = `不是最优方案，正确答案是选项 ${s.correctLetter}`;
+    document.getElementById('fb-explain').innerHTML = s.wrongFeedback;
+    document.getElementById('fb-chip-text').textContent = s.feedback.chip;
+  }
+
+  const isLast = state.current === SCENARIOS.length - 1;
+  document.getElementById('next-label').textContent = isLast ? '查看最终结果' : '下一个场景';
+  fp.classList.add('show');
+
+  renderDots();
+}
+
+function nextScene() {
+  state.current++;
+  if (state.current >= SCENARIOS.length) {
+    showTransition(() => showResult());
+  } else {
+    showTransition(() => renderScene(state.current));
+  }
+}
+
+/* ============================================================
+   RESULT
+   ============================================================ */
+function showResult() {
+  showScreen('result-screen');
+
+  const s = state.score;
+  const n = SCENARIOS.length;
+
+  document.getElementById('final-score').textContent = s;
+
+  let title, msg;
+  if (s === n) {
+    title = '完美！你是顶级隐私卫士 🏆';
+    msg = '你在每一个场景都做出了最优决策！你已经掌握了AI时代保护个人隐私的核心能力，继续保持这种数字安全意识。';
+  } else if (s >= 3) {
+    title = `良好！隐私意识大于 ${Math.round(s/n*100)}% 的人`;
+    msg = '你在大多数场景里做出了正确判断！回顾答错的场景，理解其中的风险逻辑，你将成为更完善的数字公民。';
+  } else {
+    title = '需要加强！隐私意识有提升空间';
+    msg = '数字时代的陷阱越来越复杂，先从最基础的做起——不同账号使用不同密码、公共设备用完退出登录。';
+  }
+
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-msg').textContent = msg;
+
+  // Result grid
+  const grid = document.getElementById('result-grid');
+  grid.innerHTML = '';
+  state.answers.forEach((a, i) => {
+    const s = SCENARIOS[i];
+    const div = document.createElement('div');
+    div.className = 'result-item ' + (a.correct ? 'pass' : 'fail');
+    div.innerHTML = `
+      <div class="ri-icon">${s.icon}</div>
+      <div class="ri-label">${s.tag}</div>
+      <div class="ri-status">${a.correct ? '✅' : '❌'}</div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function restartGame() {
+  showTransition(() => {
+    showScreen('intro-screen');
+    state = { current: 0, score: 0, answers: [], answered: false };
+    updateScore();
+    renderDots();
+  });
+}
+
+/* Init dots */
+renderDots();
+</script>
+</body>
+</html>

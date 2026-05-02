@@ -1,0 +1,2049 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间管理大师 - AI诱惑大作战</title>
+    <style>
+        /* ============ CSS变量：日间模式（默认） ============ */
+        :root {
+            --bg-primary: #f0ebe0;
+            --bg-secondary: #e8e0d3;
+            --bg-panel: rgba(255, 252, 245, 0.9);
+            --bg-learning: linear-gradient(180deg, #fefdf8 0%, #fdf6e8 30%, #fef9f0 100%);
+            --bg-learning-solid: #fefdf8;
+            --border-learning: #d5c8b0;
+            --border-learning-strong: #c4b590;
+            --text-primary: #3d2c1e;
+            --text-secondary: #6b5b4a;
+            --text-heading: #2c1f12;
+            --text-learning: #3d2c1e;
+            --text-learning-sub: #8b7355;
+            --phone-frame-bg: #e8e4dd;
+            --phone-frame-inner: #d5d0c8;
+            --phone-frame-outer: #c4bfb6;
+            --phone-screen-bg: #f2f2f7;
+            --phone-notch-bg: #e8e4dd;
+            --phone-status-bg: #f2f2f7;
+            --phone-status-text: #333;
+            --phone-app-name: #444;
+            --modal-overlay-bg: rgba(40, 30, 18, 0.65);
+            --modal-card-bg: #fffef9;
+            --modal-text: #3d2c1e;
+            --modal-text-secondary: #6b5b4a;
+            --modal-detail-bg: #f9f6f0;
+            --modal-psych-bg: #fffdf5;
+            --modal-psych-border: #f0c040;
+            --notif-bg: #ffffff;
+            --notif-text: #1a1a1a;
+            --notif-text-secondary: #777;
+            --notif-header-color: #555;
+            --notif-time-color: #999;
+            --toast-bg: #2c2416;
+            --toast-text: #f0c040;
+            --task-chip-pending-bg: #f5efe0;
+            --task-chip-pending-text: #8b7355;
+            --task-chip-pending-border: #d5c8b0;
+            --task-chip-active-bg: #e3f0fb;
+            --task-chip-active-text: #2b6cb0;
+            --task-chip-active-border: #5b9bd5;
+            --task-chip-done-bg: #e6f9ee;
+            --task-chip-done-text: #1e7e34;
+            --task-chip-done-border: #2ecc71;
+            --progress-bg: #e8dcc8;
+            --stat-bg: rgba(0, 0, 0, 0.04);
+            --stat-text: #555;
+            --stat-value-color: #333;
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --popup-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+            --header-bg: rgba(255, 252, 245, 0.85);
+            --header-border: rgba(180, 160, 130, 0.3);
+            --skill-focus-bg: #5b9bd5;
+            --skill-focus-text: #fff;
+            --skill-breathe-bg: #d4e8d0;
+            --skill-breathe-text: #2d5a27;
+            --skill-breathe-border: #a3c9a0;
+            --btn-ignore-bg: #e8f0fe;
+            --btn-ignore-text: #2b6cb0;
+            --btn-accept-bg: #ff3b30;
+            --btn-accept-text: #fff;
+            --focus-indicator-bg: #e3f0fb;
+            --focus-indicator-text: #2b6cb0;
+            --guide-accent: #f0c040;
+            --guide-card-bg: #fffef9;
+            --guide-text: #3d2c1e;
+            --guide-section-bg: #fdfaf3;
+            --guide-tip-bg: #fffdf5;
+            --guide-tip-border: #f0c040;
+            --toggle-bg: #e8e0d3;
+            --toggle-icon: #c8943e;
+            --divider-color: #e8dcc8;
+            /* 基础字体大小提升 */
+            --font-base: 1.1rem;
+        }
+
+        /* ============ CSS变量：夜间模式 ============ */
+        [data-theme="dark"] {
+            --bg-primary: #1a1a24;
+            --bg-secondary: #1f1e2a;
+            --bg-panel: rgba(28, 27, 38, 0.9);
+            --bg-learning: linear-gradient(180deg, #2a2620 0%, #27231c 30%, #2a2620 100%);
+            --bg-learning-solid: #2a2620;
+            --border-learning: #4a4035;
+            --border-learning-strong: #5a5045;
+            --text-primary: #d8d0c4;
+            --text-secondary: #a09888;
+            --text-heading: #e8dfd2;
+            --text-learning: #d8d0c4;
+            --text-learning-sub: #a09080;
+            --phone-frame-bg: #2a282f;
+            --phone-frame-inner: #3a383f;
+            --phone-frame-outer: #4a4850;
+            --phone-screen-bg: #1c1c22;
+            --phone-notch-bg: #2a282f;
+            --phone-status-bg: #1c1c22;
+            --phone-status-text: #ccc;
+            --phone-app-name: #bbb;
+            --modal-overlay-bg: rgba(0, 0, 0, 0.75);
+            --modal-card-bg: #282620;
+            --modal-text: #d8d0c4;
+            --modal-text-secondary: #a09888;
+            --modal-detail-bg: #2a2722;
+            --modal-psych-bg: #2a2620;
+            --modal-psych-border: #c8943e;
+            --notif-bg: #2a2832;
+            --notif-text: #e0dcd5;
+            --notif-text-secondary: #a09890;
+            --notif-header-color: #b0a89a;
+            --notif-time-color: #888;
+            --toast-bg: #3d3525;
+            --toast-text: #f5d878;
+            --task-chip-pending-bg: #322d25;
+            --task-chip-pending-text: #a09080;
+            --task-chip-pending-border: #4a4035;
+            --task-chip-active-bg: #1a2840;
+            --task-chip-active-text: #7ab8e8;
+            --task-chip-active-border: #3a6fa0;
+            --task-chip-done-bg: #1a3025;
+            --task-chip-done-text: #5cc98a;
+            --task-chip-done-border: #2d7a4a;
+            --progress-bg: #3d3528;
+            --stat-bg: rgba(255, 255, 255, 0.05);
+            --stat-text: #b0a898;
+            --stat-value-color: #e0d8c8;
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --popup-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            --header-bg: rgba(28, 27, 38, 0.9);
+            --header-border: rgba(100, 90, 75, 0.3);
+            --skill-focus-bg: #4a85b8;
+            --skill-focus-text: #e8f0fb;
+            --skill-breathe-bg: #3a4d35;
+            --skill-breathe-text: #c0d8b8;
+            --skill-breathe-border: #5a7d52;
+            --btn-ignore-bg: #1e3048;
+            --btn-ignore-text: #7ab8e8;
+            --btn-accept-bg: #c0392b;
+            --btn-accept-text: #fdd;
+            --focus-indicator-bg: #1a2840;
+            --focus-indicator-text: #7ab8e8;
+            --guide-accent: #c8943e;
+            --guide-card-bg: #282620;
+            --guide-text: #d8d0c4;
+            --guide-section-bg: #2c2822;
+            --guide-tip-bg: #2a2620;
+            --guide-tip-border: #c8943e;
+            --toggle-bg: #3a3530;
+            --toggle-icon: #f5d878;
+            --divider-color: #3d3528;
+            --font-base: 1.1rem;
+        }
+
+        /* ============ 全局样式 ============ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.5s ease, color 0.5s ease;
+            color: var(--text-primary);
+            font-size: var(--font-base);
+            line-height: 1.5;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 30% 20%, var(--bg-secondary) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 70%, var(--bg-secondary) 0%, transparent 50%);
+            z-index: -1;
+            transition: background 0.5s ease;
+            pointer-events: none;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 1150px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            position: relative;
+        }
+
+        /* ============ 顶部标题栏 ============ */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            background: var(--header-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 1rem 1.5rem;
+            border: 1px solid var(--header-border);
+            box-shadow: var(--card-shadow);
+            transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+        }
+        .header .title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .header .logo-icon {
+            font-size: 2.4rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+        .header h1 {
+            font-size: 1.6em;
+            font-weight: 700;
+            color: var(--text-heading);
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #c8943e, #e0b860, #c8943e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transition: all 0.5s ease;
+        }
+        [data-theme="dark"] .header h1 {
+            background: linear-gradient(135deg, #f5d878, #ffe8a0, #f5d878);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header .subtitle {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+            transition: color 0.5s ease;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+        }
+        .header-stats {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--stat-bg);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: var(--stat-text);
+            white-space: nowrap;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        .stat-icon {
+            font-size: 1.2em;
+        }
+        .stat-value {
+            font-weight: 700;
+            color: var(--stat-value-color);
+            transition: color 0.5s ease;
+        }
+        .stat-value.willpower {
+            color: #5dade2;
+        }
+        .stat-value.time {
+            color: #c8943e;
+        }
+        .stat-value.score {
+            color: #2ecc71;
+        }
+        [data-theme="dark"] .stat-value.willpower {
+            color: #6db9e8;
+        }
+        [data-theme="dark"] .stat-value.time {
+            color: #f5d878;
+        }
+        [data-theme="dark"] .stat-value.score {
+            color: #4cdb8a;
+        }
+
+        /* 主题切换按钮 */
+        .theme-toggle-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            border: 2px solid var(--header-border);
+            background: var(--toggle-bg);
+            cursor: pointer;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .theme-toggle-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+        .theme-toggle-btn:active {
+            transform: scale(0.94);
+        }
+        .theme-toggle-btn .icon-sun,
+        .theme-toggle-btn .icon-moon {
+            transition: all 0.4s ease;
+            position: absolute;
+        }
+        [data-theme="light"] .theme-toggle-btn .icon-moon {
+            opacity: 0;
+            transform: rotate(-90deg) scale(0.5);
+        }
+        [data-theme="light"] .theme-toggle-btn .icon-sun {
+            opacity: 1;
+            transform: rotate(0deg) scale(1);
+        }
+        [data-theme="dark"] .theme-toggle-btn .icon-sun {
+            opacity: 0;
+            transform: rotate(90deg) scale(0.5);
+        }
+        [data-theme="dark"] .theme-toggle-btn .icon-moon {
+            opacity: 1;
+            transform: rotate(0deg) scale(1);
+        }
+
+        /* 帮助按钮 */
+        .help-btn {
+            width: 2.3rem;
+            height: 2.3rem;
+            border-radius: 50%;
+            border: 2px solid var(--header-border);
+            background: var(--toggle-bg);
+            cursor: pointer;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-weight: 700;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        .help-btn:hover {
+            transform: scale(1.1);
+            background: var(--guide-accent);
+            color: #3d2c1e;
+            border-color: var(--guide-accent);
+        }
+
+        /* ============ 主布局 ============ */
+        .main-layout {
+            display: flex;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+        }
+
+        /* ============ 学习区域 ============ */
+        .learning-area {
+            flex: 1 1 550px;
+            min-width: 320px;
+            background: var(--bg-learning);
+            border-radius: 20px;
+            padding: 1.5rem 1.8rem;
+            border: 3px solid var(--border-learning);
+            box-shadow: var(--card-shadow), inset 0 0 80px rgba(180, 150, 100, 0.06);
+            position: relative;
+            overflow: hidden;
+            transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+        }
+        .learning-area::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            right: -30px;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(200, 170, 120, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transition: background 0.5s ease;
+        }
+        [data-theme="dark"] .learning-area::before {
+            background: radial-gradient(circle, rgba(180, 140, 90, 0.15) 0%, transparent 70%);
+        }
+        .learning-area .desk-label {
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-learning-sub);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            transition: color 0.5s ease;
+        }
+        .learning-area .current-task-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--text-learning);
+            margin-bottom: 0.2rem;
+            transition: color 0.5s ease;
+        }
+        .learning-area .task-subtitle {
+            font-size: 0.95em;
+            color: var(--text-learning-sub);
+            margin-bottom: 1rem;
+            transition: color 0.5s ease;
+        }
+        .task-progress-wrap {
+            background: var(--progress-bg);
+            border-radius: 12px;
+            height: 1.8rem;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+            transition: background 0.5s ease;
+        }
+        .task-progress-fill {
+            height: 100%;
+            border-radius: 12px;
+            background: linear-gradient(90deg, #5b9bd5, #3b7cc3, #2b6cb0);
+            transition: width 0.3s ease, background 0.5s ease;
+            position: relative;
+        }
+        .task-progress-fill.completed {
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+        }
+        .task-progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 10px;
+            right: 10px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+        .progress-text {
+            font-size: 0.85em;
+            color: var(--text-learning-sub);
+            text-align: right;
+            font-weight: 600;
+            transition: color 0.5s ease;
+        }
+        .task-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.8rem;
+        }
+        .task-chip {
+            font-size: 0.9em;
+            padding: 0.5rem 1rem;
+            border-radius: 18px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            transition: all 0.35s;
+            border: 2px solid transparent;
+        }
+        .task-chip.pending {
+            background: var(--task-chip-pending-bg);
+            color: var(--task-chip-pending-text);
+            border-color: var(--task-chip-pending-border);
+        }
+        .task-chip.active {
+            background: var(--task-chip-active-bg);
+            color: var(--task-chip-active-text);
+            border-color: var(--task-chip-active-border);
+            animation: pulse-border 2s ease-in-out infinite;
+        }
+        .task-chip.done {
+            background: var(--task-chip-done-bg);
+            color: var(--task-chip-done-text);
+            border-color: var(--task-chip-done-border);
+            text-decoration: line-through;
+            text-decoration-thickness: 2px;
+        }
+        @keyframes pulse-border {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(91, 155, 213, 0.35);
+            }
+            50% {
+                box-shadow: 0 0 0 12px rgba(91, 155, 213, 0);
+            }
+        }
+        .focus-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--focus-indicator-bg);
+            color: var(--focus-indicator-text);
+            padding: 0.4rem 1rem;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 700;
+            margin-top: 0.6rem;
+            animation: focusGlow 1.5s ease-in-out infinite;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        @keyframes focusGlow {
+            0%,
+            100% {
+                box-shadow: 0 0 8px rgba(91, 155, 213, 0.25);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(91, 155, 213, 0.55);
+            }
+        }
+
+        /* ============ 手机区域 ============ */
+        .phone-area {
+            flex: 0 0 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+            min-width: 300px;
+        }
+        .phone-frame {
+            width: 270px;
+            height: 480px;
+            background: var(--phone-frame-bg);
+            border-radius: 32px;
+            padding: 0.6rem;
+            box-shadow: 0 10px 36px rgba(0, 0, 0, 0.3), inset 0 0 0 2px var(--phone-frame-inner),
+                inset 0 0 0 5px var(--phone-frame-bg), 0 0 0 4px var(--phone-frame-outer);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: var(--phone-screen-bg);
+            border-radius: 24px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: background 0.5s ease;
+        }
+        .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 22px;
+            background: var(--phone-notch-bg);
+            border-radius: 0 0 16px 16px;
+            z-index: 10;
+            transition: background 0.5s ease;
+        }
+        .phone-status-bar {
+            background: var(--phone-status-bg);
+            padding: 0.8rem 1rem 0.2rem;
+            font-size: 0.75em;
+            color: var(--phone-status-text);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            z-index: 5;
+            position: relative;
+            padding-top: 1.2rem;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        .phone-app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.8rem;
+            padding: 0.8rem 1rem;
+            flex: 1;
+            align-content: start;
+        }
+        .phone-app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.15s;
+        }
+        .phone-app:active {
+            transform: scale(0.9);
+        }
+        .app-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            position: relative;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+            transition: all 0.2s;
+        }
+        .app-icon.has-notification::after {
+            content: attr(data-badge);
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ff3b30;
+            color: #fff;
+            font-size: 0.65em;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 0.2rem;
+            animation: badgePulse 2s ease-in-out infinite;
+        }
+        @keyframes badgePulse {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.25);
+            }
+        }
+        .app-name {
+            font-size: 0.7em;
+            color: var(--phone-app-name);
+            font-weight: 500;
+            text-align: center;
+            line-height: 1.2;
+            transition: color 0.5s ease;
+        }
+        .phone-home-indicator {
+            width: 40px;
+            height: 4px;
+            background: #999;
+            border-radius: 3px;
+            margin: 0.6rem auto;
+        }
+        [data-theme="dark"] .phone-home-indicator {
+            background: #555;
+        }
+
+        /* ============ 通知弹窗 ============ */
+        .notification-popup {
+            position: absolute;
+            top: 55px;
+            left: 8px;
+            right: 8px;
+            background: var(--notif-bg);
+            border-radius: 14px;
+            padding: 0.9rem 1rem;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
+            z-index: 20;
+            animation: slideDown 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+            cursor: pointer;
+            border-left: 4px solid var(--notif-accent, #ff3b30);
+            transition: all 0.3s ease, background 0.5s ease;
+        }
+        .notification-popup:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+        }
+        .notification-popup.swiping-away {
+            animation: swipeAway 0.35s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+        }
+        @keyframes slideDown {
+            from {
+                transform: translateY(-60px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        @keyframes swipeAway {
+            to {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+        }
+        .notif-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.2rem;
+        }
+        .notif-app-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .notif-app-name {
+            font-size: 0.75em;
+            font-weight: 700;
+            color: var(--notif-header-color);
+            letter-spacing: 0.3px;
+            transition: color 0.5s ease;
+        }
+        .notif-time {
+            font-size: 0.65em;
+            color: var(--notif-time-color);
+            margin-left: auto;
+            transition: color 0.5s ease;
+        }
+        .notif-body {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: var(--notif-text);
+            margin: 0.2rem 0;
+            line-height: 1.4;
+            transition: color 0.5s ease;
+        }
+        .notif-subtitle {
+            font-size: 0.75em;
+            color: var(--notif-text-secondary);
+            line-height: 1.4;
+            transition: color 0.5s ease;
+        }
+        .notif-psych-tag {
+            display: inline-block;
+            font-size: 0.68em;
+            background: #fff3cd;
+            color: #856404;
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            margin-top: 0.2rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        [data-theme="dark"] .notif-psych-tag {
+            background: #3d3520;
+            color: #e0c060;
+        }
+        .notif-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .notif-btn {
+            flex: 1;
+            padding: 0.5rem 0.8rem;
+            border-radius: 18px;
+            font-size: 0.75em;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .notif-btn.ignore {
+            background: var(--btn-ignore-bg);
+            color: var(--btn-ignore-text);
+        }
+        .notif-btn.ignore:hover {
+            filter: brightness(1.1);
+            transform: scale(1.04);
+        }
+        .notif-btn.accept {
+            background: var(--btn-accept-bg);
+            color: var(--btn-accept-text);
+            animation: gentlePulse 2s ease-in-out infinite;
+        }
+        .notif-btn.accept:hover {
+            filter: brightness(1.1);
+            transform: scale(1.04);
+        }
+        @keyframes gentlePulse {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(255, 59, 48, 0);
+            }
+        }
+
+        /* ============ 技能按钮 ============ */
+        .skills-bar {
+            display: flex;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .skill-btn {
+            padding: 0.7rem 1.2rem;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.9em;
+            cursor: pointer;
+            border: 2px solid transparent;
+            letter-spacing: 0.5px;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+        }
+        .skill-btn:active {
+            transform: scale(0.93);
+        }
+        .skill-btn.focus-mode {
+            background: var(--skill-focus-bg);
+            color: var(--skill-focus-text);
+        }
+        .skill-btn.focus-mode:hover:not(:disabled) {
+            filter: brightness(1.1);
+            box-shadow: 0 6px 20px rgba(91, 155, 213, 0.5);
+        }
+        .skill-btn.breathe {
+            background: var(--skill-breathe-bg);
+            color: var(--skill-breathe-text);
+            border-color: var(--skill-breathe-border);
+        }
+        .skill-btn.breathe:hover:not(:disabled) {
+            filter: brightness(1.08);
+            box-shadow: 0 6px 20px rgba(126, 200, 150, 0.45);
+        }
+        .skill-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            filter: grayscale(25%);
+        }
+        .skill-cooldown {
+            font-size: 0.75em;
+            opacity: 0.85;
+        }
+
+        /* ============ 引导弹窗 ============ */
+        .guide-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--modal-overlay-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.35s ease;
+            padding: 1.5rem;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .guide-card {
+            background: var(--guide-card-bg);
+            border-radius: 24px;
+            padding: 1.8rem;
+            max-width: 650px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: var(--popup-shadow);
+            animation: popIn 0.45s cubic-bezier(0.18, 0.89, 0.32, 1.1);
+            color: var(--guide-text);
+            transition: background 0.5s ease, color 0.5s ease;
+            scroll-behavior: smooth;
+            font-size: 0.95em;
+        }
+        @keyframes popIn {
+            from {
+                transform: scale(0.85) translateY(25px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+        .guide-card::-webkit-scrollbar {
+            width: 6px;
+        }
+        .guide-card::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 10px;
+        }
+        .guide-card::-webkit-scrollbar-thumb {
+            background: #c4b590;
+            border-radius: 10px;
+        }
+        [data-theme="dark"] .guide-card::-webkit-scrollbar-thumb {
+            background: #5a5045;
+        }
+        .guide-header-icon {
+            font-size: 3.5rem;
+            text-align: center;
+            display: block;
+            animation: float 2.5s ease-in-out infinite;
+        }
+        .guide-title {
+            text-align: center;
+            font-size: 1.8em;
+            font-weight: 800;
+            margin: 0.5rem 0 0.2rem;
+            color: var(--guide-text);
+            transition: color 0.5s ease;
+        }
+        .guide-subtitle {
+            text-align: center;
+            font-size: 1em;
+            color: var(--text-secondary);
+            margin-bottom: 1.2rem;
+            letter-spacing: 0.5px;
+            transition: color 0.5s ease;
+        }
+        .guide-section {
+            background: var(--guide-section-bg);
+            border-radius: 14px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 0.8rem;
+            transition: background 0.5s ease;
+            border-left: 4px solid var(--guide-accent);
+        }
+        .guide-section h3 {
+            font-size: 1.1em;
+            margin-bottom: 0.4rem;
+            color: var(--guide-text);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: color 0.5s ease;
+        }
+        .guide-section p,
+        .guide-section li {
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            transition: color 0.5s ease;
+        }
+        .guide-section ul {
+            padding-left: 1.5rem;
+            margin: 0.3rem 0;
+        }
+        .guide-section li {
+            margin-bottom: 0.2rem;
+        }
+        .guide-tip-box {
+            background: var(--guide-tip-bg);
+            border-left: 4px solid var(--guide-tip-border);
+            border-radius: 0 12px 12px 0;
+            padding: 0.8rem 1rem;
+            margin: 0.8rem 0;
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            transition: all 0.5s ease;
+        }
+        .guide-tip-box strong {
+            color: var(--guide-text);
+            transition: color 0.5s ease;
+        }
+        .guide-demo-notif {
+            background: var(--notif-bg);
+            border-radius: 12px;
+            padding: 0.7rem 1rem;
+            margin: 0.5rem 0;
+            border-left: 3px solid #ff3b30;
+            font-size: 0.85em;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+            transition: background 0.5s ease;
+            line-height: 1.5;
+        }
+        .guide-demo-notif .demo-tag {
+            display: inline-block;
+            background: #fff3cd;
+            color: #856404;
+            font-size: 0.8em;
+            padding: 0.1rem 0.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 0.2rem;
+        }
+        [data-theme="dark"] .guide-demo-notif .demo-tag {
+            background: #3d3520;
+            color: #e0c060;
+        }
+        .guide-btn-row {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.2rem;
+        }
+        .guide-btn {
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            letter-spacing: 0.5px;
+            transition: all 0.25s;
+            text-align: center;
+        }
+        .guide-btn.primary {
+            background: #5b9bd5;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(91, 155, 213, 0.35);
+        }
+        .guide-btn.primary:hover {
+            background: #4a8cc7;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 26px rgba(91, 155, 213, 0.5);
+        }
+        .guide-btn.secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 2px solid var(--border-learning);
+        }
+        .guide-btn.secondary:hover {
+            background: var(--guide-section-bg);
+            transform: translateY(-2px);
+        }
+
+        /* ============ 游戏结束弹窗 ============ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--modal-overlay-bg);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+            padding: 1.5rem;
+        }
+        .modal-card {
+            background: var(--modal-card-bg);
+            border-radius: 22px;
+            padding: 1.8rem;
+            max-width: 550px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            text-align: center;
+            box-shadow: var(--popup-shadow);
+            animation: popIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.1);
+            color: var(--modal-text);
+            transition: background 0.5s ease, color 0.5s ease;
+            font-size: 0.95em;
+        }
+        .modal-card h2 {
+            font-size: 1.7em;
+            margin-bottom: 0.4rem;
+            color: var(--modal-text);
+            transition: color 0.5s ease;
+        }
+        .modal-card .grade-emoji {
+            font-size: 3.5rem;
+            display: block;
+            margin: 0.4rem 0;
+            animation: float 2s ease-in-out infinite;
+        }
+        .modal-card .score-detail {
+            text-align: left;
+            font-size: 0.9em;
+            color: var(--modal-text-secondary);
+            line-height: 1.7;
+            margin: 0.8rem 0;
+            padding: 0.8rem 1rem;
+            background: var(--modal-detail-bg);
+            border-radius: 12px;
+            transition: all 0.5s ease;
+        }
+        .modal-card .psych-summary {
+            text-align: left;
+            font-size: 0.85em;
+            background: var(--modal-psych-bg);
+            border-left: 4px solid var(--modal-psych-border);
+            padding: 0.7rem 1rem;
+            border-radius: 0 10px 10px 0;
+            margin: 0.8rem 0;
+            color: var(--modal-text-secondary);
+            line-height: 1.6;
+            transition: all 0.5s ease;
+        }
+        .modal-btn {
+            display: inline-block;
+            padding: 0.7rem 1.8rem;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            border: none;
+            letter-spacing: 0.5px;
+            background: #5b9bd5;
+            color: #fff;
+            transition: all 0.2s;
+            margin: 0.3rem;
+        }
+        .modal-btn:hover {
+            background: #4a8cc7;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(91, 155, 213, 0.45);
+        }
+        .modal-btn.secondary {
+            background: var(--btn-ignore-bg);
+            color: var(--btn-ignore-text);
+        }
+
+        /* ============ 知识Toast ============ */
+        .knowledge-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--toast-bg);
+            color: var(--toast-text);
+            padding: 0.8rem 1.5rem;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            z-index: 50;
+            animation: toastUp 2.5s ease forwards;
+            pointer-events: none;
+            letter-spacing: 0.5px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+            text-align: center;
+            max-width: 90%;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        @keyframes toastUp {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(25px);
+            }
+            15% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+            75% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+        }
+
+        /* ============ 响应式 ============ */
+        @media (max-width: 850px) {
+            body {
+                font-size: 1rem;
+                padding: 0.8rem;
+            }
+            .main-layout {
+                flex-direction: column-reverse;
+            }
+            .phone-area {
+                flex: 0 0 auto;
+            }
+            .phone-frame {
+                width: 230px;
+                height: 400px;
+                border-radius: 26px;
+                padding: 0.5rem;
+            }
+            .phone-screen {
+                border-radius: 20px;
+            }
+            .app-icon {
+                width: 2.5rem;
+                height: 2.5rem;
+                font-size: 1.2rem;
+                border-radius: 10px;
+            }
+            .phone-app-grid {
+                gap: 0.6rem;
+                padding: 0.6rem 0.8rem;
+            }
+            .header {
+                padding: 0.8rem 1rem;
+            }
+            .header h1 {
+                font-size: 1.3em;
+            }
+            .learning-area {
+                padding: 1rem 1.2rem;
+            }
+            .notification-popup {
+                top: 40px;
+                left: 5px;
+                right: 5px;
+                padding: 0.7rem 0.8rem;
+            }
+            .guide-card {
+                padding: 1.2rem;
+                border-radius: 18px;
+                font-size: 0.9em;
+            }
+            .guide-title {
+                font-size: 1.5em;
+            }
+            .guide-section {
+                padding: 0.8rem 1rem;
+            }
+            .modal-card {
+                padding: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ============ 游戏前引导弹窗 ============ -->
+    <div class="guide-overlay" id="guideOverlay">
+        <div class="guide-card" id="guideCard">
+            <span class="guide-header-icon">⏰</span>
+            <div class="guide-title">时间管理大师</div>
+            <div class="guide-subtitle">AI诱惑大作战 · 游戏规则</div>
+
+            <div class="guide-section">
+                <h3>📖 故事背景</h3>
+                <p>你是一名学生，今晚有<strong>4项学习任务</strong>要完成（数学、英语、编程、复习）。但你的手机里装满了AI驱动的App——它们会不断分析你的行为，推送<strong>精心设计的内容</strong>来吸引你点击。</p>
+                <p style="margin-top:0.3rem;">你的挑战：<strong>在虚拟的8:00-22:00之间，坚持完成学习计划！</strong></p>
+            </div>
+
+            <div class="guide-section">
+                <h3>🎯 游戏目标</h3>
+                <ul>
+                    <li>在<strong>22:00前</strong>完成所有4项学习任务</li>
+                    <li>学会<strong>识别并抵制</strong>AI推荐系统的诱惑</li>
+                    <li>保持<strong>意志力</strong>（过低时更容易被诱惑）</li>
+                    <li>积累<strong>成就分</strong>（抵制诱惑+完成任务得分）</li>
+                </ul>
+            </div>
+
+            <div class="guide-section">
+                <h3>🕹️ 操作方式</h3>
+                <ul>
+                    <li><strong>📚 左侧学习桌面：</strong>任务自动推进，进度条会逐渐填满</li>
+                    <li><strong>📱 右侧手机屏幕：</strong>会弹出AI诱惑通知</li>
+                    <li><strong>✋ 忽略诱惑：</strong>消耗一些意志力，但获得成就分</li>
+                    <li><strong>👀 接受诱惑：</strong>学习暂停约8-20分钟，扣分</li>
+                </ul>
+                <div class="guide-demo-notif">
+                    <strong>📱 示例诱惑通知：</strong><br>
+                    <span style="color:#ff3b30;">🔴 抖短视频 · 刚刚</span><br>
+                    "🔥 为你精选了5个搞笑视频"<br>
+                    <span class="demo-tag">🧠 个性化推荐算法</span>
+                    <br><small style="color:#888;">每个通知都标注了AI使用的<strong>心理学技巧</strong>！</small>
+                </div>
+            </div>
+
+            <div class="guide-section">
+                <h3>🛡️ 特殊技能</h3>
+                <ul>
+                    <li><strong>🛡️ 专注模式：</strong>15秒内自动拒绝所有诱惑（冷却35秒）</li>
+                    <li><strong>🌿 深呼吸：</strong>恢复20点意志力（冷却25秒）</li>
+                </ul>
+            </div>
+
+            <div class="guide-tip-box">
+                <strong>💡 教育的意义：</strong>这个游戏帮助你<strong>认识AI推荐系统的成瘾设计</strong>。现实中的短视频、游戏、社交App都使用类似的心理学原理（如FOMO错失恐惧、个性化推荐、无限滚动、稀缺性营销等）来吸引你的注意力。<br>
+                <em>学会识别这些技巧，你就能更好地管理自己的时间！</em>
+            </div>
+
+            <div class="guide-btn-row">
+                <button class="guide-btn primary" id="btnStartGame">🎮 开始游戏</button>
+                <button class="guide-btn secondary" id="btnSkipGuide">跳过说明 ></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ 游戏主界面 ============ -->
+    <div class="game-container" id="gameContainer">
+        <!-- 顶部栏 -->
+        <div class="header">
+            <div class="title-group">
+                <span class="logo-icon">⏰</span>
+                <div>
+                    <h1>时间管理大师</h1>
+                    <div class="subtitle">AI诱惑大作战 · 坚持你的计划</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <span class="stat-icon">🕐</span>
+                        <span>时间</span>
+                        <span class="stat-value time" id="gameClock">8:00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">💪</span>
+                        <span>意志力</span>
+                        <span class="stat-value willpower" id="willpowerDisplay">100</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">⭐</span>
+                        <span>分数</span>
+                        <span class="stat-value score" id="scoreDisplay">0</span>
+                    </div>
+                </div>
+                <button class="help-btn" id="btnHelp" title="查看游戏规则">?</button>
+                <button class="theme-toggle-btn" id="btnThemeToggle" title="切换日间/夜间模式">
+                    <span class="icon-sun">☀️</span>
+                    <span class="icon-moon">🌙</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 主布局 -->
+        <div class="main-layout">
+            <!-- 学习区域 -->
+            <div class="learning-area" id="learningArea">
+                <div class="desk-label">📚 学习桌面</div>
+                <div class="current-task-title" id="currentTaskTitle">数学作业</div>
+                <div class="task-subtitle" id="currentTaskSubtitle">需要专注完成 · 预计30分钟</div>
+                <div class="task-progress-wrap">
+                    <div class="task-progress-fill" id="taskProgressFill" style="width: 0%;"></div>
+                </div>
+                <div class="progress-text" id="progressText">进度 0%</div>
+                <div id="focusIndicatorContainer"></div>
+                <div class="task-list" id="taskList"></div>
+            </div>
+
+            <!-- 手机区域 -->
+            <div class="phone-area">
+                <div class="phone-frame">
+                    <div class="phone-screen" id="phoneScreen">
+                        <div class="phone-notch"></div>
+                        <div class="phone-status-bar">
+                            <span>9:41</span>
+                            <span>📶 🔋 85%</span>
+                        </div>
+                        <div class="phone-app-grid" id="phoneAppGrid"></div>
+                        <div class="phone-home-indicator"></div>
+                    </div>
+                </div>
+                <div class="skills-bar">
+                    <button class="skill-btn focus-mode" id="btnFocusMode" title="专注模式：15秒内自动拒绝所有诱惑">
+                        🛡️ 专注模式 <span class="skill-cooldown" id="focusCooldown"></span>
+                    </button>
+                    <button class="skill-btn breathe" id="btnBreathe" title="深呼吸：恢复20点意志力">
+                        🌿 深呼吸 <span class="skill-cooldown" id="breatheCooldown"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏结束弹窗 -->
+    <div class="modal-overlay" id="modalOverlay" style="display: none;">
+        <div class="modal-card" id="modalCard"></div>
+    </div>
+
+    <!-- 知识Toast容器 -->
+    <div id="toastContainer"></div>
+
+    <script>
+        (function() {
+            // ============ 主题管理 ============
+            const htmlEl = document.documentElement;
+            const btnThemeToggle = document.getElementById('btnThemeToggle');
+
+            const savedTheme = localStorage.getItem('timemanager-theme') || 'light';
+            htmlEl.setAttribute('data-theme', savedTheme);
+
+            btnThemeToggle.addEventListener('click', () => {
+                const current = htmlEl.getAttribute('data-theme');
+                const next = current === 'light' ? 'dark' : 'light';
+                htmlEl.setAttribute('data-theme', next);
+                localStorage.setItem('timemanager-theme', next);
+            });
+
+            // ============ 引导弹窗管理 ============
+            const guideOverlay = document.getElementById('guideOverlay');
+            const btnStartGame = document.getElementById('btnStartGame');
+            const btnSkipGuide = document.getElementById('btnSkipGuide');
+            const btnHelp = document.getElementById('btnHelp');
+            let gameStarted = false;
+
+            function hideGuide() {
+                guideOverlay.style.display = 'none';
+                if (!gameStarted) {
+                    gameStarted = true;
+                    startGame();
+                }
+            }
+
+            function showGuide() {
+                guideOverlay.style.display = 'flex';
+                const guideCard = document.getElementById('guideCard');
+                if (guideCard) guideCard.scrollTop = 0;
+            }
+
+            btnStartGame.addEventListener('click', hideGuide);
+            btnSkipGuide.addEventListener('click', hideGuide);
+            btnHelp.addEventListener('click', () => {
+                if (gameStarted) {
+                    showGuide();
+                    btnStartGame.textContent = '✅ 继续游戏';
+                    btnSkipGuide.textContent = '关闭说明';
+                    const origStartHandler = btnStartGame.onclick;
+                    const origSkipHandler = btnSkipGuide.onclick;
+                    btnStartGame.onclick = function() { hideGuideFromHelp(); };
+                    btnSkipGuide.onclick = function() { hideGuideFromHelp(); };
+
+                    function hideGuideFromHelp() {
+                        guideOverlay.style.display = 'none';
+                        btnStartGame.textContent = '🎮 开始游戏';
+                        btnSkipGuide.textContent = '跳过说明 >';
+                        btnStartGame.onclick = hideGuide;
+                        btnSkipGuide.onclick = hideGuide;
+                    }
+                }
+            });
+
+            // 初始显示引导
+            showGuide();
+
+            // ============ 游戏核心状态 ============
+            const GAME_START_HOUR = 8;
+            const GAME_END_HOUR = 22;
+            const TOTAL_GAME_MINUTES = (GAME_END_HOUR - GAME_START_HOUR) * 60;
+            const REAL_GAME_DURATION_SEC = 200;
+            const TIME_SPEED_RATIO = TOTAL_GAME_MINUTES / REAL_GAME_DURATION_SEC;
+
+            let gameTimeMinutes = 0;
+            let willpower = 100;
+            let score = 0;
+            let gameRunning = false;
+            let gameInterval = null;
+            let notificationTimer = null;
+            let activeNotification = null;
+            let focusModeActive = false;
+            let focusModeEndTime = 0;
+            let focusModeCooldownEnd = 0;
+            let breatheCooldownEnd = 0;
+            let learningPausedUntil = 0;
+            let currentTaskIndex = 0;
+            let temptationAcceptedCount = 0;
+            let temptationRejectedCount = 0;
+            let psychTagsEncountered = {};
+
+            // ============ 学习任务定义 ============
+            const tasks = [
+                { id: 1, name: '数学作业', icon: '📐', subtitle: '代数练习题 · 需要30分钟', totalMinutes: 30, progress: 0,
+                    color: '#5b9bd5' },
+                { id: 2, name: '英语阅读', icon: '📖', subtitle: '阅读理解2篇 · 需要25分钟', totalMinutes: 25, progress: 0,
+                    color: '#e8915c' },
+                { id: 3, name: '编程练习', icon: '💻', subtitle: 'Python小项目 · 需要35分钟', totalMinutes: 35, progress: 0,
+                    color: '#6c5ce7' },
+                { id: 4, name: '复习笔记', icon: '📝', subtitle: '整理今日所学 · 需要20分钟', totalMinutes: 20, progress: 0,
+                    color: '#2ecc71' },
+            ];
+
+            // ============ AI诱惑模板 ============
+            const temptationTemplates = [
+                { appName: '抖短视频', appIcon: '🎬', appColor: '#ff3b30', title: '🔥 为你精选了5个搞笑视频',
+                    subtitle: '根据你的观看历史，这些视频你可能喜欢...', psychTag: '个性化推荐算法',
+                    psychDetail: 'AI分析你的行为数据，精准推送让你停不下来的内容', attraction: 8 },
+                { appName: '王者对战', appIcon: '⚔️', appColor: '#ff9500', title: '好友邀请你组队开黑！',
+                    subtitle: '你的3位好友正在线上等你加入...', psychTag: '社交压力(FOMO)',
+                    psychDetail: '利用错失恐惧心理，让你觉得不参与就会错过重要社交', attraction: 9 },
+                { appName: '微博热榜', appIcon: '💬', appColor: '#ff6b6b', title: '🔥 你关注的博主更新了',
+                    subtitle: '热门话题：#你的偶像# 正在刷屏...', psychTag: '从众效应',
+                    psychDetail: '展示大家都在看的内容，利用社会认同感吸引你点击', attraction: 7 },
+                { appName: '无限阅读', appIcon: '📱', appColor: '#5856d6', title: '📖 继续浏览更多内容...',
+                    subtitle: '下拉刷新，永远有新的内容等着你', psychTag: '无限滚动设计',
+                    psychDetail: '没有尽头的瀑布流，消除"停止信号"，让你不知不觉刷很久', attraction: 8 },
+                { appName: '游戏中心', appIcon: '🎮', appColor: '#34c759', title: '⏰ 限时双倍经验！仅剩45分钟',
+                    subtitle: '错过今天就要等一个月！立即领取奖励', psychTag: '稀缺性+奖励机制',
+                    psychDetail: '制造紧迫感和可变奖励，类似赌博机的随机奖励机制', attraction: 10 },
+                { appName: '购物App', appIcon: '🛍️', appColor: '#ff6482', title: '💥 限时优惠！你收藏的商品降价了',
+                    subtitle: '仅剩2小时 · 已有328人购买', psychTag: '稀缺性营销',
+                    psychDetail: '倒计时和库存警示制造紧迫感，促使冲动决策', attraction: 7 },
+                { appName: '直播平台', appIcon: '📡', appColor: '#e4405f', title: '🔴 你关注的主播正在直播',
+                    subtitle: '精彩内容进行中，快来互动吧！', psychTag: '实时互动吸引',
+                    psychDetail: '直播的实时性和互动性让人产生陪伴感和参与感', attraction: 8 },
+                { appName: '资讯推荐', appIcon: '📰', appColor: '#007aff', title: '🤖 AI为你定制了今日资讯',
+                    subtitle: '基于你的兴趣画像，这5篇文章值得一读', psychTag: '信息茧房',
+                    psychDetail: '算法只展示你认同的观点，让你陷入舒适的信息泡泡中', attraction: 6 },
+            ];
+
+            // ============ 手机App图标 ============
+            const phoneApps = [
+                { name: '抖短视频', icon: '🎬', color: '#ff3b30', notifCount: 0 },
+                { name: '王者对战', icon: '⚔️', color: '#ff9500', notifCount: 0 },
+                { name: '微博', icon: '💬', color: '#ff6b6b', notifCount: 0 },
+                { name: '无限阅读', icon: '📱', color: '#5856d6', notifCount: 0 },
+                { name: '游戏中心', icon: '🎮', color: '#34c759', notifCount: 0 },
+                { name: '购物', icon: '🛍️', color: '#ff6482', notifCount: 0 },
+                { name: '直播', icon: '📡', color: '#e4405f', notifCount: 0 },
+                { name: '资讯', icon: '📰', color: '#007aff', notifCount: 0 },
+            ];
+
+            // ============ DOM引用 ============
+            const $gameClock = document.getElementById('gameClock');
+            const $willpowerDisplay = document.getElementById('willpowerDisplay');
+            const $scoreDisplay = document.getElementById('scoreDisplay');
+            const $currentTaskTitle = document.getElementById('currentTaskTitle');
+            const $currentTaskSubtitle = document.getElementById('currentTaskSubtitle');
+            const $taskProgressFill = document.getElementById('taskProgressFill');
+            const $progressText = document.getElementById('progressText');
+            const $taskList = document.getElementById('taskList');
+            const $focusIndicatorContainer = document.getElementById('focusIndicatorContainer');
+            const $phoneAppGrid = document.getElementById('phoneAppGrid');
+            const $phoneScreen = document.getElementById('phoneScreen');
+            const $btnFocusMode = document.getElementById('btnFocusMode');
+            const $btnBreathe = document.getElementById('btnBreathe');
+            const $focusCooldown = document.getElementById('focusCooldown');
+            const $breatheCooldown = document.getElementById('breatheCooldown');
+            const $modalOverlay = document.getElementById('modalOverlay');
+            const $modalCard = document.getElementById('modalCard');
+            const $toastContainer = document.getElementById('toastContainer');
+            const $learningArea = document.getElementById('learningArea');
+
+            // ============ 手机App渲染 ============
+            function buildPhoneApps() {
+                $phoneAppGrid.innerHTML = '';
+                phoneApps.forEach((app) => {
+                    const div = document.createElement('div');
+                    div.className = 'phone-app';
+                    div.innerHTML = `
+                        <div class="app-icon ${app.notifCount > 0 ? 'has-notification' : ''}"
+                             data-badge="${app.notifCount}"
+                             style="background:${app.color};">
+                            ${app.icon}
+                        </div>
+                        <span class="app-name">${app.name}</span>
+                    `;
+                    $phoneAppGrid.appendChild(div);
+                });
+            }
+
+            function updatePhoneBadges() {
+                const icons = $phoneAppGrid.querySelectorAll('.app-icon');
+                icons.forEach((iconEl, i) => {
+                    if (phoneApps[i].notifCount > 0) {
+                        iconEl.classList.add('has-notification');
+                        iconEl.setAttribute('data-badge', phoneApps[i].notifCount);
+                    } else {
+                        iconEl.classList.remove('has-notification');
+                        iconEl.removeAttribute('data-badge');
+                    }
+                });
+            }
+
+            // ============ 任务列表渲染 ============
+            function buildTaskList() {
+                $taskList.innerHTML = '';
+                tasks.forEach((task, i) => {
+                    const chip = document.createElement('span');
+                    chip.className = 'task-chip pending';
+                    chip.textContent = `${task.icon} ${task.name}`;
+                    chip.id = `taskChip${i}`;
+                    $taskList.appendChild(chip);
+                });
+                updateTaskChips();
+            }
+
+            function updateTaskChips() {
+                tasks.forEach((task, i) => {
+                    const chip = document.getElementById(`taskChip${i}`);
+                    if (!chip) return;
+                    chip.className = 'task-chip';
+                    if (task.progress >= task.totalMinutes) {
+                        chip.classList.add('done');
+                    } else if (i === currentTaskIndex) {
+                        chip.classList.add('active');
+                    } else {
+                        chip.classList.add('pending');
+                    }
+                });
+            }
+
+            function updateCurrentTaskDisplay() {
+                if (currentTaskIndex >= tasks.length) {
+                    $currentTaskTitle.textContent = '🎉 全部完成！';
+                    $currentTaskSubtitle.textContent = '太棒了！你坚持完成了所有学习任务';
+                    $taskProgressFill.style.width = '100%';
+                    $taskProgressFill.classList.add('completed');
+                    $progressText.textContent = '进度 100% ✓';
+                    return;
+                }
+                const task = tasks[currentTaskIndex];
+                $currentTaskTitle.textContent = `${task.icon} ${task.name}`;
+                $currentTaskSubtitle.textContent = task.subtitle;
+                const pct = Math.min(100, Math.round((task.progress / task.totalMinutes) * 100));
+                $taskProgressFill.style.width = pct + '%';
+                $taskProgressFill.classList.remove('completed');
+                $progressText.textContent = `进度 ${pct}%`;
+            }
+
+            function updateFocusIndicator() {
+                $focusIndicatorContainer.innerHTML = '';
+                if (focusModeActive) {
+                    const indicator = document.createElement('span');
+                    indicator.className = 'focus-indicator';
+                    indicator.textContent = '🛡️ 专注模式开启中 · 自动抵御诱惑';
+                    $focusIndicatorContainer.appendChild(indicator);
+                }
+            }
+
+            // ============ 通知管理 ============
+            function removeActiveNotification() {
+                if (activeNotification) {
+                    const el = activeNotification.element;
+                    if (el && el.parentNode) {
+                        el.classList.add('swiping-away');
+                        setTimeout(() => {
+                            if (el.parentNode) el.parentNode.removeChild(el);
+                        }, 350);
+                    }
+                    activeNotification = null;
+                }
+                const existing = $phoneScreen.querySelectorAll('.notification-popup');
+                existing.forEach(e => {
+                    if (!activeNotification || e !== activeNotification.element) {
+                        e.remove();
+                    }
+                });
+            }
+
+            function spawnNotification() {
+                if (!gameRunning) return;
+                if (focusModeActive) return;
+                if (activeNotification) return;
+                if (currentTaskIndex >= tasks.length) return;
+
+                const template = temptationTemplates[Math.floor(Math.random() * temptationTemplates.length)];
+                const appIndex = phoneApps.findIndex(a => a.name === template.appName);
+                if (appIndex >= 0) {
+                    phoneApps[appIndex].notifCount = Math.min(9, phoneApps[appIndex].notifCount + 1);
+                }
+                updatePhoneBadges();
+
+                const notifEl = document.createElement('div');
+                notifEl.className = 'notification-popup';
+                notifEl.style.setProperty('--notif-accent', template.appColor);
+                notifEl.innerHTML = `
+                    <div class="notif-header">
+                        <span class="notif-app-icon" style="background:${template.appColor};">${template.appIcon}</span>
+                        <span class="notif-app-name">${template.appName}</span>
+                        <span class="notif-time">刚刚</span>
+                    </div>
+                    <div class="notif-body">${template.title}</div>
+                    <div class="notif-subtitle">${template.subtitle}</div>
+                    <span class="notif-psych-tag">🧠 ${template.psychTag}</span>
+                    <div class="notif-actions">
+                        <button class="notif-btn ignore" id="btnIgnore">✋ 忽略诱惑</button>
+                        <button class="notif-btn accept" id="btnAccept">👀 看一看...</button>
+                    </div>
+                `;
+
+                $phoneScreen.appendChild(notifEl);
+
+                const notificationData = {
+                    element: notifEl,
+                    template: template,
+                    spawnedAt: Date.now(),
+                    timeoutId: null,
+                };
+                activeNotification = notificationData;
+
+                const btnIgnore = notifEl.querySelector('#btnIgnore');
+                const btnAccept = notifEl.querySelector('#btnAccept');
+
+                btnIgnore.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    rejectNotification(notificationData);
+                });
+                btnAccept.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    acceptNotification(notificationData);
+                });
+
+                notificationData.timeoutId = setTimeout(() => {
+                    if (activeNotification === notificationData) {
+                        acceptNotification(notificationData);
+                    }
+                }, 8000);
+
+                if (appIndex >= 0 && phoneApps[appIndex].notifCount > 0) {
+                    phoneApps[appIndex].notifCount = Math.max(0, phoneApps[appIndex].notifCount - 1);
+                }
+                updatePhoneBadges();
+            }
+
+            function rejectNotification(notifData) {
+                if (activeNotification !== notifData) return;
+                if (notifData.timeoutId) clearTimeout(notifData.timeoutId);
+                const cost = notifData.template.attraction;
+                willpower = Math.max(0, willpower - cost);
+                score += 15;
+                temptationRejectedCount++;
+                const tag = notifData.template.psychTag;
+                psychTagsEncountered[tag] = (psychTagsEncountered[tag] || 0) + 1;
+                showKnowledgeToast(`🧠 你识破了「${notifData.template.psychTag}」！${notifData.template.psychDetail}`);
+                removeActiveNotification();
+                updateWillpowerDisplay();
+                updateScoreDisplay();
+                flashLearningArea('#d4edda');
+            }
+
+            function acceptNotification(notifData) {
+                if (activeNotification !== notifData) return;
+                if (notifData.timeoutId) clearTimeout(notifData.timeoutId);
+                temptationAcceptedCount++;
+                const penaltyMinutes = 8 + Math.floor(Math.random() * 12);
+                const penaltyRealSec = penaltyMinutes / TIME_SPEED_RATIO;
+                learningPausedUntil = Math.max(learningPausedUntil, Date.now() + penaltyRealSec * 1000);
+                willpower = Math.min(100, willpower + 3);
+                score = Math.max(0, score - 5);
+                const tag = notifData.template.psychTag;
+                psychTagsEncountered[tag] = (psychTagsEncountered[tag] || 0) + 1;
+                showKnowledgeToast(`⚠️ 你落入了「${notifData.template.psychTag}」的陷阱！学习暂停了约${penaltyMinutes}分钟`);
+                removeActiveNotification();
+                updateWillpowerDisplay();
+                updateScoreDisplay();
+                flashLearningArea('#fce4e4');
+            }
+
+            function flashLearningArea(color) {
+                const origBg = $learningArea.style.backgroundColor;
+                $learningArea.style.transition = 'background-color 0.15s ease';
+                $learningArea.style.backgroundColor = color;
+                setTimeout(() => {
+                    $learningArea.style.backgroundColor = origBg;
+                    setTimeout(() => { $learningArea.style.transition = ''; }, 200);
+                }, 200);
+            }
+
+            function showKnowledgeToast(message) {
+                const toast = document.createElement('div');
+                toast.className = 'knowledge-toast';
+                toast.textContent = message;
+                $toastContainer.appendChild(toast);
+                setTimeout(() => {
+                    if (toast.parentNode) toast.parentNode.removeChild(toast);
+                }, 2600);
+            }
+
+            // ============ 游戏循环 ============
+            function gameTick() {
+                if (!gameRunning) return;
+                const now = Date.now();
+                const realElapsed = 1 / 10;
+                const gameMinutesElapsed = realElapsed * TIME_SPEED_RATIO;
+                gameTimeMinutes += gameMinutesElapsed;
+
+                const currentGameHour = GAME_START_HOUR + gameTimeMinutes / 60;
+                if (currentGameHour >= GAME_END_HOUR || gameTimeMinutes >= TOTAL_GAME_MINUTES) {
+                    endGame();
+                    return;
+                }
+
+                const displayHour = Math.floor(currentGameHour);
+                const displayMinute = Math.floor((currentGameHour - displayHour) * 60);
+                $gameClock.textContent = `${displayHour}:${String(displayMinute).padStart(2, '0')}`;
+
+                if (focusModeActive && now >= focusModeEndTime) {
+                    focusModeActive = false;
+                    updateFocusIndicator();
+                    $btnFocusMode.disabled = false;
+                    $focusCooldown.textContent = '';
+                }
+
+                updateSkillCooldowns(now);
+
+                if (now >= learningPausedUntil && currentTaskIndex < tasks.length) {
+                    const task = tasks[currentTaskIndex];
+                    const efficiencyMultiplier = focusModeActive ? 1.5 : 1.0;
+                    task.progress += gameMinutesElapsed * efficiencyMultiplier;
+                    if (task.progress >= task.totalMinutes) {
+                        task.progress = task.totalMinutes;
+                        score += 30;
+                        currentTaskIndex++;
+                        updateTaskChips();
+                        if (currentTaskIndex < tasks.length) {
+                            showKnowledgeToast(`✅ 完成「${task.name}」！太棒了，继续加油！`);
+                        } else {
+                            showKnowledgeToast('🎉 所有学习任务完成！你是真正的时间管理大师！');
+                            setTimeout(() => endGame(), 1500);
+                            gameRunning = false;
+                        }
+                    }
+                }
+
+                updateCurrentTaskDisplay();
+                updateTaskChips();
+                updateWillpowerDisplay();
+                updateScoreDisplay();
+                updateFocusIndicator();
+
+                if (willpower <= 15 && willpower > 0) {
+                    $willpowerDisplay.style.color = '#e94560';
+                } else {
+                    $willpowerDisplay.style.color = '';
+                }
+                if (willpower <= 0) willpower = 0;
+            }
+
+            function updateSkillCooldowns(now) {
+                if (now < focusModeCooldownEnd && !focusModeActive) {
+                    const remaining = Math.ceil((focusModeCooldownEnd - now) / 1000);
+                    $focusCooldown.textContent = `(${remaining}秒)`;
+                    $btnFocusMode.disabled = true;
+                } else if (!focusModeActive) {
+                    $focusCooldown.textContent = '';
+                    $btnFocusMode.disabled = false;
+                }
+                if (focusModeActive) {
+                    $btnFocusMode.disabled = true;
+                    const remaining = Math.ceil((focusModeEndTime - now) / 1000);
+                    $focusCooldown.textContent = `(生效中 ${remaining}秒)`;
+                }
+                if (now < breatheCooldownEnd) {
+                    const remaining = Math.ceil((breatheCooldownEnd - now) / 1000);
+                    $breatheCooldown.textContent = `(${remaining}秒)`;
+                    $btnBreathe.disabled = true;
+                } else {
+                    $breatheCooldown.textContent = '';
+                    $btnBreathe.disabled = false;
+                }
+            }
+
+            function updateWillpowerDisplay() {
+                $willpowerDisplay.textContent = Math.round(willpower);
+            }
+
+            function updateScoreDisplay() {
+                $scoreDisplay.textContent = Math.round(score);
+            }
+
+            // ============ 技能按钮 ============
+            $btnFocusMode.addEventListener('click', () => {
+                const now = Date.now();
+                if (focusModeActive || now < focusModeCooldownEnd) return;
+                focusModeActive = true;
+                focusModeEndTime = now + 15000;
+                focusModeCooldownEnd = now + 35000;
+                removeActiveNotification();
+                updateFocusIndicator();
+                updateSkillCooldowns(now);
+                score += 5;
+                showKnowledgeToast('🛡️ 专注模式开启！15秒内自动抵御所有AI诱惑');
+            });
+
+            $btnBreathe.addEventListener('click', () => {
+                const now = Date.now();
+                if (now < breatheCooldownEnd) return;
+                willpower = Math.min(100, willpower + 20);
+                breatheCooldownEnd = now + 25000;
+                updateWillpowerDisplay();
+                updateSkillCooldowns(now);
+                score += 3;
+                showKnowledgeToast('🌿 深呼吸帮助你恢复了20点意志力！正念是应对诱惑的好方法');
+            });
+
+            // ============ 游戏结束 ============
+            function endGame() {
+                gameRunning = false;
+                if (gameInterval) clearInterval(gameInterval);
+                if (notificationTimer) clearTimeout(notificationTimer);
+                removeActiveNotification();
+                updateCurrentTaskDisplay();
+                updateTaskChips();
+
+                const tasksCompleted = tasks.filter(t => t.progress >= t.totalMinutes).length;
+                let grade = '',
+                    gradeEmoji = '',
+                    feedback = '';
+                if (tasksCompleted >= 4 && temptationRejectedCount >= 8) {
+                    grade = 'S · 时间管理大师';
+                    gradeEmoji = '🏆';
+                    feedback =
+                        '你展现了极强的自我管理能力！面对AI推荐系统的各种诱惑，你坚持了自己的计划。你已经理解了推荐系统的成瘾设计，并能有效抵制。';
+                } else if (tasksCompleted >= 3 && temptationRejectedCount >= 5) {
+                    grade = 'A · 自律达人';
+                    gradeEmoji = '🌟';
+                    feedback = '大部分时间你都能坚持计划，但偶尔也会被AI推荐吸引。继续练习自我管理技巧，你会变得更强！';
+                } else if (tasksCompleted >= 2) {
+                    grade = 'B · 努力进步中';
+                    gradeEmoji = '📚';
+                    feedback = '你完成了部分任务，但AI推荐系统还是分散了你的注意力。认识这些成瘾机制是第一步，下次试试使用专注模式吧！';
+                } else if (tasksCompleted >= 1) {
+                    grade = 'C · 需要加油';
+                    gradeEmoji = '💪';
+                    feedback =
+                        'AI推荐系统太强大了，对吧？它们就是被设计成让人上瘾的。了解这一点，下次你就能更好地识别它们的伎俩。';
+                } else {
+                    grade = 'D · 被AI俘获';
+                    gradeEmoji = '📱';
+                    feedback =
+                        '你完全被AI推荐系统牵着走了。别灰心！这些系统由顶尖工程师设计，目的就是让你沉迷。认识它们是第一步。';
+                }
+
+                let psychSummaryHTML = '';
+                const tagEntries = Object.entries(psychTagsEncountered);
+                if (tagEntries.length > 0) {
+                    psychSummaryHTML = '<strong>🧠 你遇到的AI推荐成瘾机制：</strong><br>';
+                    tagEntries.forEach(([tag, count]) => {
+                        psychSummaryHTML += `· <strong>${tag}</strong>：遇到${count}次<br>`;
+                    });
+                    psychSummaryHTML +=
+                        '<br><em>💡 提示：AI推荐系统利用这些心理学原理来吸引你的注意力。下次看到类似的推送时，试着识别它们使用了哪种技巧！</em>';
+                }
+
+                const totalTemptations = temptationAcceptedCount + temptationRejectedCount;
+                const resistRate = totalTemptations > 0 ? Math.round((temptationRejectedCount / totalTemptations) *
+                    100) : 100;
+
+                $modalCard.innerHTML = `
+                    <span class="grade-emoji">${gradeEmoji}</span>
+                    <h2>${grade}</h2>
+                    <p style="color:var(--modal-text-secondary);margin:0.4rem 0;">你的时间管理评分</p>
+                    <div class="score-detail">
+                        📚 完成任务：<strong>${tasksCompleted}/${tasks.length}</strong><br>
+                        ✋ 抵制诱惑：<strong>${temptationRejectedCount}次</strong>（抵制率 ${resistRate}%）<br>
+                        👀 接受诱惑：<strong>${temptationAcceptedCount}次</strong><br>
+                        ⭐ 总成就分：<strong>${Math.round(score)}</strong><br>
+                        💪 剩余意志力：<strong>${Math.round(willpower)}</strong>
+                    </div>
+                    <div class="psych-summary">${psychSummaryHTML}</div>
+                    <p style="font-size:0.9em;color:var(--modal-text-secondary);line-height:1.5;margin:0.8rem 0;">${feedback}</p>
+                    <button class="modal-btn" onclick="location.reload()">🔄 再来一局</button>
+                    <button class="modal-btn secondary" id="btnCloseModal">📋 查看游戏画面</button>
+                `;
+                $modalOverlay.style.display = 'flex';
+
+                document.getElementById('btnCloseModal').addEventListener('click', () => {
+                    $modalOverlay.style.display = 'none';
+                    $modalCard.innerHTML = '';
+                });
+            }
+
+            // ============ 启动游戏 ============
+            function startGame() {
+                gameTimeMinutes = 0;
+                willpower = 100;
+                score = 0;
+                gameRunning = true;
+                currentTaskIndex = 0;
+                temptationAcceptedCount = 0;
+                temptationRejectedCount = 0;
+                psychTagsEncountered = {};
+                focusModeActive = false;
+                focusModeEndTime = 0;
+                focusModeCooldownEnd = 0;
+                breatheCooldownEnd = 0;
+                learningPausedUntil = 0;
+                activeNotification = null;
+                tasks.forEach(t => t.progress = 0);
+                phoneApps.forEach(a => a.notifCount = 0);
+
+                $gameClock.textContent = '8:00';
+                $willpowerDisplay.textContent = '100';
+                $willpowerDisplay.style.color = '';
+                $scoreDisplay.textContent = '0';
+                $modalOverlay.style.display = 'none';
+                $focusCooldown.textContent = '';
+                $breatheCooldown.textContent = '';
+                $btnFocusMode.disabled = false;
+                $btnBreathe.disabled = false;
+                $focusIndicatorContainer.innerHTML = '';
+                $taskProgressFill.classList.remove('completed');
+
+                buildPhoneApps();
+                buildTaskList();
+                updateCurrentTaskDisplay();
+                updateTaskChips();
+                removeActiveNotification();
+                $phoneScreen.querySelectorAll('.notification-popup').forEach(e => e.remove());
+
+                if (gameInterval) clearInterval(gameInterval);
+                if (notificationTimer) clearTimeout(notificationTimer);
+
+                gameInterval = setInterval(gameTick, 100);
+
+                function scheduleNextNotification() {
+                    if (!gameRunning) return;
+                    const delay = 3000 + Math.random() * 5000;
+                    notificationTimer = setTimeout(() => {
+                        if (gameRunning && !focusModeActive && currentTaskIndex < tasks.length) {
+                            spawnNotification();
+                        }
+                        scheduleNextNotification();
+                    }, delay);
+                }
+                scheduleNextNotification();
+
+                showKnowledgeToast('🎮 游戏开始！坚持你的学习计划，抵制AI推荐系统的诱惑吧！');
+            }
+
+            // ============ 关闭游戏结束弹窗的遮罩点击 ============
+            $modalOverlay.addEventListener('click', function(e) {
+                if (e.target === $modalOverlay && $modalOverlay.style.display === 'flex') {
+                    $modalOverlay.style.display = 'none';
+                    $modalCard.innerHTML = '';
+                }
+            });
+
+            console.log('⏰ 时间管理大师 - AI诱惑大作战 已就绪');
+            console.log('🌓 日间/夜间模式已启用，默认日间模式');
+            console.log('📖 游戏前引导已就绪，字体已优化放大');
+            console.log('📚 教育主题：认识AI推荐系统的成瘾设计 | 实践自我管理 | 平衡学习与娱乐');
+        })();
+    </script>
+</body>
+</html>

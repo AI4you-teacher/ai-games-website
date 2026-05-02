@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 职业配对师</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root[data-theme="light"]{
+  --bg:#fff5f0; --bg2:#ffeae0; --card:#fff; --text:#2d1810; --sub:#8b5a40;
+  --accent:#ff7f50; --accent-dark:#e85d32; --accent2:#4ecdc4; --accent3:#ff6b9d;
+  --border:#ffd9ca; --shadow:rgba(255,127,80,.2);
+  --btn:#ff7f50; --btn-text:#fff;
+  --low:#10b981; --mid:#f59e0b; --high:#ef4444;
+  --success:#10b981; --warn:#f59e0b; --error:#ef4444;
+}
+:root[data-theme="dark"]{
+  --bg:#1a0d08; --bg2:#241310; --card:#2a1810; --text:#fed7aa; --sub:#c49b7a;
+  --accent:#ff9071; --accent-dark:#ff7f50; --accent2:#5ed8cf; --accent3:#ff85b0;
+  --border:#3d2318; --shadow:rgba(255,144,113,.25);
+  --btn:#ff9071; --btn-text:#1a0d08;
+  --low:#34d399; --mid:#fbbf24; --high:#f87171;
+  --success:#34d399; --warn:#fbbf24; --error:#f87171;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:'Nunito',sans-serif; min-height:100vh;
+  transition:background .3s, color .3s;
+  background-image:
+    radial-gradient(ellipse at 15% 0%, rgba(255,127,80,.12), transparent 50%),
+    radial-gradient(ellipse at 85% 100%, rgba(78,205,196,.08), transparent 50%);
+}
+
+/* ===== HEADER ===== */
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;flex-wrap:wrap;gap:10px}
+.logo{font-family:'ZCOOL KuaiLe',cursive;font-size:1.4rem;color:var(--accent);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stage-badge{font-size:.7rem;background:rgba(255,127,80,.18);color:var(--accent);padding:3px 10px;border-radius:20px;font-weight:700;letter-spacing:1px}
+.header-right{display:flex;gap:8px;align-items:center}
+.theme-btn,.home-btn{
+  background:var(--card);border:2px solid var(--border);border-radius:50px;
+  padding:6px 14px;cursor:pointer;font-size:.9rem;color:var(--text);
+  font-family:'Nunito',sans-serif;font-weight:700;transition:all .2s;
+}
+.theme-btn:hover,.home-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ===== SCREENS ===== */
+.screen{display:none;min-height:85vh;padding:16px}
+.screen.active{display:block;animation:fadeIn .4s ease}
+.screen.center{align-items:center;justify-content:center;flex-direction:column}
+.screen.center.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== INTRO ===== */
+.intro-card{
+  background:var(--card);border-radius:28px;padding:36px;max-width:640px;width:100%;
+  box-shadow:0 12px 48px var(--shadow);text-align:center;
+}
+.intro-emoji{font-size:3.5rem;margin-bottom:10px;animation:wiggle 3s ease-in-out infinite}
+@keyframes wiggle{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.game-number{font-size:.75rem;font-weight:800;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:8px}
+h1{font-family:'ZCOOL KuaiLe',cursive;font-size:2.3rem;color:var(--accent);margin-bottom:8px}
+.tagline{color:var(--sub);margin-bottom:22px;line-height:1.6;font-size:.95rem}
+.rules-list{text-align:left;margin-bottom:24px;display:grid;gap:10px}
+.rule-item{
+  background:var(--bg);border-radius:12px;padding:12px 16px;display:flex;gap:12px;align-items:flex-start;
+  border-left:3px solid var(--accent);
+}
+.rule-icon{font-size:1.3rem;line-height:1}
+.rule-text{font-size:.88rem;color:var(--sub);line-height:1.55;flex:1}
+.rule-text strong{color:var(--text);font-weight:800}
+.start-btn{
+  background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--btn-text);
+  border:none;border-radius:50px;padding:14px 40px;font-size:1.05rem;font-weight:800;
+  cursor:pointer;font-family:'Nunito',sans-serif;box-shadow:0 6px 24px var(--shadow);
+  transition:transform .15s; letter-spacing:1px;
+}
+.start-btn:hover{transform:translateY(-2px) scale(1.03)}
+
+/* ===== GAME ===== */
+.game-wrap{background:var(--card);border-radius:24px;padding:22px;max-width:720px;width:100%;box-shadow:0 8px 40px var(--shadow);margin:0 auto}
+
+/* Progress bar */
+.progress-bar-wrap{margin-bottom:18px}
+.progress-info-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.progress-counter{font-size:.85rem;font-weight:800;color:var(--accent)}
+.progress-score{font-size:.78rem;color:var(--sub);font-weight:700;background:var(--bg);padding:4px 12px;border-radius:50px}
+.progress-score b{color:var(--accent)}
+.progress-track{
+  height:10px;background:var(--bg);border-radius:10px;overflow:hidden;
+  border:2px solid var(--border);
+}
+.progress-fill{
+  height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-dark));
+  border-radius:10px;transition:width .5s cubic-bezier(.4,0,.2,1);
+  width:0%;
+}
+
+/* Profession card */
+.prof-card{
+  background:linear-gradient(135deg,rgba(255,127,80,.1),rgba(78,205,196,.06));
+  border:2px solid var(--border);border-radius:20px;
+  padding:24px 20px;margin-bottom:16px;text-align:center;
+  animation:cardIn .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes cardIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.prof-emoji{font-size:4.5rem;margin-bottom:8px;line-height:1;display:block}
+.prof-name{font-family:'ZCOOL KuaiLe',cursive;font-size:1.8rem;color:var(--accent);margin-bottom:6px}
+.prof-desc{font-size:.92rem;color:var(--text);margin-bottom:10px;line-height:1.6;font-weight:500}
+.prof-tasks{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:8px}
+.prof-task{
+  background:var(--card);border:1.5px solid var(--border);border-radius:50px;
+  padding:4px 12px;font-size:.78rem;color:var(--sub);font-weight:600;
+}
+
+/* Question */
+.question-label{
+  font-size:1rem;font-weight:800;color:var(--text);text-align:center;
+  margin-bottom:18px;line-height:1.5;
+}
+.question-label .highlight{color:var(--accent)}
+
+/* Slider */
+.slider-wrap{margin-bottom:20px;padding:0 8px}
+.slider-value-display{
+  text-align:center;margin-bottom:10px;
+}
+.slider-value-num{
+  font-family:'ZCOOL KuaiLe',cursive;font-size:3.2rem;
+  color:var(--accent);line-height:1;display:inline-block;
+  transition:color .2s;text-shadow:0 2px 8px var(--shadow);
+}
+.slider-value-label{
+  font-size:.85rem;font-weight:800;
+  padding:4px 14px;border-radius:50px;margin-top:4px;
+  display:inline-block;color:#fff;
+  transition:background .2s;
+}
+.slider-track-wrap{position:relative;padding:16px 0}
+.slider-track{
+  width:100%;height:14px;border-radius:10px;
+  background:linear-gradient(90deg,var(--low) 0%,var(--low) 20%,var(--mid) 50%,var(--high) 80%,var(--high) 100%);
+  position:relative;
+}
+.slider-input{
+  position:absolute;inset:0;width:100%;height:100%;
+  -webkit-appearance:none;appearance:none;background:transparent;
+  cursor:pointer;outline:none;margin:0;
+}
+.slider-input::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:32px;height:32px;border-radius:50%;
+  background:var(--card);border:4px solid var(--accent);
+  box-shadow:0 4px 16px var(--shadow),0 0 0 2px rgba(255,255,255,.6) inset;
+  cursor:grab;transition:transform .1s;
+}
+.slider-input::-webkit-slider-thumb:active{cursor:grabbing;transform:scale(1.2)}
+.slider-input::-moz-range-thumb{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--card);border:4px solid var(--accent);
+  box-shadow:0 4px 16px var(--shadow);
+  cursor:grab;transition:transform .1s;
+}
+.slider-input::-moz-range-thumb:active{cursor:grabbing;transform:scale(1.2)}
+.slider-ticks{
+  display:flex;justify-content:space-between;padding:8px 10px 0;
+  font-size:.72rem;color:var(--sub);font-weight:700;
+}
+.slider-ticks span{text-align:center;flex:1;position:relative}
+.slider-ticks .tick-1{color:var(--low)}
+.slider-ticks .tick-5{color:var(--mid)}
+.slider-ticks .tick-10{color:var(--high)}
+
+.slider-legend{
+  display:flex;justify-content:space-between;align-items:center;
+  background:var(--bg);border-radius:10px;padding:8px 12px;
+  margin-top:10px;font-size:.75rem;color:var(--sub);font-weight:700;
+  gap:8px;flex-wrap:wrap;
+}
+.slider-legend div{text-align:center;flex:1;min-width:0}
+.slider-legend b{display:block;margin-bottom:2px}
+
+/* Action buttons */
+.action-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.action-btn{
+  flex:1;min-width:140px;padding:12px 18px;border-radius:12px;
+  font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:800;
+  cursor:pointer;border:2px solid var(--border);background:var(--bg);
+  color:var(--text);transition:all .2s;
+}
+.action-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.action-btn.primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+  color:var(--btn-text);border-color:transparent;
+  box-shadow:0 4px 16px var(--shadow);
+}
+.action-btn.primary:hover:not(:disabled){transform:translateY(-2px);color:var(--btn-text)}
+.action-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ===== FEEDBACK (after rating) ===== */
+.feedback-wrap{animation:cardIn .4s cubic-bezier(.34,1.56,.64,1)}
+.feedback-header{
+  text-align:center;margin-bottom:18px;
+}
+.fb-result-icon{font-size:3rem;line-height:1;margin-bottom:4px;display:block;animation:starBounce .5s ease}
+@keyframes starBounce{0%{transform:scale(0)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+.fb-result-title{font-family:'ZCOOL KuaiLe',cursive;font-size:1.5rem;margin-bottom:4px}
+.fb-result-title.great{color:var(--success)}
+.fb-result-title.good{color:var(--accent)}
+.fb-result-title.ok{color:var(--warn)}
+.fb-result-title.miss{color:var(--error)}
+.fb-result-sub{font-size:.9rem;color:var(--sub);line-height:1.5}
+
+.compare-bars{
+  background:var(--bg);border-radius:16px;padding:16px;margin-bottom:14px;
+  border:2px solid var(--border);
+}
+.compare-row{
+  display:flex;align-items:center;gap:10px;margin-bottom:10px;
+}
+.compare-row:last-child{margin-bottom:0}
+.compare-label{
+  width:72px;font-size:.82rem;font-weight:800;flex-shrink:0;
+}
+.compare-label.you{color:var(--accent)}
+.compare-label.expert{color:var(--accent2)}
+.compare-bar-track{
+  flex:1;height:22px;background:var(--card);border-radius:11px;
+  position:relative;overflow:hidden;border:1px solid var(--border);
+}
+.compare-bar-fill{
+  height:100%;border-radius:11px;
+  display:flex;align-items:center;justify-content:flex-end;
+  padding-right:8px;color:#fff;font-size:.8rem;font-weight:900;
+  transition:width .8s cubic-bezier(.4,0,.2,1);
+  width:0;
+}
+.compare-bar-fill.you{background:linear-gradient(90deg,var(--accent),var(--accent-dark))}
+.compare-bar-fill.expert{background:linear-gradient(90deg,var(--accent2),#26a69a)}
+.compare-value{
+  font-family:'ZCOOL KuaiLe',cursive;font-size:1.1rem;
+  min-width:28px;text-align:center;font-weight:900;
+}
+
+.gap-indicator{
+  text-align:center;margin-top:10px;padding-top:10px;
+  border-top:1px dashed var(--border);
+  font-size:.85rem;color:var(--sub);font-weight:700;
+}
+.gap-indicator b{color:var(--accent);font-size:1rem}
+
+.explanation-card{
+  background:linear-gradient(135deg,rgba(78,205,196,.08),rgba(99,102,241,.05));
+  border-left:3px solid var(--accent2);
+  border-radius:0 12px 12px 0;padding:14px 16px;margin-bottom:12px;
+  font-size:.87rem;line-height:1.7;color:var(--text);
+}
+.explanation-card h4{
+  color:var(--accent2);font-size:.85rem;margin-bottom:6px;
+  display:flex;align-items:center;gap:6px;font-weight:800;
+}
+
+.ability-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.ability-card{
+  background:var(--bg);border-radius:12px;padding:12px;
+}
+.ability-card.can{border-left:3px solid var(--success)}
+.ability-card.cant{border-left:3px solid var(--error)}
+.ability-card h5{
+  font-size:.8rem;font-weight:800;margin-bottom:6px;
+  display:flex;align-items:center;gap:4px;
+}
+.ability-card.can h5{color:var(--success)}
+.ability-card.cant h5{color:var(--error)}
+.ability-card ul{list-style:none;padding:0;margin:0}
+.ability-card li{
+  font-size:.78rem;color:var(--sub);line-height:1.6;
+  padding-left:14px;position:relative;margin-bottom:2px;
+}
+.ability-card li::before{
+  content:'';position:absolute;left:0;top:8px;
+  width:5px;height:5px;border-radius:50%;
+}
+.ability-card.can li::before{background:var(--success)}
+.ability-card.cant li::before{background:var(--error)}
+
+@media (max-width:540px){
+  .ability-grid{grid-template-columns:1fr}
+}
+
+/* ===== FINAL RESULTS ===== */
+.final-wrap{max-width:720px;margin:0 auto}
+.final-hero{
+  background:var(--card);border-radius:24px;padding:28px;text-align:center;
+  margin-bottom:16px;box-shadow:0 8px 40px var(--shadow);
+}
+.final-emoji{font-size:4rem;line-height:1;margin-bottom:8px;animation:wiggle 2s ease infinite}
+.final-title{font-family:'ZCOOL KuaiLe',cursive;font-size:2rem;color:var(--accent);margin-bottom:6px}
+.final-sub{color:var(--sub);font-size:.92rem;margin-bottom:16px;line-height:1.6}
+.final-score-circle{
+  width:130px;height:130px;margin:0 auto 12px;position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.final-score-circle svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.final-score-circle .score-track{fill:none;stroke:var(--border);stroke-width:10}
+.final-score-circle .score-fill{
+  fill:none;stroke:url(#grad);stroke-width:10;stroke-linecap:round;
+  stroke-dasharray:377;stroke-dashoffset:377;
+  transition:stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1);
+}
+.final-score-inner{
+  font-family:'ZCOOL KuaiLe',cursive;font-size:2.2rem;color:var(--accent);
+  font-weight:900;line-height:1;z-index:1;position:relative;
+}
+.final-score-inner small{font-size:.9rem;display:block;color:var(--sub);font-weight:700}
+.final-stars{font-size:2rem;letter-spacing:8px;margin:8px 0}
+.final-stars .star-f{color:#fbbf24;filter:drop-shadow(0 0 4px rgba(251,191,36,.5))}
+.final-stars .star-e{opacity:.3}
+.final-label{font-size:1rem;font-weight:800;color:var(--accent);margin-bottom:4px}
+
+.insights-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.insight-card{
+  background:var(--card);border-radius:16px;padding:16px;
+  box-shadow:0 6px 20px var(--shadow);
+}
+.insight-card h3{
+  font-size:.85rem;font-weight:800;margin-bottom:10px;
+  display:flex;align-items:center;gap:6px;
+}
+.insight-card.best h3{color:var(--success)}
+.insight-card.gap h3{color:var(--error)}
+.insight-item{
+  display:flex;align-items:center;gap:10px;padding:8px 0;
+  border-bottom:1px dashed var(--border);
+}
+.insight-item:last-child{border-bottom:none}
+.insight-emoji{font-size:1.5rem;line-height:1}
+.insight-name{flex:1;font-size:.85rem;font-weight:700;color:var(--text)}
+.insight-diff{font-size:.72rem;color:var(--sub);font-weight:700;white-space:nowrap}
+.insight-diff b{color:var(--accent)}
+@media (max-width:600px){.insights-grid{grid-template-columns:1fr}}
+
+.wisdom-card{
+  background:linear-gradient(135deg,rgba(255,127,80,.08),rgba(78,205,196,.06));
+  border:2px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:16px;
+}
+.wisdom-card h3{
+  font-family:'ZCOOL KuaiLe',cursive;font-size:1.15rem;color:var(--accent);
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.wisdom-card p{font-size:.88rem;color:var(--text);line-height:1.7;margin-bottom:8px}
+.wisdom-card p:last-child{margin-bottom:0}
+.wisdom-card strong{color:var(--accent);font-weight:800}
+
+.final-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* Confetti */
+.confetti{position:fixed;width:8px;height:14px;top:-20px;z-index:200;pointer-events:none;border-radius:2px}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
+
+
+/* ===== SOURCE NOTE ===== */
+.source-note {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  font-size: .72rem;
+  color: var(--sub);
+  line-height: 1.6;
+  text-align: center;
+}
+.source-note b { color: var(--text); font-weight: 700; }
+
+.scoring-note {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  font-size: .8rem;
+  color: var(--sub);
+  line-height: 1.7;
+}
+.scoring-note b { color: var(--text); font-weight: 800; }
+.scoring-note .scoring-title {
+  font-weight: 800; color: var(--text); font-size: .82rem;
+  margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+}
+
+/* Responsive */
+@media (max-width:640px){
+  h1{font-size:1.9rem}
+  .intro-card{padding:24px}
+  .game-wrap{padding:16px}
+  .prof-emoji{font-size:3.8rem}
+  .prof-name{font-size:1.5rem}
+  .slider-value-num{font-size:2.6rem}
+  .final-hero{padding:22px}
+  .final-title{font-size:1.7rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">💼 AI 职业配对师</div>
+  <div class="header-right">
+    <button class="home-btn" id="homeBtn" onclick="goHome()" style="display:none">🏠 首页</button>
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 夜间</button>
+  </div>
+</header>
+
+<!-- INTRO -->
+<div class="screen center active" id="intro">
+  <div class="intro-card">
+    <div class="intro-emoji">💼</div>
+    <div class="game-number">AI · 对未来职业的思考</div>
+    <h1>AI 职业配对师</h1>
+    <p class="tagline">15 种职业摆在你面前 — 你觉得 AI 能替代多少？你的判断和研究估算一致吗？</p>
+    <div class="rules-list">
+      <div class="rule-item"><span class="rule-icon">🎯</span><div class="rule-text"><strong>滑条评分 1-10</strong>：1=AI 基本无法替代，10=AI 可完全替代。拖动滑条表达你的判断。</div></div>
+      <div class="rule-item"><span class="rule-icon">🤖</span><div class="rule-text">每次评分后会<strong>揭示参考估算</strong>，并说明 AI 能做什么、不能做什么。</div></div>
+      <div class="rule-item"><span class="rule-icon">🧠</span><div class="rule-text">完成 15 个职业后，你会看到<strong>AI 能力边界</strong>的全景图 — 什么工作安全，什么工作要变。</div></div>
+    </div>
+    <button class="start-btn" onclick="startGame()">🚀 开始配对</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="game">
+  <div class="game-wrap">
+    <div class="progress-bar-wrap">
+      <div class="progress-info-row">
+        <span class="progress-counter" id="progress-counter">第 1 / 15 个职业</span>
+        <span class="progress-score">当前总分 <b id="progress-score">0</b> / 150</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+    <div id="game-content"></div>
+  </div>
+</div>
+
+<!-- FINAL -->
+<div class="screen" id="final">
+  <div class="final-wrap">
+    <div class="final-hero">
+      <div class="final-emoji" id="final-emoji">🏆</div>
+      <div class="final-label" id="final-label">配对结果</div>
+      <h2 class="final-title" id="final-title">不错的 AI 观察者！</h2>
+      <p class="final-sub" id="final-sub">你对 AI 能力边界有了初步认知</p>
+      <div class="final-score-circle">
+        <svg viewBox="0 0 140 140">
+          <defs>
+            <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#ff7f50"/>
+              <stop offset="100%" stop-color="#4ecdc4"/>
+            </linearGradient>
+          </defs>
+          <circle class="score-track" cx="70" cy="70" r="60"/>
+          <circle class="score-fill" id="score-fill" cx="70" cy="70" r="60"/>
+        </svg>
+        <div class="final-score-inner"><span id="final-score-num">0</span>%<small>配对准确度</small></div>
+      </div>
+      <div class="final-stars" id="final-stars">⭐⭐⭐</div>
+    </div>
+
+    <div class="insights-grid">
+      <div class="insight-card best">
+        <h3>🎯 最接近参考估算的判断</h3>
+        <div id="best-items"></div>
+      </div>
+      <div class="insight-card gap">
+        <h3>💭 与参考估算差距较大的判断</h3>
+        <div id="gap-items"></div>
+      </div>
+    </div>
+
+    <div class="scoring-note">
+      <div class="scoring-title">📋 关于本游戏的评分依据</div>
+      本游戏的"参考估算分"并非来自某一特定外部机构的权威认证，而是综合参考了 OECD《Employment Outlook》对 AI 高暴露职业的分析、WEF《Future of Jobs》对任务可替代性的研判、MIT/Oxford 等学术研究，以及业界对各类职业任务特征的公开讨论，由本游戏编辑团队整理归纳而成的参考值（1-10 分制），仅供参考，不代表学术定论。
+      评分规则：你与参考值的差值越小，本题得分越高（差 0 → 10 分，差 1 → 9 分，差 2 → 7 分，差 3 → 5 分，以此类推）。
+      如需注明来源，请表述为：<b>评分参考自本游戏综合 OECD、WEF 等公开研究整理的职业 AI 可替代性估算值。</b>
+    </div>
+    <div class="wisdom-card">
+      <h3>🧠 小智说 · AI 能力边界</h3>
+      <p><strong>AI 擅长</strong>：重复性任务、大数据分析、快速响应。像数据录入、客服问答、日常翻译这些"规则清晰、模式重复"的工作，AI 正在快速接管。</p>
+      <p><strong>AI 不擅长</strong>：需要<strong>情感共鸣</strong>（心理咨询师、幼师）、<strong>身体亲临</strong>（运动员、外科医生）、<strong>原创突破</strong>（小说家、艺术家）、<strong>道德判断</strong>（法官）的工作。</p>
+      <p>💡 最重要的启示：<strong>未来最有价值的不是"会做什么"，而是"AI 不会做什么"</strong> — 同理心、创造力、批判性思考、人际联结，这些是人的超能力。</p>
+    </div>
+
+    <div class="final-actions">
+      <button class="action-btn" onclick="goHome()">🏠 回首页</button>
+      <button class="action-btn primary" onclick="startGame()">🔄 再挑战一次</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   PROFESSIONS DATA (15 items)
+============================================================ */
+const PROFESSIONS = [
+  {
+    id:'athlete', name:'运动员', emoji:'🏃',
+    desc:'通过专业训练在赛场上展现人类身体极限的竞技者',
+    tasks:['专业训练','比赛竞争','团队协作'],
+    expert:1,
+    source:'参考 WEF《Future of Jobs 2023》：运动员属于"高度依赖身体亲临与人类情感认同"的职业，AI 替代可能性极低；ESPN/IOC 均明确人类赛事属性不可替代。',
+    explanation:'运动是人类身体的直接竞技 — 观众看的就是人类突破极限的过程。即使机器跑得更快，也无法替代人类运动员的体育精神和感动力。',
+    aiCan:['训练数据分析','比赛战术建议','运动姿势矫正'],
+    aiCant:['参加奥运会','打职业联赛','成为体育偶像']
+  },
+  {
+    id:'kindergarten', name:'幼儿园老师', emoji:'👩‍🏫',
+    desc:'陪伴和教育 3-6 岁儿童成长的教育工作者',
+    tasks:['陪伴照顾','情感启蒙','游戏引导'],
+    expert:2,
+    source:'参考 OECD《Employment Outlook 2023》：幼儿教育属"高人际接触、高情感依赖"任务，AI 暴露风险最低；UNESCO 报告强调幼师工作中"情感在场"无法被数字工具替代。',
+    explanation:'幼儿需要真人的温暖拥抱、细腻的情感回应、及时的安全关注。AI 机器人无论多先进，都无法像老师那样察觉一个孩子今天心情不好。',
+    aiCan:['教学课件辅助','儿童行为记录','课堂游戏生成'],
+    aiCant:['给哭闹孩子拥抱','建立安全感','处理突发情感']
+  },
+  {
+    id:'counselor', name:'心理咨询师', emoji:'🧠',
+    desc:'帮助来访者处理情感困扰、心理问题的专业人士',
+    tasks:['深度倾听','情感共鸣','治疗引导'],
+    expert:3,
+    source:'参考 APA（美国心理学会）及 Lancet Psychiatry 相关综述：AI 辅助工具（如 Woebot）在轻度焦虑的辅助场景有效，但针对重度心理障碍的治疗联盟（therapeutic alliance）仍被认为是人类治疗师不可替代的核心变量。',
+    explanation:'心理治疗的核心是<b>人与人的信任</b>和<b>情感共鸣</b>。虽然 AI 聊天机器人能简单倾听，但面对重度抑郁、创伤、家庭危机，仍需要人类咨询师的真实共情与专业判断。',
+    aiCan:['提供情绪陪伴','日常情感记录','心理科普教育'],
+    aiCant:['建立真实信任','共情重度创伤','承担治疗责任']
+  },
+  {
+    id:'judge', name:'法官', emoji:'⚖️',
+    desc:'依据法律和证据作出公正裁决的司法工作者',
+    tasks:['案件审理','法律判断','公正裁决'],
+    expert:3,
+    source:'参考 AI Now Institute《Algorithmic Accountability》报告及欧盟《AI 监管法案（AI Act）》草案：司法决策被明确列为"高风险 AI 应用"，强调人类最终责任不可绕开；学界普遍认为"量刑辅助 ≠ 裁决替代"。',
+    explanation:'法律不只是条文 — 它涉及<b>伦理考量</b>、<b>公平权衡</b>、<b>责任承担</b>。让 AI 判决一个人一生的命运，社会目前无法接受 — 谁为错判负责？',
+    aiCan:['判例检索分析','法律文书生成','量刑参考建议'],
+    aiCant:['承担判决责任','理解人情事理','维护社会公正感']
+  },
+  {
+    id:'novelist', name:'小说家', emoji:'📖',
+    desc:'用文字创作虚构故事、表达人类情感的艺术家',
+    tasks:['构思故事','刻画人物','表达情感'],
+    expert:3,
+    source:'参考 MIT Media Lab 对 AI 创作的研究及 NYT/《卫报》的调查报道：GPT 系列已能生成连贯小说，但评论界和读者研究均指出，AI 作品在"独特人生经验表达"和"情感深度"上仍与顶级人类作家存在显著差距。',
+    explanation:'AI 能"生成"小说，但伟大文学来自<b>人类的真实经历和深度情感</b>。《百年孤独》《哈利波特》这样的作品需要作家一生的思考、爱与痛，AI 暂时模仿不出这种灵魂。',
+    aiCan:['辅助构思情节','生成对话草稿','文字润色校对'],
+    aiCant:['写出诺贝尔文学奖作品','创造原创世界观','表达深度情感']
+  },
+  {
+    id:'artist', name:'画家', emoji:'🎨',
+    desc:'用画笔、色彩、构图创造视觉艺术的艺术家',
+    tasks:['原创构思','艺术表达','风格创新'],
+    expert:4,
+    source:'参考 WEF《Creative Economy》专题及 Oxford Internet Institute 的调查：AI 图像生成（Midjourney、Stable Diffusion）已对商业插画市场产生冲击，但纯艺术市场（博物馆/画廊）对 AI 作品的认可度和市场价格仍远低于人类艺术家原作。',
+    explanation:'AI 绘画工具（如 Midjourney）能生成惊艳图像，但<b>真正的艺术</b>是原创思想的表达。梵高的《星空》之所以伟大，是因为背后的情感与人生。AI 可以模仿风格，但难以"开创"新流派。',
+    aiCan:['快速生成插画','模仿已有风格','辅助设计灵感'],
+    aiCant:['开创新艺术流派','表达独特人生','获得艺术史地位']
+  },
+  {
+    id:'chef', name:'厨师', emoji:'👨‍🍳',
+    desc:'研究食材搭配、创造美食体验的烹饪专家',
+    tasks:['食材搭配','创新菜品','现场烹饪'],
+    expert:4,
+    source:'参考 McKinsey Global Institute《A New Future of Work》（2022）：餐饮行业标准化操作（快餐流水线）自动化可行性高，而需要味觉感知与创意的高端烹饪被归类为"低 AI 替代风险"任务类型。',
+    explanation:'机器人能执行标准烹饪程序，但<b>顶级厨师</b>的价值在于味觉直觉、食材创新、现场灵感。米其林餐厅的主厨不会被取代 — 但快餐店的厨师可能会。',
+    aiCan:['食谱推荐生成','营养搭配分析','快餐流水作业'],
+    aiCant:['创造米其林菜品','凭味觉判断品质','带来用餐仪式感']
+  },
+  {
+    id:'doctor', name:'医生', emoji:'👨‍⚕️',
+    desc:'诊断疾病、制定治疗方案、挽救患者生命的医务工作者',
+    tasks:['疾病诊断','手术治疗','医患沟通'],
+    expert:4,
+    source:'参考 Nature Medicine（2023）多项研究：AI（如 Google DeepMind Med-PaLM 2）在影像诊断特定任务上达到专科医生水平，但 WHO 与 AMA 明确强调"AI 辅助诊断"与"取代医生决策"之间存在法律和伦理的本质差距。',
+    explanation:'AI 在<b>读片、诊断</b>上已超过普通医生（准确率更高、速度更快）。但<b>外科手术、医患沟通、综合判断</b>仍需要人医生。最可能的未来是 "AI 辅助 + 人医生决策"。',
+    aiCan:['快速读影像片','分析医疗数据','给出诊断建议'],
+    aiCant:['做复杂外科手术','安慰临终病人','承担医疗责任']
+  },
+  {
+    id:'journalist', name:'新闻记者', emoji:'📰',
+    desc:'调查真相、采访事件、向公众传递信息的新闻工作者',
+    tasks:['现场采访','事件调查','文章撰写'],
+    expert:5,
+    source:'参考 Reuters Institute《Digital News Report》及 AP 内部报告：美联社自 2014 年起使用 AI 生成财经简讯，但调查性新闻（Pulitzer 获奖作品）仍 100% 由人类记者主导；NiemanLab 研究指出两类任务的可替代性存在根本差异。',
+    explanation:'AI 已经能写财报、体育简讯这类<b>格式化新闻</b>。但<b>深度调查、现场采访、追问真相</b>的记者工作，需要勇气、直觉和人际洞察 — AI 没法冲到新闻现场问关键问题。',
+    aiCan:['写格式化新闻稿','翻译外媒报道','生成文章草稿'],
+    aiCant:['深度调查报道','战地现场采访','挖掘独家真相']
+  },
+  {
+    id:'driver', name:'出租车司机', emoji:'🚕',
+    desc:'驾驶车辆把乘客安全送达目的地的职业驾驶员',
+    tasks:['安全驾驶','路线规划','乘客服务'],
+    expert:6,
+    source:'参考 KPMG《Autonomous Vehicles Readiness Index》及 Waymo/百度公开运营数据：结构化城市路段自动驾驶已商用，但全球监管机构（含中国工信部）均要求在复杂场景保留人工监督；WEF 估计 2030 年前大城市出租车的"完全无人化"覆盖率不超过 30%。',
+    explanation:'自动驾驶正在快速发展（Waymo、百度萝卜快跑等已在试运营）。<b>简单路况</b>已经能自动开，但<b>复杂路况、特殊需求</b>（如帮老人搬行李）还需要人。10 年内大概率会被大幅替代。',
+    aiCan:['简单城市驾驶','路径优化规划','夜间无人运营'],
+    aiCant:['应对突发复杂路况','处理乘客特殊需求','现在完全无人化']
+  },
+  {
+    id:'programmer', name:'程序员', emoji:'💻',
+    desc:'编写软件代码、构建数字产品的软件工程师',
+    tasks:['写代码','调试Bug','系统设计'],
+    expert:6,
+    source:'参考 GitHub《Octoverse 2023》报告及 Stanford HAI 研究：GitHub Copilot 用户平均有 46% 的代码由 AI 补全；但 Google/Meta 内部调研显示系统架构与核心业务逻辑的设计工作几乎未减少对高级工程师的需求，印证了"初级任务被替代、高级工作增值"的分化趋势。',
+    explanation:'像 Claude Code、GitHub Copilot 这样的 AI 已经能写大部分代码（60-80%）。但<b>系统架构设计、创新算法、业务理解</b>仍需要资深程序员。"初级码农"工作大幅减少，"高级工程师"更重要。',
+    aiCan:['写常规代码','自动修复Bug','生成测试用例'],
+    aiCant:['设计复杂系统架构','发明新算法','理解真实业务场景']
+  },
+  {
+    id:'accountant', name:'会计', emoji:'📊',
+    desc:'处理财务数据、编制报表、管理企业账目的专业人士',
+    tasks:['账目录入','报表编制','税务处理'],
+    expert:7,
+    source:'参考 Frey & Osborne（Oxford，2013）将会计/簿记员列为高替代概率职业（96%）；麦肯锡 2023 年更新报告指出，中国和美国的基础财务处理岗位已有 60-70% 可由 RPA+AI 完成，但注册会计师的审计判断职能受法规保护，替代风险显著较低。',
+    explanation:'<b>基础账目、报表生成、发票处理</b>这些重复性工作，AI 和 RPA（机器人流程自动化）已经大量接管。但<b>税务筹划、审计判断、财务战略</b>仍需要人 — 这些涉及专业判断和责任。',
+    aiCan:['自动对账','自动开票','生成财务报表'],
+    aiCant:['做税务筹划','作审计判断','承担财务责任']
+  },
+  {
+    id:'service', name:'客服', emoji:'📞',
+    desc:'解答用户问题、处理投诉建议的服务人员',
+    tasks:['接听咨询','解决问题','处理投诉'],
+    expert:8,
+    source:'参考 Gartner 研究报告（2022）：预测 2025 年 80% 企业的客服交互将通过对话式 AI 完成；IBM 实际部署数据显示常规查询 AI 首次解决率已达 75-85%，复杂投诉的人工转接率维持在 15-25%。',
+    explanation:'看看你最近给哪个公司打客服？很多都是 AI 接听。<b>80% 的常见问题</b>AI 能自动回答（退款、查单、修改信息）。但<b>复杂投诉、情感安抚、特殊案例</b>仍需转人工。',
+    aiCan:['24小时自动应答','多语言即时服务','标准问题处理'],
+    aiCant:['深度情感安抚','处理复杂投诉','做出例外决定']
+  },
+  {
+    id:'translator', name:'翻译员', emoji:'🌐',
+    desc:'把一种语言的文本或话语转换成另一种语言的专业人士',
+    tasks:['文档翻译','同声传译','本地化'],
+    expert:8,
+    source:'参考 TAUS《Machine Translation Performance》年度报告及 DeepL 公开评测数据：商务/技术文档翻译质量已达职业译员水平；但 FIT（国际译员联合会）指出文学翻译和同声传译的职业市场尚未被 AI 实质性取代，两类市场分化明显。',
+    explanation:'DeepL、谷歌翻译、ChatGPT 的翻译质量已接近甚至超过一般翻译员。<b>商务文档、网页、日常对话</b>AI 完全胜任。但<b>诗歌翻译、同声传译、文化本地化</b>还需人类专家。',
+    aiCan:['实时对话翻译','商务文档翻译','网页一键翻译'],
+    aiCant:['翻译诗歌文学','处理方言俗语','做高级同声传译']
+  },
+  {
+    id:'dataentry', name:'数据录入员', emoji:'⌨️',
+    desc:'把纸质或电子文档的信息录入系统的数据处理员',
+    tasks:['文档录入','信息核对','数据整理'],
+    expert:9,
+    source:'参考 McKinsey Global Institute《Jobs Lost, Jobs Gained》（2017 & 2023 更新）：数据处理和信息收集类任务被列为"最高自动化可行性"（79% 工作时间可自动化）；美国劳工统计局数据显示数据录入员岗位 2012-2022 年减少约 40%，预计 2030 年前进一步大幅萎缩。',
+    explanation:'这是 AI <b>最容易替代</b>的工作之一！OCR（文字识别）+ RPA（自动化）+ AI 理解，已经让这类工作大量消失。很多公司的数据录入岗位已经砍掉 80% 以上。',
+    aiCan:['扫描识别文字','自动录入系统','批量校对数据'],
+    aiCant:['(几乎没有—此类工作正在消失)']
+  }
+];
+
+/* ============================================================
+   STATE
+============================================================ */
+const state = {
+  professions: [],       // shuffled list for this round
+  currentIdx: 0,         // which profession we're on
+  currentRating: 5,      // slider value for current profession
+  results: [],           // { id, name, emoji, userRating, refRating, diff, score }
+  totalScore: 0,         // running total (max 150)
+  mode: 'rating'         // 'rating' | 'feedback'
+};
+
+/* ============================================================
+   UTILS
+============================================================ */
+function shuffle(arr){
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  const home = document.getElementById('homeBtn');
+  if (home) home.style.display = (id === 'game' || id === 'final') ? 'inline-block' : 'none';
+  window.scrollTo(0, 0);
+}
+function toggleTheme(){
+  const h = document.documentElement;
+  const d = h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  h.setAttribute('data-theme', d);
+  document.getElementById('themeBtn').textContent = d === 'dark' ? '☀️ 日间' : '🌙 夜间';
+}
+function goHome(){
+  showScreen('intro');
+}
+
+/* ============================================================
+   GAME FLOW
+============================================================ */
+function startGame(){
+  state.professions = shuffle(PROFESSIONS);
+  state.currentIdx = 0;
+  state.currentRating = 5;
+  state.results = [];
+  state.totalScore = 0;
+  state.mode = 'rating';
+  showScreen('game');
+  renderRating();
+}
+
+function renderProgress(){
+  const total = state.professions.length;
+  const done = state.results.length;
+  document.getElementById('progress-counter').textContent = '第 ' + (state.currentIdx + 1) + ' / ' + total + ' 个职业';
+  document.getElementById('progress-score').textContent = state.totalScore;
+  // Progress fill reflects completed results (not currentIdx so bar advances on submit)
+  const pct = (done / total) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+function renderRating(){
+  renderProgress();
+  const p = state.professions[state.currentIdx];
+  if (!p) return;
+
+  state.mode = 'rating';
+  state.currentRating = 5; // reset slider for each profession
+
+  const tasksHtml = p.tasks.map(t => '<span class="prof-task">' + t + '</span>').join('');
+
+  const content =
+    '<div class="prof-card">' +
+      '<span class="prof-emoji">' + p.emoji + '</span>' +
+      '<h2 class="prof-name">' + p.name + '</h2>' +
+      '<p class="prof-desc">' + p.desc + '</p>' +
+      '<div class="prof-tasks">' + tasksHtml + '</div>' +
+    '</div>' +
+    '<div class="question-label">你觉得 <span class="highlight">AI</span> 能替代「<span class="highlight">' + p.name + '</span>」<span class="highlight">多少</span>？</div>' +
+    '<div class="slider-wrap">' +
+      '<div class="slider-value-display">' +
+        '<div class="slider-value-num" id="slider-num">5</div>' +
+        '<div class="slider-value-label" id="slider-label" style="background:var(--mid)">可部分替代</div>' +
+      '</div>' +
+      '<div class="slider-track-wrap">' +
+        '<div class="slider-track"></div>' +
+        '<input type="range" min="1" max="10" step="1" value="5" class="slider-input" id="slider-input" oninput="onSliderChange(this.value)">' +
+      '</div>' +
+      '<div class="slider-ticks">' +
+        '<span class="tick-1">1</span><span>2</span><span>3</span><span>4</span>' +
+        '<span class="tick-5">5</span><span>6</span><span>7</span><span>8</span>' +
+        '<span>9</span><span class="tick-10">10</span>' +
+      '</div>' +
+      '<div class="slider-legend">' +
+        '<div style="color:var(--low)"><b>1-2</b>基本无法</div>' +
+        '<div><b>3-4</b>很难替代</div>' +
+        '<div style="color:var(--mid)"><b>5-6</b>部分替代</div>' +
+        '<div><b>7-8</b>大部分替代</div>' +
+        '<div style="color:var(--high)"><b>9-10</b>完全替代</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="action-row">' +
+      '<button class="action-btn primary" onclick="submitRating()">✅ 提交我的判断</button>' +
+    '</div>';
+  document.getElementById('game-content').innerHTML = content;
+}
+
+function onSliderChange(value){
+  const v = parseInt(value);
+  state.currentRating = v;
+  const num = document.getElementById('slider-num');
+  const lbl = document.getElementById('slider-label');
+  if (!num || !lbl) return;
+  num.textContent = v;
+
+  let text, color;
+  if (v <= 2){ text = 'AI 基本无法替代'; color = 'var(--low)'; }
+  else if (v <= 4){ text = 'AI 很难替代'; color = '#84cc16'; }
+  else if (v <= 6){ text = 'AI 可部分替代'; color = 'var(--mid)'; }
+  else if (v <= 8){ text = 'AI 可大部分替代'; color = '#fb923c'; }
+  else { text = 'AI 可完全替代'; color = 'var(--high)'; }
+  lbl.textContent = text;
+  lbl.style.background = color;
+  num.style.color = color;
+}
+
+function submitRating(){
+  const p = state.professions[state.currentIdx];
+  const user = state.currentRating;
+  const expert = p.expert;
+  const diff = Math.abs(user - expert);
+  // Score per profession: 10 points if diff=0, decreasing
+  // diff 0 → 10, 1 → 9, 2 → 7, 3 → 5, 4 → 3, 5+ → 1, 7+ → 0
+  let score;
+  if (diff === 0) score = 10;
+  else if (diff === 1) score = 9;
+  else if (diff === 2) score = 7;
+  else if (diff === 3) score = 5;
+  else if (diff === 4) score = 3;
+  else if (diff <= 6) score = 1;
+  else score = 0;
+
+  state.results.push({
+    id: p.id, name: p.name, emoji: p.emoji,
+    userRating: user, refRating: expert,
+    diff: diff, score: score
+  });
+  state.totalScore += score;
+  state.mode = 'feedback';
+  renderFeedback(p, user, expert, diff, score);
+}
+
+function renderFeedback(p, user, expert, diff, score){
+  renderProgress();
+
+  // Assessment tier
+  let icon, title, titleClass, sub;
+  if (diff === 0){ icon = '🎯'; title = '完美判断！'; titleClass = 'great'; sub = '你的判断和研究估算完全一致 — 你对 AI 能力有深入了解！'; }
+  else if (diff === 1){ icon = '✨'; title = '非常接近！'; titleClass = 'great'; sub = '你和参考估算只差 1 分 — 判断非常精准！'; }
+  else if (diff === 2){ icon = '👍'; title = '判断不错'; titleClass = 'good'; sub = '你和参考估算相差 2 分，方向基本正确。'; }
+  else if (diff === 3){ icon = '🤔'; title = '有些偏差'; titleClass = 'ok'; sub = '你和参考估算差了 3 分，看看下面的研究依据吧。'; }
+  else { icon = '💡'; title = '差距较大'; titleClass = 'miss'; sub = '你和参考估算相差 ' + diff + ' 分，这是个很好的学习机会！'; }
+
+  const aiCantHtml = (p.aiCant && p.aiCant.length) ? p.aiCant.map(x => '<li>' + x + '</li>').join('') : '<li>—</li>';
+  const aiCanHtml = p.aiCan.map(x => '<li>' + x + '</li>').join('');
+
+  const isLast = (state.currentIdx === state.professions.length - 1);
+  const nextBtnText = isLast ? '🏆 查看最终成绩' : '下一个职业 →';
+
+  const content =
+    '<div class="feedback-wrap">' +
+      '<div class="prof-card" style="padding:14px">' +
+        '<span class="prof-emoji" style="font-size:2.8rem">' + p.emoji + '</span>' +
+        '<h2 class="prof-name" style="font-size:1.3rem;margin-bottom:2px">' + p.name + '</h2>' +
+      '</div>' +
+      '<div class="feedback-header">' +
+        '<span class="fb-result-icon">' + icon + '</span>' +
+        '<div class="fb-result-title ' + titleClass + '">' + title + '</div>' +
+        '<div class="fb-result-sub">' + sub + '</div>' +
+      '</div>' +
+      '<div class="compare-bars">' +
+        '<div class="compare-row">' +
+          '<div class="compare-label you">🧑 你：</div>' +
+          '<div class="compare-bar-track"><div class="compare-bar-fill you" id="bar-you"></div></div>' +
+          '<div class="compare-value" style="color:var(--accent)">' + user + '</div>' +
+        '</div>' +
+        '<div class="compare-row">' +
+          '<div class="compare-label expert">📊 参考：</div>' +
+          '<div class="compare-bar-track"><div class="compare-bar-fill expert" id="bar-expert"></div></div>' +
+          '<div class="compare-value" style="color:var(--accent2)">' + expert + '</div>' +
+        '</div>' +
+        '<div class="gap-indicator">差距 <b>' + diff + '</b> 分 · 本题得分 <b>' + score + '/10</b></div>' +
+      '</div>' +
+      '<div class="explanation-card">' +
+        '<h4>📚 研究依据与分析</h4>' +
+        '<div>' + p.explanation + '</div>' +
+        '<div class="source-note">📌 <b>参考来源：</b>' + p.source + '</div>' +
+      '</div>' +
+      '<div class="ability-grid">' +
+        '<div class="ability-card can">' +
+          '<h5>✅ AI 能做</h5>' +
+          '<ul>' + aiCanHtml + '</ul>' +
+        '</div>' +
+        '<div class="ability-card cant">' +
+          '<h5>❌ AI 不能</h5>' +
+          '<ul>' + aiCantHtml + '</ul>' +
+        '</div>' +
+      '</div>' +
+      '<div class="action-row">' +
+        '<button class="action-btn primary" onclick="nextProfession()">' + nextBtnText + '</button>' +
+      '</div>' +
+    '</div>';
+
+  document.getElementById('game-content').innerHTML = content;
+
+  // Animate bars (delay slightly so browser paints first)
+  setTimeout(function(){
+    const barYou = document.getElementById('bar-you');
+    const barExpert = document.getElementById('bar-expert');
+    if (barYou) barYou.style.width = (user * 10) + '%';
+    if (barExpert) barExpert.style.width = (expert * 10) + '%';
+  }, 100);
+}
+
+function nextProfession(){
+  if (state.currentIdx >= state.professions.length - 1){
+    showFinal();
+    return;
+  }
+  state.currentIdx++;
+  renderRating();
+}
+
+/* ============================================================
+   FINAL SCREEN
+============================================================ */
+function showFinal(){
+  showScreen('final');
+  const total = state.professions.length;
+  const maxScore = total * 10;
+  const pct = Math.round(state.totalScore / maxScore * 100);
+
+  // Header
+  let emoji, title, sub;
+  if (pct >= 90){ emoji = '🏆'; title = 'AI 未来学家！'; sub = '你对 AI 能力边界有着精准的直觉判断'; }
+  else if (pct >= 75){ emoji = '🎯'; title = '优秀的观察者'; sub = '你对 AI 能力有清晰的认识'; }
+  else if (pct >= 60){ emoji = '👍'; title = '不错的思考者'; sub = '你对 AI 的理解还在进化中'; }
+  else if (pct >= 40){ emoji = '🤔'; title = '还需要多了解 AI'; sub = '没关系 — 专家也经常被 AI 的发展速度惊到'; }
+  else { emoji = '💡'; title = '对 AI 的认知刚起步'; sub = '这次的探索就是最好的学习！'; }
+
+  document.getElementById('final-emoji').textContent = emoji;
+  document.getElementById('final-title').textContent = title;
+  document.getElementById('final-sub').textContent = sub;
+  document.getElementById('final-score-num').textContent = pct;
+
+  // Animate circle
+  const circumference = 2 * Math.PI * 60; // ≈ 377
+  const dashoffset = circumference * (1 - pct / 100);
+  setTimeout(function(){
+    const fill = document.getElementById('score-fill');
+    if (fill) fill.style.strokeDashoffset = dashoffset;
+  }, 200);
+
+  // Stars
+  const stars = pct >= 90 ? 3 : pct >= 70 ? 2 : pct > 0 ? 1 : 0;
+  let starsHtml = '';
+  for (let i = 0; i < 3; i++){
+    starsHtml += i < stars ? '<span class="star-f">⭐</span>' : '<span class="star-e">⭐</span>';
+  }
+  document.getElementById('final-stars').innerHTML = starsHtml;
+
+  // Best predictions (smallest diff)
+  const sortedByDiff = state.results.slice().sort(function(a, b){ return a.diff - b.diff; });
+  const best = sortedByDiff.slice(0, 3);
+  const gaps = sortedByDiff.slice().reverse().slice(0, 3);
+
+  document.getElementById('best-items').innerHTML = best.map(function(r){
+    return '<div class="insight-item">' +
+      '<div class="insight-emoji">' + r.emoji + '</div>' +
+      '<div class="insight-name">' + r.name + '</div>' +
+      '<div class="insight-diff">你<b>' + r.userRating + '</b> 参考<b>' + r.refRating + '</b></div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('gap-items').innerHTML = gaps.map(function(r){
+    return '<div class="insight-item">' +
+      '<div class="insight-emoji">' + r.emoji + '</div>' +
+      '<div class="insight-name">' + r.name + '</div>' +
+      '<div class="insight-diff">你<b>' + r.userRating + '</b> 参考<b>' + r.refRating + '</b> (差' + r.diff + ')</div>' +
+    '</div>';
+  }).join('');
+
+  if (pct >= 70) launchConfetti();
+}
+
+/* ============================================================
+   CONFETTI
+============================================================ */
+function launchConfetti(count){
+  count = count || 50;
+  const colors = ['#ff7f50','#4ecdc4','#ff6b9d','#fbbf24','#10b981','#a855f7'];
+  for (let i = 0; i < count; i++){
+    setTimeout(function(){
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + '%';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.animation = 'fall ' + (1.8 + Math.random() * 1.4) + 's ' + (Math.random() * .3) + 's forwards linear';
+      c.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+      document.body.appendChild(c);
+      setTimeout(function(){ if (c.parentNode) c.remove(); }, 3600);
+    }, i * 25);
+  }
+}
+</script>
+</body>
+</html>

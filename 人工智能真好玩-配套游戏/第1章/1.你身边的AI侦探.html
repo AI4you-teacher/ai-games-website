@@ -1,0 +1,380 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>你身边的AI侦探</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for detective theme and modals */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #2a2a4a; /* Darker blue for modal background */
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #00ff88;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .modal-close-btn:hover,
+        .modal-close-btn:focus {
+            color: #00ff88;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Neon button hover effect */
+        .neon-green-btn:hover {
+            box-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88, 0 0 30px #00ff88;
+        }
+        .neon-red-btn:hover {
+            box-shadow: 0 0 10px #ff4757, 0 0 20px #ff4757, 0 0 30px #ff4757;
+        }
+    </style>
+</head>
+<body class="bg-[#1a1a2e] text-white min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Game Container -->
+    <div id="game-container" class="w-full max-w-2xl bg-[#2a2a4a] rounded-lg shadow-lg p-6 flex flex-col items-center relative border border-gray-700">
+        <!-- Header -->
+        <div class="flex items-center text-3xl font-bold mb-8 text-yellow-400">
+            <span class="mr-3 text-5xl">🔎</span>
+            你身边的AI侦探
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center">
+            <h2 class="text-2xl font-semibold mb-4">欢迎来到真相调查局！</h2>
+            <p class="text-lg mb-6">作为AI侦探，你需要分辨出哪些是真正的AI，哪些只是自动化设备。</p>
+            <p class="text-lg mb-8 text-yellow-400 font-medium">记住判断AI的三要素：<br/>是否具备<span class="text-green-400">'学习'</span>、<span class="text-green-400">'识别'</span>、<span class="text-green-400">'决策'</span>能力！</p>
+            <button id="start-game-btn" class="px-8 py-3 bg-[#00ff88] text-gray-900 text-xl font-bold rounded-full neon-green-btn transition-all duration-300">
+                开始调查
+            </button>
+        </div>
+
+        <!-- Game Play Area -->
+        <div id="game-play-area" class="hidden w-full flex flex-col items-center">
+            <!-- Scenario Card -->
+            <div class="bg-gray-800 rounded-xl p-6 text-center mb-8 w-full border border-gray-600">
+                <div class="text-6xl mb-4 text-blue-400">💡</div> <!-- Placeholder for icon -->
+                <p id="scenario-text" class="text-2xl font-semibold text-white">场景描述</p>
+            </div>
+
+            <!-- Judgment Buttons -->
+            <div class="flex space-x-6 mb-8">
+                <button id="is-ai-btn" class="px-8 py-4 bg-[#00ff88] text-gray-900 text-xl font-bold rounded-full w-48 neon-green-btn transition-all duration-300">
+                    是AI
+                </button>
+                <button id="not-ai-btn" class="px-8 py-4 bg-[#ff4757] text-white text-xl font-bold rounded-full w-48 neon-red-btn transition-all duration-300">
+                    不是AI
+                </button>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full text-center text-lg text-gray-400">
+                已调查 <span id="progress-count">0</span>/10
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center">
+            <h2 id="result-title" class="text-3xl font-bold mb-4"></h2>
+            <p id="result-message" class="text-xl mb-6"></p>
+            <div id="knowledge-card" class="bg-gray-800 rounded-xl p-6 text-left mb-8 border border-gray-600">
+                <h3 class="text-2xl font-bold text-yellow-400 mb-3">AI侦探知识卡片：</h3>
+                <p class="text-lg leading-relaxed">
+                    AI的核心是"会学习、能识别、做决策"。自动门、电子秤虽然看起来智能，但只是按固定规则工作。真正的AI能从数据中学习、识别复杂模式、做出智能决策。
+                    生活中很多"智能设备"其实是"自动化设备"。真正的AI会越用越聪明——比如推荐系统会根据你的浏览记录调整推荐内容。下次看到"智能"标签，试着问：它能学习吗？
+                </p>
+            </div>
+            <button id="retry-game-btn" class="px-8 py-3 bg-[#00ff88] text-gray-900 text-xl font-bold rounded-full neon-green-btn transition-all duration-300">
+                再次调查
+            </button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- 小智老师 Feedback Modal -->
+    <div id="xiaozhi-modal" class="modal hidden">
+        <div class="modal-content text-white text-center">
+            <span class="modal-close-btn" onclick="closeModal('xiaozhi-modal')">&times;</span>
+            <h3 id="xiaozhi-feedback-title" class="text-2xl font-bold mb-4"></h3>
+            <p id="xiaozhi-feedback-text" class="text-lg leading-relaxed"></p>
+            <p class="mt-4 text-green-400 text-xl font-bold">小智老师</p>
+        </div>
+    </div>
+
+    <!-- 人类老师 Tip Modal -->
+    <div id="human-teacher-modal" class="modal hidden">
+        <div class="modal-content text-white text-center">
+            <span class="modal-close-btn" onclick="closeModal('human-teacher-modal')">&times;</span>
+            <h3 class="text-2xl font-bold mb-4 text-yellow-400">人类老师提示卡</h3>
+            <p id="human-teacher-tip-text" class="text-lg leading-relaxed"></p>
+            <p class="mt-4 text-yellow-400 text-xl font-bold">人类老师</p>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                scenario: "自动售卖机——投币后自动出货",
+                isAI: false,
+                coreReason: "自动售卖机只是按预设程序工作，不需要学习数据，不会识别你的偏好，只是简单的自动化——所以不是AI。",
+                icon: "🛒"
+            },
+            {
+                scenario: "电子秤——称重显示",
+                isAI: false,
+                coreReason: "电子秤是简单传感器转换，将重量信号转化为数字显示，没有智能处理过程，不是AI。",
+                icon: "⚖️"
+            },
+            {
+                scenario: "智能马桶——感应冲水",
+                isAI: false,
+                coreReason: "智能马桶通过红外感应触发固定冲水程序，不涉及学习、识别用户习惯或做出复杂决策，是自动化。",
+                icon: "🚽"
+            },
+            {
+                scenario: "超市自动门——人来开门",
+                isAI: false,
+                coreReason: "超市自动门是传感器检测到物体后，执行预设的开门程序，没有决策能力，不属于AI。",
+                icon: "🚪"
+            },
+            {
+                scenario: "手机人脸解锁",
+                isAI: true,
+                coreReason: "手机人脸解锁涉及复杂的图像识别、特征提取和模式匹配，它通过学习你的面部数据进行识别和决策，是AI应用。",
+                icon: "📱"
+            },
+            {
+                scenario: "抖音推荐视频",
+                isAI: true,
+                coreReason: "抖音推荐系统会学习你的观看历史、点赞、评论等用户偏好，识别你的兴趣模式，并基于此个性化决策推送视频，是AI。",
+                icon: "▶️"
+            },
+            {
+                scenario: "语音助手（Siri/小爱）",
+                isAI: true,
+                coreReason: "语音助手能进行语音识别、自然语言理解，识别你的指令并生成回应，是典型的AI应用，具备学习、识别和决策能力。",
+                icon: "🗣️"
+            },
+            {
+                scenario: "扫地机器人（规划路线）",
+                isAI: true,
+                coreReason: "扫地机器人通过传感器感知环境，学习房间布局，识别障碍物，并自主规划清扫路径和避障，是AI应用。",
+                icon: "🤖"
+            },
+            {
+                scenario: "微信表情推荐",
+                isAI: true,
+                coreReason: "微信表情推荐系统会学习你的聊天习惯、识别当前对话情绪，并预测你可能使用的表情，是AI的应用。",
+                icon: "💬"
+            },
+            {
+                scenario: "健身房跑步机（显示心率）",
+                isAI: false,
+                coreReason: "跑步机显示心率只是传感器数据采集和呈现，它没有对心率数据进行智能分析、学习或决策，不是AI。",
+                icon: "🏃"
+            }
+        ];
+
+        const humanTeacherTips = [
+            "你开始掌握诀窍了！记住：看'能不能学习新东西'。",
+            "厉害！你已经能区分'自动化'和'真智能'了。"
+        ];
+
+        let currentQuestionIndex = 0;
+        let correctAnswersCount = 0;
+        let consecutiveCorrectAnswers = 0; // For human teacher tips
+
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const gamePlayArea = document.getElementById('game-play-area');
+        const resultScreen = document.getElementById('result-screen');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const retryGameBtn = document.getElementById('retry-game-btn');
+        const scenarioText = document.getElementById('scenario-text');
+        const scenarioIcon = document.querySelector('.scenario-card .text-6xl'); // For icon within the card
+        const isAiBtn = document.getElementById('is-ai-btn');
+        const notAiBtn = document.getElementById('not-ai-btn');
+        const progressCount = document.getElementById('progress-count');
+
+        // Modals
+        const xiaozhiModal = document.getElementById('xiaozhi-modal');
+        const xiaozhiFeedbackTitle = document.getElementById('xiaozhi-feedback-title');
+        const xiaozhiFeedbackText = document.getElementById('xiaozhi-feedback-text');
+        const humanTeacherModal = document.getElementById('human-teacher-modal');
+        const humanTeacherTipText = document.getElementById('human-teacher-tip-text');
+
+        // Event Listeners
+        startGameBtn.addEventListener('click', startGame);
+        retryGameBtn.addEventListener('click', startGame);
+        isAiBtn.addEventListener('click', () => handleAnswer(true));
+        notAiBtn.addEventListener('click', () => handleAnswer(false));
+
+        function startGame() {
+            currentQuestionIndex = 0;
+            correctAnswersCount = 0;
+            consecutiveCorrectAnswers = 0;
+            startScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            gamePlayArea.classList.remove('hidden');
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            if (currentQuestionIndex < questions.length) {
+                const question = questions[currentQuestionIndex];
+                scenarioText.textContent = question.scenario;
+                // Update icon if available
+                const iconElement = gamePlayArea.querySelector('.bg-gray-800 .text-6xl');
+                if (iconElement) {
+                     iconElement.textContent = question.icon || '💡'; // Use specified icon or default
+                }
+                
+                updateProgress();
+            } else {
+                endGame();
+            }
+        }
+
+        function handleAnswer(userIsAI) {
+            const question = questions[currentQuestionIndex];
+            const isCorrect = (userIsAI === question.isAI);
+
+            if (isCorrect) {
+                correctAnswersCount++;
+                consecutiveCorrectAnswers++;
+                xiaozhiFeedbackTitle.textContent = "太棒了！判断正确！";
+                xiaozhiFeedbackTitle.classList.remove('text-red-400');
+                xiaozhiFeedbackTitle.classList.add('text-green-400');
+            } else {
+                consecutiveCorrectAnswers = 0; // Reset consecutive count on wrong answer
+                xiaozhiFeedbackTitle.textContent = "嗯，判断错误了，别灰心！";
+                xiaozhiFeedbackTitle.classList.remove('text-green-400');
+                xiaozhiFeedbackTitle.classList.add('text-red-400');
+            }
+            xiaozhiFeedbackText.textContent = question.coreReason;
+            showModal('xiaozhi-modal');
+
+            // After closing Xiaozhi modal, check for human teacher tip
+            // This is handled by the closeModal function and `currentQuestionIndex` increment
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            if (modalId === 'xiaozhi-modal') {
+                // Check for human teacher tip after every 3 correct answers
+                if (consecutiveCorrectAnswers > 0 && consecutiveCorrectAnswers % 3 === 0 && (consecutiveCorrectAnswers / 3) <= humanTeacherTips.length) {
+                    showHumanTeacherTip(humanTeacherTips[(consecutiveCorrectAnswers / 3) - 1]);
+                } else {
+                    currentQuestionIndex++; // Move to next question if no human tip or tips exhausted
+                    displayQuestion(); // Continue to next question or end game
+                }
+            } else if (modalId === 'human-teacher-modal') {
+                currentQuestionIndex++; // Move to next question after human teacher tip
+                displayQuestion(); // Continue to next question or end game
+            }
+        }
+
+        function showHumanTeacherTip(tipText) {
+            humanTeacherTipText.textContent = tipText;
+            showModal('human-teacher-modal');
+        }
+
+        function updateProgress() {
+            progressCount.textContent = currentQuestionIndex;
+        }
+
+        function endGame() {
+            gamePlayArea.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            const resultTitle = document.getElementById('result-title');
+            const resultMessage = document.getElementById('result-message');
+            const successThreshold = 7; // 70% of 10 questions
+
+            if (correctAnswersCount >= successThreshold) {
+                resultTitle.textContent = "恭喜你，AI侦探！调查成功！";
+                resultTitle.classList.remove('text-red-400');
+                resultTitle.classList.add('text-green-400');
+                resultMessage.textContent = `你答对了 ${correctAnswersCount} 题，顺利通过！`;
+            } else {
+                resultTitle.textContent = "侦探还需修炼！调查失败。";
+                resultTitle.classList.remove('text-green-400');
+                resultTitle.classList.add('text-red-400');
+                resultMessage.textContent = `你答对了 ${correctAnswersCount} 题。再试试看，记住判断要点：学习、识别、决策！`;
+            }
+        }
+
+        // Initial state: show start screen
+        startScreen.classList.remove('hidden');
+
+    </script>
+<script>window.parent.postMessage({ action: "ready" }, "*"); 
+ 
+window.console = new Proxy(console, {
+  get(target, prop) {
+    if (['log', 'warn', 'error'].includes(prop)) {
+      return new Proxy(target[prop], {
+        apply(fn, thisArg, args) {
+          fn.apply(thisArg, args);
+          window.parent.postMessage({ action: 'console', 
+            type: prop, 
+            args: args.map((arg) => {
+              try {
+                return JSON.stringify(arg).replace(/^["']|["']$/g, '');
+              } catch (e) {
+                return arg;
+              }
+            }) 
+          }, '*');
+        }
+      });
+    }
+    return target[prop];
+  }
+});
+</script></body>
+</html>

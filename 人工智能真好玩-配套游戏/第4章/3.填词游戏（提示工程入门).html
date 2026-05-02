@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>故事炼金坊</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,500&family=ZCOOL+XiaoWei&family=Noto+Serif+SC:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5ecd7;
+    --bg-deep: #ede1c4;
+    --paper: #fffaf0;
+    --ink: #2a1810;
+    --ink-soft: #5c4938;
+    --accent: #c83e1d;
+    --accent-soft: #e8a792;
+    --gold: #b8893a;
+    --gold-light: #e6c878;
+    --line: #2a1810;
+    --shadow: rgba(42, 24, 16, 0.15);
+    --highlight: #ffe566;
+  }
+
+  [data-theme="dark"] {
+    --bg: #1a1410;
+    --bg-deep: #0f0a07;
+    --paper: #2a2018;
+    --ink: #f5ecd7;
+    --ink-soft: #b8a78a;
+    --accent: #ff6b47;
+    --accent-soft: #7a3a2a;
+    --gold: #e6c878;
+    --gold-light: #b8893a;
+    --line: #f5ecd7;
+    --shadow: rgba(0, 0, 0, 0.5);
+    --highlight: #5a4a1a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Serif SC', 'Fraunces', serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    transition: background 0.4s, color 0.4s;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(circle at 10% 20%, var(--bg-deep) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, var(--bg-deep) 0%, transparent 40%);
+  }
+
+  /* 纸张纹理 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(42,24,16,0.02) 2px, rgba(42,24,16,0.02) 3px),
+      repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(42,24,16,0.02) 2px, rgba(42,24,16,0.02) 3px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 顶栏 */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--line);
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+  }
+
+  .brand-num {
+    font-family: 'Fraunces', serif;
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--accent);
+    font-style: italic;
+    line-height: 1;
+  }
+
+  .brand-title {
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: 1.6rem;
+    color: var(--ink);
+    letter-spacing: 0.1em;
+  }
+
+  .theme-toggle {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    font-size: 1.3rem;
+  }
+
+  .theme-toggle:hover {
+    transform: rotate(180deg) scale(1.1);
+    background: var(--gold-light);
+  }
+
+  /* 介绍场景 */
+  .scene {
+    display: none;
+    animation: fadeIn 0.6s ease;
+  }
+
+  .scene.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .intro-card {
+    background: var(--paper);
+    border: 3px solid var(--line);
+    padding: 3rem 2.5rem;
+    box-shadow: 8px 8px 0 var(--accent);
+    position: relative;
+  }
+
+  .intro-card::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    border: 1px solid var(--line);
+    pointer-events: none;
+  }
+
+  .intro-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .intro-title {
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    color: var(--ink);
+  }
+
+  .intro-title .accent {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .intro-story {
+    font-size: 1.1rem;
+    line-height: 1.9;
+    color: var(--ink-soft);
+    margin-bottom: 2rem;
+    text-indent: 2em;
+  }
+
+  .rules-box {
+    background: var(--bg-deep);
+    border-left: 5px solid var(--gold);
+    padding: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .rules-title {
+    font-weight: 900;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ink);
+  }
+
+  .rules-list {
+    list-style: none;
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .rules-list li {
+    padding-left: 1.5rem;
+    position: relative;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+
+  .rules-list li::before {
+    content: '◆';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  .start-btn {
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: 1.3rem;
+    background: var(--accent);
+    color: var(--paper);
+    border: none;
+    padding: 1rem 3rem;
+    cursor: pointer;
+    letter-spacing: 0.2em;
+    transition: all 0.3s;
+    box-shadow: 4px 4px 0 var(--line);
+    margin-top: 1rem;
+  }
+
+  .start-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--line);
+  }
+
+  .start-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--line);
+  }
+
+  /* 游戏主界面 */
+  .game-main {
+    background: var(--paper);
+    border: 3px solid var(--line);
+    padding: 2rem;
+    box-shadow: 6px 6px 0 var(--accent);
+    position: relative;
+  }
+
+  .game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px dashed var(--ink-soft);
+  }
+
+  .chapter-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    color: var(--ink-soft);
+  }
+
+  .progress-dots {
+    display: flex;
+    gap: 8px;
+  }
+
+  .dot {
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--line);
+    background: var(--paper);
+    border-radius: 50%;
+  }
+
+  .dot.filled {
+    background: var(--accent);
+  }
+
+  /* 要素选择区 */
+  .element-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .element-group {
+    background: var(--bg);
+    border: 2px solid var(--line);
+    padding: 1.2rem;
+    position: relative;
+    transition: all 0.3s;
+  }
+
+  .element-group.has-selection {
+    box-shadow: 4px 4px 0 var(--gold);
+  }
+
+  .element-label {
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: 1.3rem;
+    color: var(--ink);
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .element-icon {
+    font-size: 1.5rem;
+  }
+
+  .hint-text {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin-bottom: 0.8rem;
+    font-style: italic;
+  }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .chip {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    padding: 0.4rem 0.9rem;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--ink);
+    user-select: none;
+  }
+
+  .chip:hover {
+    background: var(--gold-light);
+    transform: translateY(-2px);
+  }
+
+  .chip.selected {
+    background: var(--accent);
+    color: var(--paper);
+    transform: scale(1.05);
+    box-shadow: 2px 2px 0 var(--line);
+  }
+
+  /* 生成按钮 */
+  .action-bar {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+  }
+
+  .gen-btn {
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: 1.1rem;
+    padding: 0.9rem 2.2rem;
+    border: 2px solid var(--line);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.1em;
+  }
+
+  .gen-btn.primary {
+    background: var(--accent);
+    color: var(--paper);
+    box-shadow: 4px 4px 0 var(--line);
+  }
+
+  .gen-btn.primary:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--line);
+  }
+
+  .gen-btn.primary:disabled {
+    background: var(--ink-soft);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .gen-btn.secondary {
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .gen-btn.secondary:hover {
+    background: var(--bg-deep);
+  }
+
+  /* 故事展示 */
+  .story-panel {
+    background: var(--bg);
+    border: 2px solid var(--line);
+    padding: 2rem;
+    margin-top: 1.5rem;
+    position: relative;
+    min-height: 180px;
+    font-family: 'Noto Serif SC', serif;
+  }
+
+  .story-panel::before {
+    content: '生成故事';
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: var(--paper);
+    padding: 0 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+  }
+
+  .story-text {
+    font-size: 1.1rem;
+    line-height: 2;
+    color: var(--ink);
+    white-space: pre-wrap;
+  }
+
+  .story-text .tag {
+    background: var(--highlight);
+    padding: 0 4px;
+    border-radius: 2px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .story-empty {
+    text-align: center;
+    color: var(--ink-soft);
+    font-style: italic;
+    padding: 2rem 0;
+  }
+
+  /* 评分 */
+  .score-panel {
+    margin-top: 1.5rem;
+    background: var(--bg-deep);
+    border: 2px solid var(--line);
+    padding: 1.5rem;
+    display: none;
+  }
+
+  .score-panel.show {
+    display: block;
+    animation: slideIn 0.5s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .score-title {
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    color: var(--ink);
+  }
+
+  .score-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px dashed var(--ink-soft);
+  }
+
+  .score-item:last-child { border-bottom: none; }
+
+  .score-label {
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+  }
+
+  .score-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.85rem;
+  }
+
+  .score-badge.pass {
+    background: var(--gold-light);
+    color: var(--ink);
+  }
+
+  .score-badge.fail {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+
+  /* AI老师反馈 */
+  .ai-teacher {
+    background: linear-gradient(135deg, var(--paper), var(--bg-deep));
+    border: 3px dashed var(--accent);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    position: relative;
+    display: none;
+  }
+
+  .ai-teacher.show {
+    display: block;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .teacher-head {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .teacher-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--paper);
+    font-weight: 900;
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: 1.2rem;
+  }
+
+  .teacher-name {
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+  }
+
+  .teacher-text {
+    line-height: 1.8;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+  }
+
+  /* 知识卡片 */
+  .knowledge-card {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 2.5rem;
+    margin-top: 2rem;
+    border: 3px solid var(--line);
+    box-shadow: 8px 8px 0 var(--gold);
+    display: none;
+    position: relative;
+  }
+
+  .knowledge-card.show {
+    display: block;
+    animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  [data-theme="dark"] .knowledge-card {
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .kc-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    color: var(--gold-light);
+    margin-bottom: 0.8rem;
+  }
+
+  .kc-title {
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .kc-content {
+    line-height: 1.9;
+    font-size: 1rem;
+    opacity: 0.9;
+  }
+
+  .kc-content p { margin-bottom: 1rem; }
+
+  .kc-formula {
+    background: rgba(255, 229, 102, 0.15);
+    border-left: 4px solid var(--gold-light);
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: 1.1rem;
+  }
+
+  /* 漂浮装饰 */
+  .deco {
+    position: absolute;
+    font-family: 'ZCOOL XiaoWei', serif;
+    color: var(--accent-soft);
+    opacity: 0.3;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .deco-1 { top: 20px; right: 40px; font-size: 4rem; transform: rotate(-15deg); }
+  .deco-2 { bottom: 30px; left: 30px; font-size: 3rem; transform: rotate(8deg); }
+
+  @media (max-width: 600px) {
+    .container { padding: 1rem; }
+    .intro-card { padding: 2rem 1.5rem; }
+    .element-groups { grid-template-columns: 1fr; }
+    .brand-num { font-size: 2.2rem; }
+    .brand-title { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="brand">
+        <span class="brand-num">PE</span>
+        <span class="brand-title">故事炼金坊</span>
+      </div>
+      <button class="theme-toggle" id="themeBtn" title="切换主题">🌙</button>
+    </header>
+
+    <!-- 介绍场景 -->
+    <section class="scene active" id="sceneIntro">
+      <div class="intro-card">
+        <div class="deco deco-1">故事</div>
+        <div class="deco deco-2">炼金</div>
+        <div class="intro-label">提示工程入门 Prompt Engineering</div>
+        <h1 class="intro-title">
+          欢迎来到<span class="accent">故事炼金坊</span><br>
+          你是今晚的<span class="accent">配方师</span>
+        </h1>
+        <p class="intro-story">
+          古老的炼金坊里，住着一只会写故事的精灵"文墨"。传说它能把任何素材变成精彩故事——但它有个怪脾气：<strong>你给它什么，它就写什么；你不给的，它绝不会自己瞎编</strong>。
+        </p>
+        <p class="intro-story">
+          今晚，它在等你投放素材。你将扮演<strong>配方师</strong>，从四种要素卡里挑选：时间、地点、角色与情绪、关键事件。投得越准、配得越齐，文墨写出的故事就越动人。
+        </p>
+
+        <div class="rules-box">
+          <div class="rules-title">📜 配方规则</div>
+          <ul class="rules-list">
+            <li>从四组要素中各选 <strong>1 张卡片</strong>，不选也可以（试试看会发生什么）</li>
+            <li>点击 <strong>"开始炼金"</strong>，文墨会依据你的配方写出故事草稿</li>
+            <li>系统会从三个维度打分：<strong>要素齐全 / 情绪呼应 / 有转折</strong></li>
+            <li>挑战三次，看看什么样的配方能让故事"活"起来</li>
+          </ul>
+        </div>
+
+        <button class="start-btn" onclick="goScene('game')">进入炼金坊 →</button>
+      </div>
+    </section>
+
+    <!-- 游戏主界面 -->
+    <section class="scene" id="sceneGame">
+      <div class="game-main">
+        <div class="game-header">
+          <span class="chapter-label">第一炉 · 调配你的故事配方</span>
+          <div class="progress-dots">
+            <div class="dot" id="d1"></div>
+            <div class="dot" id="d2"></div>
+            <div class="dot" id="d3"></div>
+            <div class="dot" id="d4"></div>
+          </div>
+        </div>
+
+        <div class="element-groups">
+          <div class="element-group" data-group="time">
+            <div class="element-label"><span class="element-icon">🕰️</span>时间</div>
+            <div class="hint-text">故事发生在什么时候？</div>
+            <div class="chip-row">
+              <div class="chip" data-val="在一个雷雨交加的深夜">深夜</div>
+              <div class="chip" data-val="在星期六的清晨">清晨</div>
+              <div class="chip" data-val="在放学后的黄昏">黄昏</div>
+              <div class="chip" data-val="在春天来临的那一天">春日</div>
+            </div>
+          </div>
+
+          <div class="element-group" data-group="place">
+            <div class="element-label"><span class="element-icon">🏛️</span>地点</div>
+            <div class="hint-text">在哪里发生？</div>
+            <div class="chip-row">
+              <div class="chip" data-val="废弃的图书馆">图书馆</div>
+              <div class="chip" data-val="学校天台">天台</div>
+              <div class="chip" data-val="奶奶家的老阁楼">阁楼</div>
+              <div class="chip" data-val="地铁最后一班车厢">地铁</div>
+            </div>
+          </div>
+
+          <div class="element-group" data-group="role">
+            <div class="element-label"><span class="element-icon">🎭</span>角色与情绪</div>
+            <div class="hint-text">谁在经历？心情如何？</div>
+            <div class="chip-row">
+              <div class="chip" data-val="一个好奇又有点紧张的小男孩">好奇·紧张</div>
+              <div class="chip" data-val="一个勇敢而坚定的少女">勇敢·坚定</div>
+              <div class="chip" data-val="一只孤单却温柔的流浪猫">孤单·温柔</div>
+              <div class="chip" data-val="一位失落的老人">失落·沉思</div>
+            </div>
+          </div>
+
+          <div class="element-group" data-group="event">
+            <div class="element-label"><span class="element-icon">⚡</span>关键事件</div>
+            <div class="hint-text">发生了什么？</div>
+            <div class="chip-row">
+              <div class="chip" data-val="发现了一本会说话的日记本">会说话的日记</div>
+              <div class="chip" data-val="听见了来自未来的回声">未来的回声</div>
+              <div class="chip" data-val="偶遇一个自称"时间管理员"的身影">时间管理员</div>
+              <div class="chip" data-val="一颗星星从天空掉进了口袋">掉落的星星</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <button class="gen-btn primary" id="genBtn" disabled onclick="generate()">✦ 开始炼金</button>
+          <button class="gen-btn secondary" onclick="resetSelection()">清空重来</button>
+        </div>
+
+        <div class="story-panel" id="storyPanel">
+          <div class="story-empty" id="storyEmpty">至少选择 1 张卡片后点击"开始炼金"，文墨就会为你写故事……</div>
+          <div class="story-text" id="storyText" style="display:none;"></div>
+        </div>
+
+        <div class="score-panel" id="scorePanel">
+          <div class="score-title">⚖️ 文墨评审团</div>
+          <div class="score-item">
+            <span class="score-label">要素齐全度（四要素都给了吗？）</span>
+            <span class="score-badge" id="sc1">—</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">情绪呼应（氛围是否统一？）</span>
+            <span class="score-badge" id="sc2">—</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">有没有转折（故事是否有惊喜？）</span>
+            <span class="score-badge" id="sc3">—</span>
+          </div>
+        </div>
+
+        <div class="ai-teacher" id="aiTeacher">
+          <div class="teacher-head">
+            <div class="teacher-avatar">智</div>
+            <div class="teacher-name">AI老师 · 小智</div>
+          </div>
+          <div class="teacher-text" id="teacherText"></div>
+        </div>
+
+        <div class="knowledge-card" id="knowCard">
+          <div class="kc-label">KNOWLEDGE CARD · 通关奖励</div>
+          <div class="kc-title">🪄 提示词的秘密</div>
+          <div class="kc-content">
+            <p>恭喜你！你刚才做的事情，有一个正式名字——<strong>提示工程（Prompt Engineering）</strong>。</p>
+            <p>生成式AI就像今晚的文墨：<strong>它只能根据你给的要求来写</strong>。你没说地点，它只能含糊带过；你没说情绪，它只能平铺直叙。</p>
+            <div class="kc-formula">
+              好的提示 = 时间 + 地点 + 人物 + 情绪 + 事件<br>
+              （越具体，AI越知道你想要什么）
+            </div>
+            <p>下次你和 AI 聊天时，想让它帮你写一封邮件、一段祝福、一个故事，记得像"配方师"一样，把要素讲清楚——AI 不是读心术，它只能<strong>"满足你的要求"</strong>。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+// ===== 主题切换 =====
+const themeBtn = document.getElementById('themeBtn');
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  themeBtn.textContent = t === 'dark' ? '☀️' : '🌙';
+  try { localStorage.setItem('theme21', t); } catch(e) {}
+}
+themeBtn.onclick = () => {
+  const cur = document.documentElement.getAttribute('data-theme');
+  setTheme(cur === 'dark' ? 'light' : 'dark');
+};
+try {
+  const saved = localStorage.getItem('theme21');
+  if (saved) setTheme(saved);
+} catch(e) {}
+
+// ===== 场景切换 =====
+function goScene(id) {
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  document.getElementById('scene' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ===== 选择逻辑 =====
+const selection = { time: null, place: null, role: null, event: null };
+const groupIdx = { time: 0, place: 1, role: 2, event: 3 };
+
+document.querySelectorAll('.element-group').forEach(group => {
+  const gKey = group.dataset.group;
+  group.querySelectorAll('.chip').forEach(chip => {
+    chip.onclick = () => {
+      // 单选：取消同组其他
+      group.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      selection[gKey] = chip.dataset.val;
+      group.classList.add('has-selection');
+      // 更新进度点
+      document.getElementById('d' + (groupIdx[gKey] + 1)).classList.add('filled');
+      // 至少选1个才能生成
+      document.getElementById('genBtn').disabled = Object.values(selection).every(v => !v);
+    };
+  });
+});
+
+function resetSelection() {
+  Object.keys(selection).forEach(k => selection[k] = null);
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.element-group').forEach(g => g.classList.remove('has-selection'));
+  document.querySelectorAll('.dot').forEach(d => d.classList.remove('filled'));
+  document.getElementById('genBtn').disabled = true;
+  document.getElementById('storyText').style.display = 'none';
+  document.getElementById('storyEmpty').style.display = 'block';
+  document.getElementById('scorePanel').classList.remove('show');
+  document.getElementById('aiTeacher').classList.remove('show');
+  document.getElementById('knowCard').classList.remove('show');
+}
+
+// ===== 故事模板（根据选择拼接） =====
+function generate() {
+  const { time, place, role, event } = selection;
+
+  // 根据已选要素，用不同模板（缺失的地方故意"含糊"，让学生感受到不足）
+  let story = '';
+
+  if (time && place && role && event) {
+    // 四要素齐全：好故事
+    story = `<span class="tag">${time}</span>，<span class="tag">${place}</span>里一片寂静。<span class="tag">${role}</span>缓缓推开门，空气里飘着旧书页的味道。\n\n就在这时，${event.startsWith('一颗') || event.startsWith('听') || event.startsWith('发') || event.startsWith('偶') ? '' : '突然'}<span class="tag">${event}</span>——世界仿佛停了一秒，然后，一切都不一样了。\n\n他/她/它心中翻涌起千万种可能，深吸一口气，决定：不逃，也不躲，要直面这场奇遇。`;
+  } else {
+    // 缺要素：模板变得"含糊"，让学生意识到缺失
+    story = '在';
+    story += time ? `<span class="tag">${time}</span>，` : '<em style="color:var(--ink-soft)">某个时候</em>，';
+    story += place ? `<span class="tag">${place}</span>里，` : '<em style="color:var(--ink-soft)">某个地方</em>，';
+    story += role ? `<span class="tag">${role}</span>` : '<em style="color:var(--ink-soft)">某个人</em>';
+    story += '经历了一些事情。';
+    story += event ? `原来——<span class="tag">${event}</span>。` : '具体发生了什么，嗯……文墨也说不清。';
+    story += '\n\n故事就这样结束了。（文墨耸了耸肩：你给的信息太少，我只能写到这里了……）';
+  }
+
+  // 显示故事
+  document.getElementById('storyEmpty').style.display = 'none';
+  const t = document.getElementById('storyText');
+  t.style.display = 'block';
+  t.innerHTML = story;
+
+  // 评分
+  const filled = Object.values(selection).filter(v => v).length;
+  const s1 = filled === 4;
+  const s2 = role && (time || place); // 情绪需要氛围支撑
+  const s3 = event && filled >= 3;     // 有事件+足够铺垫=有转折
+
+  setBadge('sc1', s1, `${filled}/4`);
+  setBadge('sc2', s2, s2 ? '呼应' : '较弱');
+  setBadge('sc3', s3, s3 ? '有转折' : '平铺');
+  document.getElementById('scorePanel').classList.add('show');
+
+  // AI老师反馈
+  const teacherEl = document.getElementById('aiTeacher');
+  const teacherText = document.getElementById('teacherText');
+  let msg = '';
+  if (filled === 4 && s1 && s2 && s3) {
+    msg = `<strong>太棒了！</strong>四个要素都到位，文墨写出了一个有氛围、有转折的完整故事。<br><br>看到了吗？<strong>你给的越具体，AI 写的就越生动</strong>。这就是"提示词"的力量——它不是魔法咒语，而是<strong>一份需求说明书</strong>。`;
+  } else if (filled >= 2) {
+    const missing = [];
+    if (!selection.time) missing.push('时间');
+    if (!selection.place) missing.push('地点');
+    if (!selection.role) missing.push('角色与情绪');
+    if (!selection.event) missing.push('事件');
+    msg = `不错的起步！但你没告诉文墨：<strong>${missing.join('、')}</strong>。<br><br>注意看故事里那些"<em>某个时候</em>""<em>某个人</em>"——AI 不是不想写具体，而是<strong>你没给，它就不会编</strong>。试着再补一两张卡，故事会截然不同。`;
+  } else {
+    msg = `文墨写得很敷衍对吧？这不是它偷懒，而是<strong>你只给了一个要素</strong>。<br><br>生成式 AI 有个重要特点：<strong>它只能满足你明确提出的要求</strong>。要让它写好，你必须把画面描述得足够清楚。再试一次，这次多选几张卡？`;
+  }
+  teacherText.innerHTML = msg;
+  teacherEl.classList.add('show');
+
+  // 满分解锁知识卡
+  if (filled === 4 && s1 && s2 && s3) {
+    setTimeout(() => {
+      document.getElementById('knowCard').classList.add('show');
+      document.getElementById('knowCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 800);
+  }
+}
+
+function setBadge(id, pass, text) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'score-badge ' + (pass ? 'pass' : 'fail');
+}
+</script>
+</body>
+</html>
