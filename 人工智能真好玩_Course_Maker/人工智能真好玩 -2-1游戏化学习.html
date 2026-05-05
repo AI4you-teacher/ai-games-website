@@ -1,0 +1,1720 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>监督学习 - 探索式学习</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+  * { font-family: 'Noto Sans SC', sans-serif; box-sizing: border-box; }
+  body { background: #f0f4ff; margin: 0; padding: 0; }
+
+  .hero-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+  .card { background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .section-title { font-size: 1.5rem; font-weight: 700; color: #2d3748; }
+
+  /* Tabs */
+  .tab-btn { transition: all 0.3s; cursor: pointer; border-radius: 10px; padding: 10px 20px; font-weight: 500; border: none; background: transparent; }
+  .tab-btn.active { background: #667eea; color: white; box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+  .tab-btn:not(.active) { color: #718096; }
+  .tab-btn:not(.active):hover { background: #edf2f7; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Story cards */
+  .story-card { border-left: 4px solid #667eea; background: #f7f8ff; border-radius: 0 12px 12px 0; padding: 16px; margin: 12px 0; }
+  .emoji-big { font-size: 2.5rem; }
+
+  /* Data table */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .data-table th { background: #667eea; color: white; padding: 8px 12px; text-align: center; }
+  .data-table td { padding: 7px 12px; text-align: center; border-bottom: 1px solid #e2e8f0; }
+  .data-table tr:nth-child(even) { background: #f7f8ff; }
+  .data-table tr.cat-row td { color: #e53e3e; font-weight: 500; }
+  .data-table tr.notcat-row td { color: #3182ce; }
+  .tag-cat { background: #fed7d7; color: #c53030; border-radius: 20px; padding: 2px 10px; font-size: 0.8rem; font-weight: 600; }
+  .tag-notcat { background: #bee3f8; color: #2b6cb0; border-radius: 20px; padding: 2px 10px; font-size: 0.8rem; font-weight: 600; }
+
+  /* Simulator */
+  .feature-toggle { cursor: pointer; border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px 16px; transition: all 0.2s; user-select: none; text-align: center; }
+  .feature-toggle.selected { border-color: #667eea; background: #ebf4ff; color: #3c4fe0; font-weight: 600; }
+  .feature-toggle:hover { border-color: #a0aec0; }
+
+  .result-bar { height: 28px; border-radius: 6px; transition: width 0.6s ease; display: flex; align-items: center; padding-left: 10px; color: white; font-size: 0.85rem; font-weight: 600; min-width: 40px; }
+
+  /* Animal cards */
+  .animal-card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.2s; text-align: center; }
+  .animal-card:hover { border-color: #667eea; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102,126,234,0.2); }
+  .animal-card.selected-cat { border-color: #e53e3e; background: #fff5f5; }
+  .animal-card.selected-notcat { border-color: #3182ce; background: #ebf8ff; }
+
+  /* Progress */
+  .progress-step { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; margin: 8px 0; }
+  .progress-step.done { background: #f0fff4; }
+  .progress-step.active { background: #ebf4ff; }
+  .progress-step.pending { background: #f7fafc; opacity: 0.6; }
+  .step-circle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+  .step-circle.done { background: #48bb78; color: white; }
+  .step-circle.active { background: #667eea; color: white; }
+  .step-circle.pending { background: #e2e8f0; color: #a0aec0; }
+
+  /* Chart containers */
+  .chart-wrap { position: relative; min-height: 260px; max-height: 380px; margin-bottom: 1rem; }
+  .chart-wrap canvas { max-height: 360px; }
+
+  /* Scatter plot custom */
+  #scatterCanvas { border: 2px solid #e2e8f0; border-radius: 12px; cursor: crosshair; }
+
+  /* Quiz */
+  .quiz-option { border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; cursor: pointer; transition: all 0.2s; margin: 6px 0; }
+  .quiz-option:hover { border-color: #667eea; background: #f7f8ff; }
+  .quiz-option.correct { border-color: #48bb78; background: #f0fff4; color: #276749; }
+  .quiz-option.wrong { border-color: #fc8181; background: #fff5f5; color: #c53030; }
+
+  /* Connecting line game */
+  .connect-item { border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; cursor: pointer; transition: all 0.2s; text-align: center; font-size: 0.9rem; }
+  .connect-item.selected { border-color: #667eea; background: #ebf4ff; }
+  .connect-item.matched { border-color: #48bb78; background: #f0fff4; }
+
+  /* Poker cards */
+  .poker-card { width: 56px; height: 80px; border: 2px solid #cbd5e0; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; background: white; font-weight: 700; font-size: 1.1rem; user-select: none; }
+  .poker-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.15); }
+  .poker-card.group-a { border-color: #e53e3e; background: #fff5f5; }
+  .poker-card.group-b { border-color: #3182ce; background: #ebf8ff; }
+  .poker-card.red { color: #e53e3e; }
+  .poker-card.black { color: #2d3748; }
+
+  /* Tooltip */
+  .tooltip { position: relative; display: inline-block; }
+  .tooltip .tip { visibility: hidden; background: #2d3748; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); white-space: nowrap; z-index: 10; }
+  .tooltip:hover .tip { visibility: visible; }
+
+  /* Animations */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.4s ease forwards; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+  .pulse { animation: pulse 2s infinite; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #f1f1f1; }
+  ::-webkit-scrollbar-thumb { background: #c5c5c5; border-radius: 3px; }
+
+  .nav-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s; }
+  .nav-dot.active { background: white; transform: scale(1.3); }
+</style>
+</head>
+<body>
+
+<!-- Hero Section -->
+<div class="hero-gradient text-white py-12 px-4 text-center relative overflow-hidden">
+  <div class="absolute inset-0 opacity-10">
+    <div style="position:absolute;top:10%;left:5%;font-size:4rem;">🐱</div>
+    <div style="position:absolute;top:20%;right:8%;font-size:3rem;">🤖</div>
+    <div style="position:absolute;bottom:15%;left:15%;font-size:3.5rem;">📚</div>
+    <div style="position:absolute;bottom:10%;right:20%;font-size:3rem;">🧠</div>
+  </div>
+  <div class="relative z-10 max-w-3xl mx-auto">
+    <div class="text-5xl mb-4">🤖</div>
+    <h1 class="text-3xl md:text-4xl font-bold mb-3">监督学习</h1>
+    <p class="text-lg opacity-90 mb-6">像妈妈教你认识世界一样，AI 也可以从有标签的数据中学习！</p>
+    <div class="bg-white bg-opacity-20 rounded-2xl p-4 inline-block">
+      <p class="text-base font-medium">🤔 探索问题：如果给 AI 看 100 张猫的照片，它能学会认猫吗？</p>
+    </div>
+  </div>
+</div>
+
+<!-- Navigation Tabs -->
+<div class="max-w-5xl mx-auto px-4 py-6">
+  <div class="card p-3 mb-6 flex flex-wrap gap-2 justify-center">
+    <button class="tab-btn active" onclick="switchTab('story')">📖 故事引入</button>
+    <button class="tab-btn" onclick="switchTab('machine')">🤖 机器学习</button>
+    <button class="tab-btn" onclick="switchTab('simulator')">🔬 分类模拟器</button>
+    <button class="tab-btn" onclick="switchTab('practice')">🎮 互动练习</button>
+    <button class="tab-btn" onclick="switchTab('summary')">📊 学习总结</button>
+  </div>
+
+  <!-- TAB 1: Story -->
+  <div id="tab-story" class="tab-content active fade-in">
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card p-6">
+        <h2 class="section-title mb-4">👶 你是怎么学习的？</h2>
+        <div class="story-card">
+          <div class="flex items-start gap-3">
+            <span class="emoji-big">🕐</span>
+            <div>
+              <p class="font-semibold text-gray-700">认识钟表</p>
+              <p class="text-gray-600 text-sm mt-1">你听到滴答滴答的声音，妈妈指着钟表说：<strong>"宝贝，这是钟表"</strong></p>
+            </div>
+          </div>
+        </div>
+        <div class="story-card">
+          <div class="flex items-start gap-3">
+            <span class="emoji-big">🍎</span>
+            <div>
+              <p class="font-semibold text-gray-700">认识苹果</p>
+              <p class="text-gray-600 text-sm mt-1">妈妈拿起红红的果子，喂给你说：<strong>"红红苹果甜又甜"</strong></p>
+            </div>
+          </div>
+        </div>
+        <div class="story-card">
+          <div class="flex items-start gap-3">
+            <span class="emoji-big">🐱</span>
+            <div>
+              <p class="font-semibold text-gray-700">认识小猫</p>
+              <p class="text-gray-600 text-sm mt-1">毛茸茸的小家伙喵喵叫，妈妈说：<strong>"这是小猫咪，不用怕"</strong></p>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 p-4 bg-purple-50 rounded-xl border border-purple-200">
+          <p class="text-purple-800 font-medium text-sm">💡 这种有人在旁边不断教你的学习方式，就对应着机器学习中的 <strong>"监督学习"</strong>！</p>
+        </div>
+      </div>
+
+      <div class="card p-6">
+        <h2 class="section-title mb-4">🔑 监督学习的核心</h2>
+        <div class="space-y-4">
+          <div class="flex items-center gap-4 p-3 bg-blue-50 rounded-xl">
+            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-xl flex-shrink-0">👩</div>
+            <div>
+              <p class="font-semibold text-blue-800">有一位"老师"</p>
+              <p class="text-blue-600 text-sm">提供带有正确答案的训练数据</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 p-3 bg-green-50 rounded-xl">
+            <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-xl flex-shrink-0">🏷️</div>
+            <div>
+              <p class="font-semibold text-green-800">数据有"标签"</p>
+              <p class="text-green-600 text-sm">每个例子都告诉 AI 正确答案是什么</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 p-3 bg-orange-50 rounded-xl">
+            <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white text-xl flex-shrink-0">📝</div>
+            <div>
+              <p class="font-semibold text-orange-800">有"考试"检验</p>
+              <p class="text-orange-600 text-sm">用测试数据验证 AI 是否真的学会了</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 p-3 bg-purple-50 rounded-xl">
+            <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white text-xl flex-shrink-0">🎯</div>
+            <div>
+              <p class="font-semibold text-purple-800">目标是"泛化"</p>
+              <p class="text-purple-600 text-sm">能对没见过的新数据做出正确判断</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison diagram -->
+    <div class="card p-6 mt-6">
+      <h2 class="section-title mb-4 text-center">🔄 人类学习 vs 机器学习</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-bold text-center text-gray-600 mb-3">👶 人类宝宝学习</h3>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg text-sm">
+              <span>1️⃣</span><span>妈妈展示苹果（<strong>输入数据</strong>）</span>
+            </div>
+            <div class="text-center text-gray-400 text-xs">↓</div>
+            <div class="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg text-sm">
+              <span>2️⃣</span><span>妈妈说"这是苹果"（<strong>标签</strong>）</span>
+            </div>
+            <div class="text-center text-gray-400 text-xs">↓</div>
+            <div class="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg text-sm">
+              <span>3️⃣</span><span>宝宝记住特征（<strong>训练</strong>）</span>
+            </div>
+            <div class="text-center text-gray-400 text-xs">↓</div>
+            <div class="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg text-sm">
+              <span>4️⃣</span><span>看到新苹果能认出（<strong>预测</strong>）</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="font-bold text-center text-gray-600 mb-3">🤖 AI 机器学习</h3>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg text-sm">
+              <span>1️⃣</span><span>输入特征数据（<strong>特征向量</strong>）</span>
+            </div>
+            <div class="text-center text-gray-400 text-xs">↓</div>
+            <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg text-sm">
+              <span>2️⃣</span><span>对应正确答案（<strong>标签 Label</strong>）</span>
+            </div>
+            <div class="text-center text-gray-400 text-xs">↓</div>
+            <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg text-sm">
+              <span>3️⃣</span><span>算法优化参数（<strong>模型训练</strong>）</span>
+            </div>
+            <div class="text-center text-gray-400 text-xs">↓</div>
+            <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg text-sm">
+              <span>4️⃣</span><span>对新数据分类（<strong>模型预测</strong>）</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: Machine Learning Process -->
+  <div id="tab-machine" class="tab-content fade-in">
+    <div class="card p-6 mb-6">
+      <h2 class="section-title mb-2">🤖 AI 学习认猫的过程</h2>
+      <p class="text-gray-500 text-sm mb-4">点击下方步骤，逐步了解 AI 是如何从数据中学习的</p>
+      
+      <!-- Step progress -->
+      <div class="grid md:grid-cols-4 gap-3 mb-6" id="stepProgress">
+        <div class="progress-step active" id="step-0" onclick="showStep(0)">
+          <div class="step-circle active" id="sc-0">1</div>
+          <div><p class="font-semibold text-sm">收集数据</p><p class="text-xs text-gray-500">获取动物图片</p></div>
+        </div>
+        <div class="progress-step pending" id="step-1" onclick="showStep(1)">
+          <div class="step-circle pending" id="sc-1">2</div>
+          <div><p class="font-semibold text-sm">打标签</p><p class="text-xs text-gray-500">标注猫/非猫</p></div>
+        </div>
+        <div class="progress-step pending" id="step-2" onclick="showStep(2)">
+          <div class="step-circle pending" id="sc-2">3</div>
+          <div><p class="font-semibold text-sm">训练模型</p><p class="text-xs text-gray-500">AI 学习规律</p></div>
+        </div>
+        <div class="progress-step pending" id="step-3" onclick="showStep(3)">
+          <div class="step-circle pending" id="sc-3">4</div>
+          <div><p class="font-semibold text-sm">测试验证</p><p class="text-xs text-gray-500">检验学习效果</p></div>
+        </div>
+      </div>
+
+      <!-- Step content panels -->
+      <div id="stepPanel-0" class="step-panel fade-in">
+        <div class="bg-blue-50 rounded-xl p-5">
+          <h3 class="font-bold text-blue-800 mb-3">📸 第一步：收集动物数据</h3>
+          <p class="text-blue-700 text-sm mb-4">人类教师收集了各种动物的数据，包括猫和非猫动物，并记录了它们的特征。</p>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="bg-white rounded-xl p-3 text-center shadow-sm">
+              <div class="text-3xl mb-1">🐱</div>
+              <p class="text-xs font-medium text-gray-600">家猫</p>
+              <p class="text-xs text-gray-400">胎生·食肉·有毛</p>
+            </div>
+            <div class="bg-white rounded-xl p-3 text-center shadow-sm">
+              <div class="text-3xl mb-1">🦅</div>
+              <p class="text-xs font-medium text-gray-600">老鹰</p>
+              <p class="text-xs text-gray-400">卵生·食肉·无毛</p>
+            </div>
+            <div class="bg-white rounded-xl p-3 text-center shadow-sm">
+              <div class="text-3xl mb-1">🐰</div>
+              <p class="text-xs font-medium text-gray-600">兔子</p>
+              <p class="text-xs text-gray-400">胎生·食草·有毛</p>
+            </div>
+            <div class="bg-white rounded-xl p-3 text-center shadow-sm">
+              <div class="text-3xl mb-1">🐦</div>
+              <p class="text-xs font-medium text-gray-600">小鸟</p>
+              <p class="text-xs text-gray-400">卵生·杂食·有毛</p>
+            </div>
+          </div>
+          <div class="mt-4 p-3 bg-blue-100 rounded-lg">
+            <p class="text-blue-800 text-sm">💡 <strong>关键特征：</strong>生殖方式、食物种类、是否有毛、是否是常见宠物</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="stepPanel-1" class="step-panel fade-in" style="display:none">
+        <div class="bg-green-50 rounded-xl p-5">
+          <h3 class="font-bold text-green-800 mb-3">🏷️ 第二步：打标签（训练数据 vs 测试数据）</h3>
+          <p class="text-green-700 text-sm mb-4">人类教师将数据分为两部分：大部分用于训练，少部分用于测试。</p>
+          <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div class="bg-white rounded-xl p-4 border-2 border-green-300">
+              <p class="font-bold text-green-700 mb-2">📚 训练数据（约 75%）</p>
+              <div class="overflow-x-auto">
+                <table class="data-table">
+                  <thead><tr><th>标签</th><th>生殖</th><th>食物</th><th>有毛</th><th>宠物</th></tr></thead>
+                  <tbody>
+                    <tr class="cat-row"><td><span class="tag-cat">猫</span></td><td>胎生</td><td>食肉</td><td>✅</td><td>✅</td></tr>
+                    <tr class="cat-row"><td><span class="tag-cat">猫</span></td><td>胎生</td><td>食肉</td><td>✅</td><td>✅</td></tr>
+                    <tr class="cat-row"><td><span class="tag-cat">猫</span></td><td>胎生</td><td>食肉</td><td>✅</td><td>✅</td></tr>
+                    <tr class="notcat-row"><td><span class="tag-notcat">非猫</span></td><td>卵生</td><td>食肉</td><td>❌</td><td>❌</td></tr>
+                    <tr class="notcat-row"><td><span class="tag-notcat">非猫</span></td><td>卵生</td><td>杂食</td><td>✅</td><td>✅</td></tr>
+                    <tr class="notcat-row"><td><span class="tag-notcat">非猫</span></td><td>胎生</td><td>食草</td><td>✅</td><td>❌</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="bg-white rounded-xl p-4 border-2 border-orange-300">
+              <p class="font-bold text-orange-700 mb-2">📝 测试数据（约 25%）</p>
+              <div class="overflow-x-auto">
+                <table class="data-table">
+                  <thead><tr><th>生殖</th><th>食物</th><th>有毛</th><th>宠物</th></tr></thead>
+                  <tbody>
+                    <tr><td>胎生</td><td>食肉</td><td>✅</td><td>✅</td></tr>
+                    <tr><td>胎生</td><td>食草</td><td>✅</td><td>❌</td></tr>
+                    <tr><td>卵生</td><td>食肉</td><td>❌</td><td>❌</td></tr>
+                    <tr><td>胎生</td><td>杂食</td><td>✅</td><td>✅</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="text-orange-600 text-xs mt-2">⚠️ 测试数据的标签对 AI 隐藏，用于最终验证</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="stepPanel-2" class="step-panel fade-in" style="display:none">
+        <div class="bg-purple-50 rounded-xl p-5">
+          <h3 class="font-bold text-purple-800 mb-3">🧠 第三步：AI 训练学习</h3>
+          <p class="text-purple-700 text-sm mb-4">AI 分析训练数据，找出猫的规律。点击"开始训练"观察学习过程！</p>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <div class="bg-white rounded-xl p-4 mb-3">
+                <p class="font-semibold text-gray-700 mb-2">AI 发现的规律：</p>
+                <div id="ruleList" class="space-y-2">
+                  <div class="flex items-center gap-2 text-sm text-gray-400" id="rule1">
+                    <span class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs">?</span>
+                    <span>生殖方式 = 胎生</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-sm text-gray-400" id="rule2">
+                    <span class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs">?</span>
+                    <span>食物种类 = 食肉</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-sm text-gray-400" id="rule3">
+                    <span class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs">?</span>
+                    <span>是否有毛 = 有</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-sm text-gray-400" id="rule4">
+                    <span class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs">?</span>
+                    <span>是否宠物 = 是</span>
+                  </div>
+                </div>
+              </div>
+              <button onclick="startTraining()" id="trainBtn" class="w-full py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors">
+                🚀 开始训练
+              </button>
+            </div>
+            <div>
+              <div class="chart-wrap">
+                <canvas id="trainingChart"></canvas>
+              </div>
+              <p class="text-xs text-center text-gray-400">训练准确率变化</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="stepPanel-3" class="step-panel fade-in" style="display:none">
+        <div class="bg-orange-50 rounded-xl p-5">
+          <h3 class="font-bold text-orange-800 mb-3">✅ 第四步：测试验证</h3>
+          <p class="text-orange-700 text-sm mb-4">用测试数据检验 AI 的学习效果。AI 的判断规则：胎生 + 食肉 + 有毛 + 是宠物 = 猫</p>
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr><th>生殖</th><th>食物</th><th>有毛</th><th>宠物</th><th>AI 判断</th><th>正确答案</th><th>结果</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>胎生</td><td>食肉</td><td>✅</td><td>✅</td><td><span class="tag-cat">猫</span></td><td><span class="tag-cat">猫</span></td><td>✅</td></tr>
+                <tr><td>胎生</td><td>食肉</td><td>✅</td><td>✅</td><td><span class="tag-cat">猫</span></td><td><span class="tag-cat">猫</span></td><td>✅</td></tr>
+                <tr><td>胎生</td><td>食肉</td><td>✅</td><td>✅</td><td><span class="tag-cat">猫</span></td><td><span class="tag-cat">猫</span></td><td>✅</td></tr>
+                <tr><td>胎生</td><td>食肉</td><td>✅</td><td>✅</td><td><span class="tag-cat">猫</span></td><td><span class="tag-cat">猫</span></td><td>✅</td></tr>
+                <tr><td>胎生</td><td>食草</td><td>✅</td><td>❌</td><td><span class="tag-notcat">非猫</span></td><td><span class="tag-notcat">非猫</span></td><td>✅</td></tr>
+                <tr><td>胎生</td><td>杂食</td><td>✅</td><td>✅</td><td><span class="tag-notcat">非猫</span></td><td><span class="tag-notcat">非猫</span></td><td>✅</td></tr>
+                <tr><td>胎生</td><td>杂食</td><td>✅</td><td>❌</td><td><span class="tag-notcat">非猫</span></td><td><span class="tag-notcat">非猫</span></td><td>✅</td></tr>
+                <tr><td>卵生</td><td>食肉</td><td>❌</td><td>❌</td><td><span class="tag-notcat">非猫</span></td><td><span class="tag-notcat">非猫</span></td><td>✅</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-4 p-4 bg-green-100 rounded-xl text-center">
+            <p class="text-green-800 font-bold text-lg">🎉 准确率：100%！AI 成功学会了认猫！</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-between mt-4">
+        <button onclick="prevStep()" id="prevBtn" class="px-5 py-2 bg-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-300 transition-colors disabled:opacity-40" disabled>← 上一步</button>
+        <button onclick="nextStep()" id="nextBtn" class="px-5 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">下一步 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: Simulator -->
+  <div id="tab-simulator" class="tab-content fade-in">
+    <div class="card p-6 mb-6">
+      <h2 class="section-title mb-2">🔬 分类模拟器</h2>
+      <p class="text-gray-500 text-sm mb-5">选择不同的特征组合，观察 AI 如何对动物进行分类。试试看：哪些特征最有效？</p>
+      
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- Feature selector -->
+        <div>
+          <h3 class="font-bold text-gray-700 mb-3">🎛️ 选择分类特征</h3>
+          <div class="space-y-2" id="featureSelector">
+            <div class="feature-toggle selected" data-feature="birth" onclick="toggleFeature(this)">
+              <p class="font-medium">🥚 生殖方式</p>
+              <p class="text-xs text-gray-500">胎生 / 卵生</p>
+            </div>
+            <div class="feature-toggle selected" data-feature="food" onclick="toggleFeature(this)">
+              <p class="font-medium">🍖 食物种类</p>
+              <p class="text-xs text-gray-500">食肉 / 食草 / 杂食</p>
+            </div>
+            <div class="feature-toggle selected" data-feature="fur" onclick="toggleFeature(this)">
+              <p class="font-medium">🐾 是否有毛</p>
+              <p class="text-xs text-gray-500">有毛 / 无毛</p>
+            </div>
+            <div class="feature-toggle selected" data-feature="pet" onclick="toggleFeature(this)">
+              <p class="font-medium">🏠 是否宠物</p>
+              <p class="text-xs text-gray-500">是 / 否</p>
+            </div>
+          </div>
+          <div class="mt-4 p-3 bg-yellow-50 rounded-xl border border-yellow-200">
+            <p class="text-yellow-800 text-xs">💡 <strong>提示：</strong>尝试只选择 1-2 个特征，看看准确率会如何变化！</p>
+          </div>
+        </div>
+
+        <!-- Animal test panel -->
+        <div>
+          <h3 class="font-bold text-gray-700 mb-3">🐾 测试动物</h3>
+          <div class="grid grid-cols-2 gap-2" id="animalGrid">
+            <!-- Animals will be rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div>
+          <h3 class="font-bold text-gray-700 mb-3">📊 分类结果</h3>
+          <div id="classifyResult" class="space-y-3">
+            <div class="p-4 bg-gray-50 rounded-xl text-center text-gray-400 text-sm">
+              点击左侧动物查看分类结果
+            </div>
+          </div>
+          <div class="mt-4">
+            <h4 class="font-semibold text-gray-600 text-sm mb-2">当前特征准确率</h4>
+            <div id="accuracyDisplay">
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-600">模型准确率</span>
+                <span id="accValue" class="font-bold text-indigo-600">75%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-3">
+                <div id="accBar" class="h-3 rounded-full bg-indigo-500 transition-all duration-500" style="width:75%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 p-3 bg-indigo-50 rounded-xl">
+            <p class="text-indigo-800 text-xs font-medium" id="featureHint">✅ 4个特征全选：准确率最高！</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scatter visualization -->
+    <div class="card p-6">
+      <h2 class="section-title mb-2">📈 特征空间可视化</h2>
+      <p class="text-gray-500 text-sm mb-4">在二维特征空间中，观察猫和非猫的分布。点击画布添加新的测试点！</p>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <div class="chart-wrap">
+            <canvas id="scatterCanvas" width="320" height="280"></canvas>
+          </div>
+          <p class="text-xs text-center text-gray-400 mt-1">X轴：体型大小 | Y轴：食肉程度 | 🔴猫 🔵非猫</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-700 mb-3">🎯 点击画布添加新动物</h3>
+          <div id="clickResult" class="p-4 bg-gray-50 rounded-xl text-sm text-gray-500 text-center">
+            在左侧散点图上点击，AI 将判断该点是猫还是非猫
+          </div>
+          <div class="mt-4 space-y-2">
+            <div class="flex items-center gap-2 text-sm">
+              <div class="w-4 h-4 rounded-full bg-red-400"></div>
+              <span class="text-gray-600">猫（胎生·食肉·有毛·宠物）</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <div class="w-4 h-4 rounded-full bg-blue-400"></div>
+              <span class="text-gray-600">非猫（其他动物）</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <div class="w-4 h-4 rounded-full bg-green-400 border-2 border-green-600"></div>
+              <span class="text-gray-600">你添加的测试点</span>
+            </div>
+          </div>
+          <div class="mt-4 p-3 bg-blue-50 rounded-xl">
+            <p class="text-blue-700 text-xs">💡 <strong>观察：</strong>猫的数据点聚集在右上角（体型中等、食肉性强），非猫分布更分散。</p>
+          </div>
+          <button onclick="resetScatter()" class="mt-3 w-full py-2 bg-gray-200 text-gray-600 rounded-xl text-sm hover:bg-gray-300 transition-colors">🔄 重置画布</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: Practice -->
+  <div id="tab-practice" class="tab-content fade-in">
+    <!-- Practice 1: Robot classification -->
+    <div class="card p-6 mb-6">
+      <h2 class="section-title mb-2">🎮 练习一：机器人分类</h2>
+      <p class="text-gray-500 text-sm mb-4">下面有三个机器人，请将分类特征与分类结果进行连线匹配！</p>
+      
+      <div class="grid md:grid-cols-3 gap-4 mb-6">
+        <div class="text-center p-4 bg-gray-50 rounded-xl">
+          <div class="text-5xl mb-2 text-red-500">🤖</div>
+          <p class="font-bold text-red-700">机器人 A</p>
+          <p class="text-xs text-gray-500 mt-1">有脚 · 有耳朵 · 红色</p>
+        </div>
+        <div class="text-center p-4 bg-gray-50 rounded-xl">
+          <div class="text-5xl mb-2 text-blue-500">🦾</div>
+          <p class="font-bold text-blue-700">机器人 B</p>
+          <p class="text-xs text-gray-500 mt-1">无脚 · 无耳朵 · 蓝色</p>
+        </div>
+        <div class="text-center p-4 bg-gray-50 rounded-xl">
+          <div class="text-5xl mb-2 text-green-500">🦿</div>
+          <p class="font-bold text-green-700">机器人 C</p>
+          <p class="text-xs text-gray-500 mt-1">有脚 · 无耳朵 · 绿色</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-semibold text-gray-700 mb-3">分类特征</h3>
+          <div class="space-y-2" id="featureItems">
+            <div class="connect-item" data-type="feature" data-id="f1" onclick="selectConnectItem(this)">🦶 有脚</div>
+            <div class="connect-item" data-type="feature" data-id="f2" onclick="selectConnectItem(this)">👂 有耳朵</div>
+            <div class="connect-item" data-type="feature" data-id="f3" onclick="selectConnectItem(this)">🎨 颜色是绿色</div>
+          </div>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-700 mb-3">分类结果</h3>
+          <div class="space-y-2" id="resultItems">
+            <div class="connect-item" data-type="result" data-id="r1" onclick="selectConnectItem(this)">A 和 C 一组，B 单独一组</div>
+            <div class="connect-item" data-type="result" data-id="r2" onclick="selectConnectItem(this)">A 单独一组，B 和 C 一组</div>
+            <div class="connect-item" data-type="result" data-id="r3" onclick="selectConnectItem(this)">C 单独一组，A 和 B 一组</div>
+          </div>
+        </div>
+      </div>
+      <div id="connectFeedback" class="mt-4 p-3 rounded-xl text-sm hidden"></div>
+      <button onclick="checkConnections()" class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">检查答案</button>
+    </div>
+
+    <!-- Practice 2: Poker classification -->
+    <div class="card p-6 mb-6">
+      <h2 class="section-title mb-2">🃏 练习二：扑克牌分类</h2>
+      <p class="text-gray-500 text-sm mb-4">将下面 6 张扑克牌分为两类，选择你的分类特征，然后拖动牌到对应组！</p>
+      
+      <div class="mb-4">
+        <h3 class="font-semibold text-gray-700 mb-2">选择分类特征：</h3>
+        <div class="flex flex-wrap gap-2" id="pokerFeatures">
+          <button class="px-4 py-2 rounded-xl border-2 border-gray-200 text-sm font-medium hover:border-indigo-400 transition-colors" onclick="selectPokerFeature(this, 'color')">🎨 颜色（红/黑）</button>
+          <button class="px-4 py-2 rounded-xl border-2 border-gray-200 text-sm font-medium hover:border-indigo-400 transition-colors" onclick="selectPokerFeature(this, 'number')">🔢 数字大小（>5 / ≤5）</button>
+          <button class="px-4 py-2 rounded-xl border-2 border-gray-200 text-sm font-medium hover:border-indigo-400 transition-colors" onclick="selectPokerFeature(this, 'suit')">♣ 花色（梅花/其他）</button>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3 justify-center mb-6" id="pokerDeck">
+        <!-- Poker cards rendered by JS -->
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="border-2 border-dashed border-red-300 rounded-xl p-4 min-h-24" id="groupA">
+          <p class="text-red-500 font-semibold text-sm mb-2">🔴 A 组</p>
+          <div class="flex flex-wrap gap-2" id="groupACards"></div>
+        </div>
+        <div class="border-2 border-dashed border-blue-300 rounded-xl p-4 min-h-24" id="groupB">
+          <p class="text-blue-500 font-semibold text-sm mb-2">🔵 B 组</p>
+          <div class="flex flex-wrap gap-2" id="groupBCards"></div>
+        </div>
+      </div>
+      <div id="pokerFeedback" class="mt-4 p-3 rounded-xl text-sm hidden"></div>
+      <div class="flex gap-3 mt-4">
+        <button onclick="applyPokerFeature()" class="px-6 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">应用分类</button>
+        <button onclick="resetPoker()" class="px-6 py-2 bg-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-300 transition-colors">重置</button>
+      </div>
+    </div>
+
+    <!-- Practice 3: Quiz -->
+    <div class="card p-6">
+      <h2 class="section-title mb-2">🧠 练习三：知识检测</h2>
+      <p class="text-gray-500 text-sm mb-4">测试你对监督学习的理解！</p>
+      <div id="quizContainer" class="space-y-6">
+        <!-- Quiz rendered by JS -->
+      </div>
+      <div id="quizResult" class="mt-4 p-4 rounded-xl hidden"></div>
+      <button onclick="submitQuiz()" class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">提交答案</button>
+    </div>
+  </div>
+
+  <!-- TAB 5: Summary -->
+  <div id="tab-summary" class="tab-content fade-in">
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div class="card p-6">
+        <h2 class="section-title mb-4">📊 监督学习流程图</h2>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">1</div>
+            <div class="flex-1 p-3 bg-blue-50 rounded-xl">
+              <p class="font-semibold text-blue-800 text-sm">收集带标签的训练数据</p>
+              <p class="text-blue-600 text-xs">每个样本都有正确答案（标签）</p>
+            </div>
+          </div>
+          <div class="text-center text-gray-400">↓</div>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">2</div>
+            <div class="flex-1 p-3 bg-purple-50 rounded-xl">
+              <p class="font-semibold text-purple-800 text-sm">选择算法，训练模型</p>
+              <p class="text-purple-600 text-xs">AI 从数据中学习规律和模式</p>
+            </div>
+          </div>
+          <div class="text-center text-gray-400">↓</div>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">3</div>
+            <div class="flex-1 p-3 bg-orange-50 rounded-xl">
+              <p class="font-semibold text-orange-800 text-sm">用测试数据验证效果</p>
+              <p class="text-orange-600 text-xs">检验模型是否真正学会了</p>
+            </div>
+          </div>
+          <div class="text-center text-gray-400">↓</div>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">4</div>
+            <div class="flex-1 p-3 bg-green-50 rounded-xl">
+              <p class="font-semibold text-green-800 text-sm">部署模型，预测新数据</p>
+              <p class="text-green-600 text-xs">对未见过的数据做出判断</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-6">
+        <h2 class="section-title mb-4">🌍 监督学习的应用</h2>
+        <div class="space-y-3">
+          <div class="flex items-start gap-3 p-3 bg-red-50 rounded-xl">
+            <span class="text-2xl">📧</span>
+            <div>
+              <p class="font-semibold text-red-800 text-sm">垃圾邮件过滤</p>
+              <p class="text-red-600 text-xs">学习区分正常邮件和垃圾邮件</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-3 bg-blue-50 rounded-xl">
+            <span class="text-2xl">🏥</span>
+            <div>
+              <p class="font-semibold text-blue-800 text-sm">医学图像诊断</p>
+              <p class="text-blue-600 text-xs">识别 X 光片中的病变区域</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-3 bg-green-50 rounded-xl">
+            <span class="text-2xl">🗣️</span>
+            <div>
+              <p class="font-semibold text-green-800 text-sm">语音识别</p>
+              <p class="text-green-600 text-xs">将语音转换为文字</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-3 bg-yellow-50 rounded-xl">
+            <span class="text-2xl">🚗</span>
+            <div>
+              <p class="font-semibold text-yellow-800 text-sm">自动驾驶</p>
+              <p class="text-yellow-600 text-xs">识别道路、行人、交通标志</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-3 bg-purple-50 rounded-xl">
+            <span class="text-2xl">💳</span>
+            <div>
+              <p class="font-semibold text-purple-800 text-sm">信用评分</p>
+              <p class="text-purple-600 text-xs">预测贷款违约风险</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key concepts -->
+    <div class="card p-6 mb-6">
+      <h2 class="section-title mb-4">🔑 核心概念总结</h2>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+          <p class="text-2xl mb-2">🏷️</p>
+          <p class="font-bold text-blue-800">标签 (Label)</p>
+          <p class="text-blue-600 text-sm mt-1">训练数据的正确答案，告诉 AI 每个样本属于哪个类别</p>
+          <p class="text-blue-500 text-xs mt-2 italic">例：猫 / 非猫</p>
+        </div>
+        <div class="p-4 bg-gradient-to-br from-green-50 to-teal-50 rounded-xl border border-green-200">
+          <p class="text-2xl mb-2">📐</p>
+          <p class="font-bold text-green-800">特征 (Feature)</p>
+          <p class="text-green-600 text-sm mt-1">描述样本的属性，AI 通过特征来区分不同类别</p>
+          <p class="text-green-500 text-xs mt-2 italic">例：胎生、食肉、有毛</p>
+        </div>
+        <div class="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+          <p class="text-2xl mb-2">🧮</p>
+          <p class="font-bold text-purple-800">模型 (Model)</p>
+          <p class="text-purple-600 text-sm mt-1">AI 学习到的规律，可以对新数据做出预测</p>
+          <p class="text-purple-500 text-xs mt-2 italic">例：决策树、感知器</p>
+        </div>
+        <div class="p-4 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-xl border border-orange-200">
+          <p class="text-2xl mb-2">📚</p>
+          <p class="font-bold text-orange-800">训练集 (Training Set)</p>
+          <p class="text-orange-600 text-sm mt-1">用于训练模型的数据，通常占总数据的 70-80%</p>
+        </div>
+        <div class="p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border border-red-200">
+          <p class="text-2xl mb-2">📝</p>
+          <p class="font-bold text-red-800">测试集 (Test Set)</p>
+          <p class="text-red-600 text-sm mt-1">用于验证模型效果的数据，通常占 20-30%</p>
+        </div>
+        <div class="p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border border-teal-200">
+          <p class="text-2xl mb-2">🎯</p>
+          <p class="font-bold text-teal-800">准确率 (Accuracy)</p>
+          <p class="text-teal-600 text-sm mt-1">模型预测正确的比例，衡量学习效果的指标</p>
+          <p class="text-teal-500 text-xs mt-2 italic">正确数 / 总数 × 100%</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accuracy chart -->
+    <div class="card p-6">
+      <h2 class="section-title mb-4">📈 特征数量与准确率关系</h2>
+      <p class="text-gray-500 text-sm mb-4">探索：使用不同数量的特征，模型准确率如何变化？</p>
+      <div class="chart-wrap">
+        <canvas id="summaryChart"></canvas>
+      </div>
+      <p class="text-xs text-center text-gray-400 mt-2">一般来说，选择合适的特征比选择更多特征更重要！</p>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="text-center py-8 text-gray-400 text-sm">
+  <p>🤖 监督学习探索式学习 | 像妈妈教你认识世界一样，AI 也在不断学习</p>
+</div>
+
+<script>
+// ============================================================
+// Global State
+// ============================================================
+let currentStep = 0;
+let trainingChart = null;
+let summaryChart = null;
+let selectedFeatures = new Set(['birth', 'food', 'fur', 'pet']);
+let selectedAnimal = null;
+let scatterCtx = null;
+let userPoints = [];
+let selectedPokerFeature = null;
+let connectSelected = null;
+let connections = {};
+let quizAnswers = {};
+
+// ============================================================
+// Tab Switching
+// ============================================================
+function switchTab(tabName) {
+  try {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    
+    const tabEl = document.getElementById('tab-' + tabName);
+    if (tabEl) tabEl.classList.add('active');
+    
+    const btnEls = document.querySelectorAll('.tab-btn');
+    btnEls.forEach(btn => {
+      if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabName)) {
+        btn.classList.add('active');
+      }
+    });
+
+    // Initialize charts when tabs become visible
+    setTimeout(() => {
+      if (tabName === 'machine' && currentStep === 2) {
+        initTrainingChart();
+      }
+      if (tabName === 'simulator') {
+        initScatterCanvas();
+      }
+      if (tabName === 'summary') {
+        initSummaryChart();
+      }
+    }, 100);
+  } catch(e) {
+    console.error('Tab switch error:', e);
+  }
+}
+
+// ============================================================
+// Step Navigation (Machine Learning Tab)
+// ============================================================
+function showStep(stepIndex) {
+  try {
+    // Hide all panels
+    for (let i = 0; i < 4; i++) {
+      const panel = document.getElementById('stepPanel-' + i);
+      if (panel) panel.style.display = 'none';
+      
+      const stepEl = document.getElementById('step-' + i);
+      const circleEl = document.getElementById('sc-' + i);
+      if (stepEl && circleEl) {
+        if (i < stepIndex) {
+          stepEl.className = 'progress-step done';
+          circleEl.className = 'step-circle done';
+          circleEl.textContent = '✓';
+        } else if (i === stepIndex) {
+          stepEl.className = 'progress-step active';
+          circleEl.className = 'step-circle active';
+          circleEl.textContent = (i + 1).toString();
+        } else {
+          stepEl.className = 'progress-step pending';
+          circleEl.className = 'step-circle pending';
+          circleEl.textContent = (i + 1).toString();
+        }
+      }
+    }
+    
+    const activePanel = document.getElementById('stepPanel-' + stepIndex);
+    if (activePanel) activePanel.style.display = 'block';
+    
+    currentStep = stepIndex;
+    
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    if (prevBtn) prevBtn.disabled = stepIndex === 0;
+    if (nextBtn) nextBtn.textContent = stepIndex === 3 ? '完成 ✓' : '下一步 →';
+    
+    // Init training chart when step 2 is shown
+    if (stepIndex === 2) {
+      setTimeout(initTrainingChart, 150);
+    }
+  } catch(e) {
+    console.error('showStep error:', e);
+  }
+}
+
+function nextStep() {
+  if (currentStep < 3) showStep(currentStep + 1);
+}
+
+function prevStep() {
+  if (currentStep > 0) showStep(currentStep - 1);
+}
+
+// ============================================================
+// Training Animation
+// ============================================================
+function initTrainingChart() {
+  try {
+    const canvas = document.getElementById('trainingChart');
+    if (!canvas) return;
+    
+    if (trainingChart) {
+      trainingChart.destroy();
+      trainingChart = null;
+    }
+    
+    const ctx = canvas.getContext('2d');
+    trainingChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: '训练准确率',
+          data: [],
+          borderColor: '#667eea',
+          backgroundColor: 'rgba(102,126,234,0.1)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { min: 0, max: 100, ticks: { callback: v => v + '%' } },
+          x: { title: { display: true, text: '训练轮次' } }
+        },
+        animation: { duration: 300 }
+      }
+    });
+  } catch(e) {
+    console.error('initTrainingChart error:', e);
+  }
+}
+
+function startTraining() {
+  try {
+    const btn = document.getElementById('trainBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '训练中...'; }
+    
+    if (!trainingChart) initTrainingChart();
+    
+    // Reset chart data
+    trainingChart.data.labels = [];
+    trainingChart.data.datasets[0].data = [];
+    trainingChart.update();
+    
+    // Reset rules
+    const ruleIds = ['rule1', 'rule2', 'rule3', 'rule4'];
+    ruleIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        const span = el.querySelector('span');
+        if (span) { span.className = 'w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs'; span.textContent = '?'; }
+        el.className = 'flex items-center gap-2 text-sm text-gray-400';
+      }
+    });
+    
+    // Simulate training epochs
+    const accuracyData = [20, 35, 50, 62, 71, 78, 84, 89, 93, 96, 98, 100];
+    let epoch = 0;
+    
+    const interval = setInterval(() => {
+      if (epoch >= accuracyData.length) {
+        clearInterval(interval);
+        // Reveal rules one by one
+        revealRules();
+        if (btn) { btn.disabled = false; btn.textContent = '重新训练'; }
+        return;
+      }
+      
+      trainingChart.data.labels.push('第' + (epoch + 1) + '轮');
+      trainingChart.data.datasets[0].data.push(accuracyData[epoch]);
+      trainingChart.update();
+      epoch++;
+    }, 200);
+  } catch(e) {
+    console.error('startTraining error:', e);
+  }
+}
+
+function revealRules() {
+  try {
+    const rules = [
+      { id: 'rule1', delay: 200 },
+      { id: 'rule2', delay: 500 },
+      { id: 'rule3', delay: 800 },
+      { id: 'rule4', delay: 1100 }
+    ];
+    
+    rules.forEach(rule => {
+      setTimeout(() => {
+        const el = document.getElementById(rule.id);
+        if (el) {
+          const span = el.querySelector('span');
+          if (span) {
+            span.className = 'w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-xs text-white';
+            span.textContent = '✓';
+          }
+          el.className = 'flex items-center gap-2 text-sm text-green-700 font-medium';
+        }
+      }, rule.delay);
+    });
+  } catch(e) {
+    console.error('revealRules error:', e);
+  }
+}
+
+// ============================================================
+// Simulator - Feature Toggle
+// ============================================================
+function toggleFeature(el) {
+  try {
+    const feature = el.getAttribute('data-feature');
+    if (!feature) return;
+    
+    if (selectedFeatures.has(feature)) {
+      selectedFeatures.delete(feature);
+      el.classList.remove('selected');
+    } else {
+      selectedFeatures.add(feature);
+      el.classList.add('selected');
+    }
+    
+    updateAccuracy();
+  } catch(e) {
+    console.error('toggleFeature error:', e);
+  }
+}
+
+function updateAccuracy() {
+  try {
+    // Accuracy based on feature count (simplified model)
+    const featureCount = selectedFeatures.size;
+    const accuracyMap = { 0: 50, 1: 58, 2: 65, 3: 70, 4: 75 };
+    const acc = accuracyMap[featureCount] || 50;
+    
+    const accVal = document.getElementById('accValue');
+    const accBar = document.getElementById('accBar');
+    const hint = document.getElementById('featureHint');
+    
+    if (accVal) accVal.textContent = acc + '%';
+    if (accBar) {
+      accBar.style.width = acc + '%';
+      accBar.className = 'h-3 rounded-full transition-all duration-500 ' + 
+        (acc >= 70 ? 'bg-green-500' : acc >= 60 ? 'bg-yellow-500' : 'bg-red-400');
+    }
+    
+    if (hint) {
+      const msgs = {
+        0: '⚠️ 没有选择特征，无法分类！',
+        1: '🤔 只有1个特征，准确率较低',
+        2: '📈 2个特征，有一定效果',
+        3: '✅ 3个特征，效果不错！',
+        4: '🎯 4个特征全选：准确率最高！'
+      };
+      hint.textContent = msgs[featureCount] || '';
+    }
+  } catch(e) {
+    console.error('updateAccuracy error:', e);
+  }
+}
+
+// ============================================================
+// Animal Grid
+// ============================================================
+const animals = [
+  { emoji: '🐱', name: '家猫', birth: 'viviparous', food: 'carnivore', fur: true, pet: true, isCat: true },
+  { emoji: '🐯', name: '老虎', birth: 'viviparous', food: 'carnivore', fur: true, pet: false, isCat: true },
+  { emoji: '🦅', name: '老鹰', birth: 'oviparous', food: 'carnivore', fur: false, pet: false, isCat: false },
+  { emoji: '🐰', name: '兔子', birth: 'viviparous', food: 'herbivore', fur: true, pet: true, isCat: false },
+  { emoji: '🐦', name: '小鸟', birth: 'oviparous', food: 'omnivore', fur: true, pet: true, isCat: false },
+  { emoji: '🐶', name: '小狗', birth: 'viviparous', food: 'omnivore', fur: true, pet: true, isCat: false },
+  { emoji: '🐟', name: '金鱼', birth: 'oviparous', food: 'omnivore', fur: false, pet: true, isCat: false },
+  { emoji: '🦁', name: '狮子', birth: 'viviparous', food: 'carnivore', fur: true, pet: false, isCat: true }
+];
+
+function renderAnimalGrid() {
+  try {
+    const grid = document.getElementById('animalGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    animals.forEach((animal, idx) => {
+      const div = document.createElement('div');
+      div.className = 'animal-card';
+      div.innerHTML = '<div class="text-3xl">' + animal.emoji + '</div><p class="text-xs font-medium mt-1">' + animal.name + '</p>';
+      div.onclick = () => classifyAnimal(idx, div);
+      grid.appendChild(div);
+    });
+  } catch(e) {
+    console.error('renderAnimalGrid error:', e);
+  }
+}
+
+function classifyAnimal(idx, cardEl) {
+  try {
+    // Remove previous selection
+    document.querySelectorAll('.animal-card').forEach(c => {
+      c.classList.remove('selected-cat', 'selected-notcat');
+    });
+    
+    const animal = animals[idx];
+    if (!animal) return;
+    
+    // Apply classification based on selected features
+    let matchScore = 0;
+    let totalFeatures = selectedFeatures.size;
+    
+    if (totalFeatures === 0) {
+      showClassifyResult(null, animal);
+      return;
+    }
+    
+    if (selectedFeatures.has('birth') && animal.birth === 'viviparous') matchScore++;
+    if (selectedFeatures.has('food') && animal.food === 'carnivore') matchScore++;
+    if (selectedFeatures.has('fur') && animal.fur) matchScore++;
+    if (selectedFeatures.has('pet') && animal.pet) matchScore++;
+    
+    const predicted = matchScore === totalFeatures;
+    
+    if (predicted) {
+      cardEl.classList.add('selected-cat');
+    } else {
+      cardEl.classList.add('selected-notcat');
+    }
+    
+    showClassifyResult(predicted, animal);
+  } catch(e) {
+    console.error('classifyAnimal error:', e);
+  }
+}
+
+function showClassifyResult(predicted, animal) {
+  try {
+    const resultEl = document.getElementById('classifyResult');
+    if (!resultEl) return;
+    
+    if (predicted === null) {
+      resultEl.innerHTML = '<div class="p-4 bg-red-50 rounded-xl text-red-600 text-sm text-center">请先选择至少一个分类特征！</div>';
+      return;
+    }
+    
+    const isCorrect = predicted === animal.isCat;
+    const bgColor = isCorrect ? 'bg-green-50' : 'bg-red-50';
+    const textColor = isCorrect ? 'text-green-700' : 'text-red-700';
+    
+    resultEl.innerHTML = `
+      <div class="p-4 ${bgColor} rounded-xl fade-in">
+        <div class="text-center text-4xl mb-2">${animal.emoji}</div>
+        <p class="font-bold ${textColor} text-center">${animal.name}</p>
+        <div class="mt-2 space-y-1 text-xs">
+          <div class="flex justify-between"><span class="text-gray-500">AI 判断：</span><span class="font-semibold ${predicted ? 'text-red-600' : 'text-blue-600'}">${predicted ? '🐱 是猫' : '❌ 非猫'}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">正确答案：</span><span class="font-semibold ${animal.isCat ? 'text-red-600' : 'text-blue-600'}">${animal.isCat ? '🐱 是猫' : '❌ 非猫'}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">判断结果：</span><span class="font-semibold">${isCorrect ? '✅ 正确' : '❌ 错误'}</span></div>
+        </div>
+        ${!isCorrect ? '<p class="text-xs text-orange-600 mt-2">💡 当前特征组合无法正确区分此动物</p>' : ''}
+      </div>
+    `;
+  } catch(e) {
+    console.error('showClassifyResult error:', e);
+  }
+}
+
+// ============================================================
+// Scatter Canvas
+// ============================================================
+const catPoints = [
+  { x: 180, y: 60, label: 'cat', emoji: '🐱' },
+  { x: 200, y: 55, label: 'cat', emoji: '🐱' },
+  { x: 170, y: 70, label: 'cat', emoji: '🐱' },
+  { x: 190, y: 65, label: 'cat', emoji: '🐱' },
+  { x: 210, y: 50, label: 'cat', emoji: '🐯' },
+  { x: 220, y: 45, label: 'cat', emoji: '🦁' }
+];
+const notCatPoints = [
+  { x: 80, y: 200, label: 'notcat', emoji: '🐰' },
+  { x: 100, y: 180, label: 'notcat', emoji: '🐦' },
+  { x: 60, y: 220, label: 'notcat', emoji: '🦅' },
+  { x: 120, y: 160, label: 'notcat', emoji: '🐶' },
+  { x: 50, y: 240, label: 'notcat', emoji: '🐟' },
+  { x: 90, y: 190, label: 'notcat', emoji: '🐮' }
+];
+
+function initScatterCanvas() {
+  try {
+    const canvas = document.getElementById('scatterCanvas');
+    if (!canvas) return;
+    
+    scatterCtx = canvas.getContext('2d');
+    drawScatter();
+    
+    // Remove old listener and add new one
+    canvas.onclick = handleScatterClick;
+  } catch(e) {
+    console.error('initScatterCanvas error:', e);
+  }
+}
+
+function drawScatter() {
+  try {
+    if (!scatterCtx) return;
+    const canvas = scatterCtx.canvas;
+    const W = canvas.width;
+    const H = canvas.height;
+    
+    scatterCtx.clearRect(0, 0, W, H);
+    
+    // Background
+    scatterCtx.fillStyle = '#f8faff';
+    scatterCtx.fillRect(0, 0, W, H);
+    
+    // Decision boundary (diagonal line)
+    scatterCtx.strokeStyle = 'rgba(102,126,234,0.4)';
+    scatterCtx.lineWidth = 2;
+    scatterCtx.setLineDash([6, 4]);
+    scatterCtx.beginPath();
+    scatterCtx.moveTo(140, 0);
+    scatterCtx.lineTo(W, H - 80);
+    scatterCtx.stroke();
+    scatterCtx.setLineDash([]);
+    
+    // Labels
+    scatterCtx.fillStyle = 'rgba(229,62,62,0.1)';
+    scatterCtx.fillRect(140, 0, W - 140, H - 80);
+    scatterCtx.fillStyle = 'rgba(49,130,206,0.1)';
+    scatterCtx.fillRect(0, 80, 140, H - 80);
+    
+    // Axis labels
+    scatterCtx.fillStyle = '#718096';
+    scatterCtx.font = '11px sans-serif';
+    scatterCtx.fillText('体型大小 →', W - 70, H - 5);
+    scatterCtx.save();
+    scatterCtx.translate(12, H / 2);
+    scatterCtx.rotate(-Math.PI / 2);
+    scatterCtx.fillText('食肉程度 →', 0, 0);
+    scatterCtx.restore();
+    
+    // Draw cat points
+    catPoints.forEach(p => {
+      scatterCtx.beginPath();
+      scatterCtx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+      scatterCtx.fillStyle = 'rgba(229,62,62,0.7)';
+      scatterCtx.fill();
+      scatterCtx.strokeStyle = '#c53030';
+      scatterCtx.lineWidth = 1.5;
+      scatterCtx.stroke();
+    });
+    
+    // Draw non-cat points
+    notCatPoints.forEach(p => {
+      scatterCtx.beginPath();
+      scatterCtx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+      scatterCtx.fillStyle = 'rgba(49,130,206,0.7)';
+      scatterCtx.fill();
+      scatterCtx.strokeStyle = '#2b6cb0';
+      scatterCtx.lineWidth = 1.5;
+      scatterCtx.stroke();
+    });
+    
+    // Draw user points
+    userPoints.forEach(p => {
+      scatterCtx.beginPath();
+      scatterCtx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+      scatterCtx.fillStyle = p.predicted ? 'rgba(229,62,62,0.5)' : 'rgba(49,130,206,0.5)';
+      scatterCtx.fill();
+      scatterCtx.strokeStyle = '#48bb78';
+      scatterCtx.lineWidth = 2.5;
+      scatterCtx.stroke();
+    });
+    
+    // Region labels
+    scatterCtx.fillStyle = 'rgba(229,62,62,0.6)';
+    scatterCtx.font = 'bold 12px sans-serif';
+    scatterCtx.fillText('猫区域', W - 60, 20);
+    scatterCtx.fillStyle = 'rgba(49,130,206,0.6)';
+    scatterCtx.fillText('非猫区域', 10, H - 20);
+  } catch(e) {
+    console.error('drawScatter error:', e);
+  }
+}
+
+function handleScatterClick(e) {
+  try {
+    const canvas = e.target;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Scale for canvas resolution
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const cx = x * scaleX;
+    const cy = y * scaleY;
+    
+    // Simple decision: right-upper area = cat
+    const predicted = cx > 140 && cy < (canvas.height - 80);
+    
+    userPoints.push({ x: cx, y: cy, predicted: predicted });
+    drawScatter();
+    
+    const resultEl = document.getElementById('clickResult');
+    if (resultEl) {
+      resultEl.innerHTML = `
+        <div class="fade-in">
+          <p class="font-bold ${predicted ? 'text-red-600' : 'text-blue-600'} text-lg">${predicted ? '🐱 AI 判断：是猫！' : '❌ AI 判断：不是猫'}</p>
+          <p class="text-gray-500 text-xs mt-1">点击位置：(${Math.round(cx)}, ${Math.round(cy)})</p>
+          <p class="text-gray-500 text-xs">${predicted ? '该点位于猫的特征区域（体型中等偏大，食肉性强）' : '该点位于非猫区域（体型小或食草性强）'}</p>
+        </div>
+      `;
+    }
+  } catch(e) {
+    console.error('handleScatterClick error:', e);
+  }
+}
+
+function resetScatter() {
+  try {
+    userPoints = [];
+    drawScatter();
+    const resultEl = document.getElementById('clickResult');
+    if (resultEl) resultEl.innerHTML = '<p class="text-gray-400 text-sm text-center">在左侧散点图上点击，AI 将判断该点是猫还是非猫</p>';
+  } catch(e) {
+    console.error('resetScatter error:', e);
+  }
+}
+
+// ============================================================
+// Poker Practice
+// ============================================================
+const pokerCards = [
+  { suit: '♥', number: 10, color: 'red', display: '10♥' },
+  { suit: '♠', number: 3, color: 'black', display: '3♠' },
+  { suit: '♦', number: 7, color: 'red', display: '7♦' },
+  { suit: '♣', number: 2, color: 'black', display: '2♣' },
+  { suit: '♥', number: 6, color: 'red', display: '6♥' },
+  { suit: '♠', number: 9, color: 'black', display: '9♠' }
+];
+
+function renderPokerDeck() {
+  try {
+    const deck = document.getElementById('pokerDeck');
+    if (!deck) return;
+    
+    deck.innerHTML = '';
+    pokerCards.forEach((card, idx) => {
+      const div = document.createElement('div');
+      div.className = 'poker-card ' + card.color;
+      div.setAttribute('data-idx', idx.toString());
+      div.innerHTML = '<span>' + card.suit + '</span><span>' + card.number + '</span>';
+      deck.appendChild(div);
+    });
+  } catch(e) {
+    console.error('renderPokerDeck error:', e);
+  }
+}
+
+function selectPokerFeature(btn, feature) {
+  try {
+    document.querySelectorAll('#pokerFeatures button').forEach(b => {
+      b.classList.remove('border-indigo-500', 'bg-indigo-50');
+      b.classList.add('border-gray-200');
+    });
+    btn.classList.add('border-indigo-500', 'bg-indigo-50');
+    btn.classList.remove('border-gray-200');
+    selectedPokerFeature = feature;
+  } catch(e) {
+    console.error('selectPokerFeature error:', e);
+  }
+}
+
+function applyPokerFeature() {
+  try {
+    if (!selectedPokerFeature) {
+      const fb = document.getElementById('pokerFeedback');
+      if (fb) {
+        fb.className = 'mt-4 p-3 rounded-xl text-sm bg-yellow-50 text-yellow-700';
+        fb.textContent = '⚠️ 请先选择一个分类特征！';
+        fb.classList.remove('hidden');
+      }
+      return;
+    }
+    
+    const groupACards = document.getElementById('groupACards');
+    const groupBCards = document.getElementById('groupBCards');
+    if (!groupACards || !groupBCards) return;
+    
+    groupACards.innerHTML = '';
+    groupBCards.innerHTML = '';
+    
+    pokerCards.forEach((card, idx) => {
+      let inGroupA = false;
+      
+      if (selectedPokerFeature === 'color') inGroupA = card.color === 'red';
+      else if (selectedPokerFeature === 'number') inGroupA = card.number > 5;
+      else if (selectedPokerFeature === 'suit') inGroupA = card.suit === '♣';
+      
+      const div = document.createElement('div');
+      div.className = 'poker-card ' + card.color + (inGroupA ? ' group-a' : ' group-b');
+      div.innerHTML = '<span>' + card.suit + '</span><span>' + card.number + '</span>';
+      
+      if (inGroupA) groupACards.appendChild(div);
+      else groupBCards.appendChild(div);
+    });
+    
+    const featureNames = { color: '颜色（红/黑）', number: '数字大小（>5/≤5）', suit: '花色（梅花/其他）' };
+    const fb = document.getElementById('pokerFeedback');
+    if (fb) {
+      fb.className = 'mt-4 p-3 rounded-xl text-sm bg-green-50 text-green-700';
+      fb.innerHTML = '✅ 按照 <strong>' + featureNames[selectedPokerFeature] + '</strong> 分类成功！这是一种有效的分类特征。你还能找到其他分类方式吗？';
+      fb.classList.remove('hidden');
+    }
+  } catch(e) {
+    console.error('applyPokerFeature error:', e);
+  }
+}
+
+function resetPoker() {
+  try {
+    selectedPokerFeature = null;
+    document.querySelectorAll('#pokerFeatures button').forEach(b => {
+      b.classList.remove('border-indigo-500', 'bg-indigo-50');
+      b.classList.add('border-gray-200');
+    });
+    const groupACards = document.getElementById('groupACards');
+    const groupBCards = document.getElementById('groupBCards');
+    if (groupACards) groupACards.innerHTML = '';
+    if (groupBCards) groupBCards.innerHTML = '';
+    const fb = document.getElementById('pokerFeedback');
+    if (fb) fb.classList.add('hidden');
+  } catch(e) {
+    console.error('resetPoker error:', e);
+  }
+}
+
+// ============================================================
+// Connect Game
+// ============================================================
+// Correct answers: f1(有脚) -> r1(A和C一组), f2(有耳朵) -> r2(A单独), f3(绿色) -> r3(C单独)
+const correctConnections = { f1: 'r1', f2: 'r2', f3: 'r3' };
+
+function selectConnectItem(el) {
+  try {
+    const type = el.getAttribute('data-type');
+    const id = el.getAttribute('data-id');
+    
+    if (!connectSelected) {
+      // First selection
+      document.querySelectorAll('.connect-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+      connectSelected = { type, id, el };
+    } else {
+      // Second selection - try to connect
+      if (connectSelected.type === type) {
+        // Same type, switch selection
+        document.querySelectorAll('.connect-item').forEach(i => i.classList.remove('selected'));
+        el.classList.add('selected');
+        connectSelected = { type, id, el };
+        return;
+      }
+      
+      // Different types - make connection
+      const featureId = type === 'feature' ? id : connectSelected.id;
+      const resultId = type === 'result' ? id : connectSelected.id;
+      
+      connections[featureId] = resultId;
+      
+      connectSelected.el.classList.remove('selected');
+      connectSelected.el.classList.add('matched');
+      el.classList.remove('selected');
+      el.classList.add('matched');
+      
+      connectSelected = null;
+    }
+  } catch(e) {
+    console.error('selectConnectItem error:', e);
+  }
+}
+
+function checkConnections() {
+  try {
+    let correct = 0;
+    let total = Object.keys(correctConnections).length;
+    
+    Object.entries(correctConnections).forEach(([fId, rId]) => {
+      if (connections[fId] === rId) correct++;
+    });
+    
+    const fb = document.getElementById('connectFeedback');
+    if (fb) {
+      fb.classList.remove('hidden');
+      if (correct === total) {
+        fb.className = 'mt-4 p-3 rounded-xl text-sm bg-green-50 text-green-700';
+        fb.innerHTML = '🎉 全部正确！有脚→A和C一组，有耳朵→A单独一组，绿色→C单独一组';
+      } else {
+        fb.className = 'mt-4 p-3 rounded-xl text-sm bg-orange-50 text-orange-700';
+        fb.innerHTML = '🤔 答对了 ' + correct + '/' + total + ' 个。提示：有脚的是A和C，有耳朵的只有A，绿色的是C。';
+      }
+    }
+  } catch(e) {
+    console.error('checkConnections error:', e);
+  }
+}
+
+// ============================================================
+// Quiz
+// ============================================================
+const quizData = [
+  {
+    q: '监督学习中，"标签"是指什么？',
+    options: ['数据的特征属性', '每个训练样本的正确答案', '模型的参数', '测试数据集'],
+    correct: 1
+  },
+  {
+    q: '在猫咪识别任务中，以下哪个不是有效的分类特征？',
+    options: ['是否胎生', '是否有毛', '动物的名字', '是否是宠物'],
+    correct: 2
+  },
+  {
+    q: '为什么需要将数据分为训练集和测试集？',
+    options: ['节省计算资源', '验证模型是否真正学会了，而不是死记硬背', '增加数据量', '让训练更快'],
+    correct: 1
+  },
+  {
+    q: '以下哪个是监督学习的实际应用？',
+    options: ['发现数据中未知的分组', '根据历史邮件学习识别垃圾邮件', '让机器人自主探索环境', '压缩图片文件'],
+    correct: 1
+  }
+];
+
+function renderQuiz() {
+  try {
+    const container = document.getElementById('quizContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    quizData.forEach((q, qIdx) => {
+      const div = document.createElement('div');
+      div.className = 'p-4 bg-gray-50 rounded-xl';
+      div.innerHTML = '<p class="font-semibold text-gray-800 mb-3">' + (qIdx + 1) + '. ' + q.q + '</p>';
+      
+      q.options.forEach((opt, oIdx) => {
+        const optDiv = document.createElement('div');
+        optDiv.className = 'quiz-option';
+        optDiv.setAttribute('data-q', qIdx.toString());
+        optDiv.setAttribute('data-o', oIdx.toString());
+        optDiv.textContent = String.fromCharCode(65 + oIdx) + '. ' + opt;
+        optDiv.onclick = function() { selectQuizOption(qIdx, oIdx, this); };
+        div.appendChild(optDiv);
+      });
+      
+      container.appendChild(div);
+    });
+  } catch(e) {
+    console.error('renderQuiz error:', e);
+  }
+}
+
+function selectQuizOption(qIdx, oIdx, el) {
+  try {
+    // Clear other options in same question
+    document.querySelectorAll('[data-q="' + qIdx + '"]').forEach(opt => {
+      opt.classList.remove('correct', 'wrong');
+      opt.style.borderColor = '';
+      opt.style.background = '';
+    });
+    
+    el.style.borderColor = '#667eea';
+    el.style.background = '#ebf4ff';
+    quizAnswers[qIdx] = oIdx;
+  } catch(e) {
+    console.error('selectQuizOption error:', e);
+  }
+}
+
+function submitQuiz() {
+  try {
+    let correct = 0;
+    
+    quizData.forEach((q, qIdx) => {
+      const userAns = quizAnswers[qIdx];
+      const correctAns = q.correct;
+      
+      // Show correct answer
+      const correctEl = document.querySelector('[data-q="' + qIdx + '"][data-o="' + correctAns + '"]');
+      if (correctEl) correctEl.classList.add('correct');
+      
+      if (userAns !== undefined && userAns !== correctAns) {
+        const wrongEl = document.querySelector('[data-q="' + qIdx + '"][data-o="' + userAns + '"]');
+        if (wrongEl) wrongEl.classList.add('wrong');
+      }
+      
+      if (userAns === correctAns) correct++;
+    });
+    
+    const resultEl = document.getElementById('quizResult');
+    if (resultEl) {
+      resultEl.classList.remove('hidden');
+      const pct = Math.round(correct / quizData.length * 100);
+      if (pct === 100) {
+        resultEl.className = 'mt-4 p-4 rounded-xl bg-green-50 text-green-800';
+        resultEl.innerHTML = '🎉 满分！你已经完全掌握了监督学习的核心概念！';
+      } else if (pct >= 75) {
+        resultEl.className = 'mt-4 p-4 rounded-xl bg-blue-50 text-blue-800';
+        resultEl.innerHTML = '👍 答对 ' + correct + '/' + quizData.length + ' 题（' + pct + '%），掌握得不错，再复习一下错题吧！';
+      } else {
+        resultEl.className = 'mt-4 p-4 rounded-xl bg-orange-50 text-orange-800';
+        resultEl.innerHTML = '📚 答对 ' + correct + '/' + quizData.length + ' 题（' + pct + '%），建议回顾前面的内容再试一次！';
+      }
+    }
+  } catch(e) {
+    console.error('submitQuiz error:', e);
+  }
+}
+
+// ============================================================
+// Summary Chart
+// ============================================================
+function initSummaryChart() {
+  try {
+    const canvas = document.getElementById('summaryChart');
+    if (!canvas) return;
+    
+    if (summaryChart) {
+      summaryChart.destroy();
+      summaryChart = null;
+    }
+    
+    const ctx = canvas.getContext('2d');
+    summaryChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['0个特征', '1个特征', '2个特征', '3个特征', '4个特征'],
+        datasets: [
+          {
+            label: '准确率 (%)',
+            data: [50, 58, 65, 70, 75],
+            backgroundColor: [
+              'rgba(252,129,129,0.7)',
+              'rgba(246,173,85,0.7)',
+              'rgba(246,224,94,0.7)',
+              'rgba(104,211,145,0.7)',
+              'rgba(102,126,234,0.7)'
+            ],
+            borderColor: [
+              '#fc8181',
+              '#f6ad55',
+              '#f6e05e',
+              '#68d391',
+              '#667eea'
+            ],
+            borderWidth: 2,
+            borderRadius: 8
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) { return '准确率: ' + ctx.raw + '%'; }
+            }
+          }
+        },
+        scales: {
+          y: {
+            min: 0,
+            max: 100,
+            ticks: { callback: v => v + '%' },
+            title: { display: true, text: '准确率' }
+          },
+          x: {
+            title: { display: true, text: '使用的特征数量' }
+          }
+        }
+      }
+    });
+  } catch(e) {
+    console.error('initSummaryChart error:', e);
+  }
+}
+
+// ============================================================
+// Initialize on Load
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    renderAnimalGrid();
+    renderPokerDeck();
+    renderQuiz();
+    showStep(0);
+    
+    // Init scatter after a short delay
+    setTimeout(initScatterCanvas, 200);
+    
+    console.log('Supervised Learning Explorer initialized successfully');
+  } catch(e) {
+    console.error('Initialization error:', e);
+  }
+});
+</script>
+<script>window.parent.postMessage({ action: "ready" }, "*"); 
+ 
+window.console = new Proxy(console, {
+  get(target, prop) {
+    if (['log', 'warn', 'error'].includes(prop)) {
+      return new Proxy(target[prop], {
+        apply(fn, thisArg, args) {
+          fn.apply(thisArg, args);
+          window.parent.postMessage({ action: 'console', 
+            type: prop, 
+            args: args.map((arg) => {
+              try {
+                return JSON.stringify(arg).replace(/^["']|["']$/g, '');
+              } catch (e) {
+                return arg;
+              }
+            }) 
+          }, '*');
+        }
+      });
+    }
+    return target[prop];
+  }
+});
+</script></body>
+</html>

@@ -1,0 +1,1635 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人工智能能为我做什么？</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #6366f1;
+    --secondary: #8b5cf6;
+    --accent: #06b6d4;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #0f0f1a; color: #e2e8f0; margin: 0; }
+
+  /* Hero */
+  .hero-bg {
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 50%, #0f1a2e 100%);
+    position: relative; overflow: hidden;
+  }
+  .hero-bg::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 50%, rgba(99,102,241,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 30%, rgba(6,182,212,0.1) 0%, transparent 50%);
+  }
+  .floating { animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  .pulse-ring { animation: pulseRing 2s ease-out infinite; }
+  @keyframes pulseRing { 0%{transform:scale(1);opacity:1} 100%{transform:scale(1.5);opacity:0} }
+
+  /* Cards */
+  .card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+  }
+  .card:hover { border-color: rgba(99,102,241,0.4); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99,102,241,0.2); }
+
+  /* Category tabs */
+  .cat-tab {
+    cursor: pointer; padding: 10px 20px; border-radius: 50px;
+    border: 2px solid transparent; transition: all 0.3s;
+    font-weight: 600; font-size: 14px;
+  }
+  .cat-tab.active { color: white; }
+  .cat-tab[data-cat="classification"].active { background: linear-gradient(135deg,#6366f1,#8b5cf6); border-color: #6366f1; }
+  .cat-tab[data-cat="regression"].active { background: linear-gradient(135deg,#06b6d4,#0891b2); border-color: #06b6d4; }
+  .cat-tab[data-cat="sequential"].active { background: linear-gradient(135deg,#10b981,#059669); border-color: #10b981; }
+  .cat-tab[data-cat="search"].active { background: linear-gradient(135deg,#f59e0b,#d97706); border-color: #f59e0b; }
+  .cat-tab:not(.active) { background: rgba(255,255,255,0.05); color: #94a3b8; border-color: rgba(255,255,255,0.1); }
+  .cat-tab:not(.active):hover { border-color: rgba(255,255,255,0.3); color: #e2e8f0; }
+
+  /* Simulation panels */
+  .sim-panel { display: none; }
+  .sim-panel.active { display: block; }
+
+  /* Slider */
+  input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 6px;
+    border-radius: 3px; background: rgba(255,255,255,0.1); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px;
+    border-radius: 50%; background: var(--primary); cursor: pointer;
+    box-shadow: 0 0 8px rgba(99,102,241,0.6);
+  }
+
+  /* Animal grid */
+  .animal-card {
+    cursor: pointer; border-radius: 12px; padding: 16px; text-align: center;
+    border: 2px solid transparent; transition: all 0.3s;
+    background: rgba(255,255,255,0.05);
+  }
+  .animal-card:hover { transform: scale(1.05); }
+  .animal-card.selected-cat { border-color: #6366f1; background: rgba(99,102,241,0.2); }
+  .animal-card.selected-dog { border-color: #f59e0b; background: rgba(245,158,11,0.2); }
+  .animal-card.selected-fruit { border-color: #10b981; background: rgba(16,185,129,0.2); }
+
+  /* Chart containers */
+  .chart-wrap { position: relative; min-height: 220px; max-height: 320px; margin-bottom: 1rem; }
+  .chart-wrap canvas { max-height: 300px; }
+
+  /* Hanoi */
+  .hanoi-peg { display: flex; flex-direction: column-reverse; align-items: center; min-height: 160px; position: relative; }
+  .hanoi-pole {
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 8px; height: 140px; background: rgba(255,255,255,0.3); border-radius: 4px;
+  }
+  .hanoi-base { width: 100%; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; margin-top: 4px; }
+  .hanoi-disk {
+    height: 22px; border-radius: 11px; margin: 2px 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: bold; color: white; transition: all 0.3s;
+    position: relative; z-index: 1;
+  }
+  .hanoi-disk:hover { filter: brightness(1.3); }
+
+  /* Sequential decision */
+  .grid-cell {
+    width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; font-size: 18px; cursor: pointer; transition: all 0.2s;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .grid-cell:hover { border-color: rgba(255,255,255,0.4); }
+
+  /* Progress bar */
+  .progress-bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+
+  /* Badge */
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 50px; font-size: 12px; font-weight: 600; }
+
+  /* Tooltip */
+  .tooltip { position: relative; }
+  .tooltip:hover .tooltip-text { display: block; }
+  .tooltip-text {
+    display: none; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
+    background: #1e1e3f; border: 1px solid rgba(99,102,241,0.4); border-radius: 8px;
+    padding: 8px 12px; font-size: 12px; white-space: nowrap; z-index: 100;
+    color: #e2e8f0;
+  }
+
+  /* Scroll */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+  ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.5); border-radius: 3px; }
+
+  /* Section title */
+  .section-title {
+    font-size: 1.5rem; font-weight: 700;
+    background: linear-gradient(135deg, #a5b4fc, #67e8f9);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  /* Combo badge */
+  .combo-item {
+    padding: 8px 16px; border-radius: 8px; font-size: 13px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* Nav dots */
+  .nav-dot { width: 10px; height: 10px; border-radius: 50%; cursor: pointer; transition: all 0.3s; }
+  .nav-dot.active { transform: scale(1.4); }
+
+  /* Animated gradient text */
+  .grad-text {
+    background: linear-gradient(90deg, #a5b4fc, #67e8f9, #6ee7b7, #fcd34d);
+    background-size: 300%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: gradMove 4s linear infinite;
+  }
+  @keyframes gradMove { 0%{background-position:0%} 100%{background-position:300%} }
+
+  /* Regression chart */
+  #regressionCanvas { cursor: crosshair; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .cat-tab { padding: 8px 12px; font-size: 12px; }
+    .grid-cell { width: 32px; height: 32px; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<section class="hero-bg py-16 px-4 text-center relative">
+  <div class="relative z-10 max-w-3xl mx-auto">
+    <div class="floating inline-block text-6xl mb-4">🤖</div>
+    <h1 class="text-4xl md:text-5xl font-black mb-4">
+      <span class="grad-text">人工智能能为我做什么？</span>
+    </h1>
+    <p class="text-lg text-slate-300 mb-8 leading-relaxed">
+      AI 不是魔法，而是解决问题的工具。<br>
+      探索四种核心问题类型，亲手模拟 AI 的思考方式！
+    </p>
+    <div class="flex flex-wrap justify-center gap-3 mb-8">
+      <span class="badge" style="background:rgba(99,102,241,0.3);color:#a5b4fc;border:1px solid rgba(99,102,241,0.4)">🏷️ 分类问题</span>
+      <span class="badge" style="background:rgba(6,182,212,0.3);color:#67e8f9;border:1px solid rgba(6,182,212,0.4)">📈 回归问题</span>
+      <span class="badge" style="background:rgba(16,185,129,0.3);color:#6ee7b7;border:1px solid rgba(16,185,129,0.4)">🎮 序贯决策</span>
+      <span class="badge" style="background:rgba(245,158,11,0.3);color:#fcd34d;border:1px solid rgba(245,158,11,0.4)">🔍 搜索问题</span>
+    </div>
+    <div class="card inline-block px-6 py-3 text-slate-300 text-sm">
+      💡 <strong class="text-white">探索问题：</strong>同一个 AI 产品，可能同时解决几种不同类型的问题？
+    </div>
+  </div>
+</section>
+
+<!-- ===== CATEGORY TABS ===== -->
+<section class="max-w-5xl mx-auto px-4 py-8">
+  <div class="flex flex-wrap gap-3 justify-center mb-8" id="catTabs">
+    <button class="cat-tab active" data-cat="classification">🏷️ 分类问题</button>
+    <button class="cat-tab" data-cat="regression">📈 回归问题</button>
+    <button class="cat-tab" data-cat="sequential">🎮 序贯决策</button>
+    <button class="cat-tab" data-cat="search">🔍 搜索问题</button>
+  </div>
+
+  <!-- ===== CLASSIFICATION ===== -->
+  <div class="sim-panel active" id="panel-classification">
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card p-6">
+        <h2 class="text-xl font-bold mb-2 text-indigo-300">🏷️ 分类问题</h2>
+        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+          AI 把输入数据归入某个<strong class="text-white">已知类别</strong>。就像电梯摄像头判断"是不是住户"，或者区分猫咪和小狗。
+        </p>
+        <div class="card p-4 mb-4" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.3)">
+          <p class="text-xs text-indigo-300 font-semibold mb-1">🔑 核心特征</p>
+          <p class="text-sm text-slate-300">输出是<strong class="text-white">离散的类别标签</strong>，答案是"是/否"或"A/B/C"</p>
+        </div>
+        <div class="space-y-2 text-sm">
+          <div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-slate-300">垃圾邮件过滤（垃圾 / 正常）</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-slate-300">医学影像诊断（有病灶 / 无病灶）</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-slate-300">水果识别（苹果 / 香蕉 / 橙子）</span></div>
+        </div>
+        <div class="mt-4 p-3 rounded-lg text-xs" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2)">
+          <span class="text-green-400 font-semibold">📊 真实数据：</span>
+          <span class="text-slate-300">2023年AI医学影像院端付费渗透率达 15%~20%</span>
+        </div>
+      </div>
+
+      <div class="card p-6">
+        <h3 class="font-bold mb-4 text-white">🎮 模拟：AI 图像分类器</h3>
+        <p class="text-sm text-slate-400 mb-4">点击动物/水果，看 AI 如何分类并给出置信度！</p>
+        <div class="grid grid-cols-3 gap-3 mb-4" id="animalGrid">
+          <!-- filled by JS -->
+        </div>
+        <div id="classResult" class="hidden card p-4" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.3)">
+          <div class="flex items-center gap-3 mb-3">
+            <span id="classResultIcon" class="text-3xl"></span>
+            <div>
+              <p class="font-bold text-white" id="classResultLabel"></p>
+              <p class="text-xs text-slate-400" id="classResultDesc"></p>
+            </div>
+          </div>
+          <div class="space-y-2" id="classConfidenceBars"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Email spam demo -->
+    <div class="card p-6 mt-6">
+      <h3 class="font-bold mb-4 text-white">📧 模拟：垃圾邮件检测器</h3>
+      <p class="text-sm text-slate-400 mb-4">调整邮件特征，观察 AI 的判断结果变化</p>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm text-slate-300 flex justify-between mb-1">
+              <span>🔗 链接数量</span><span class="text-indigo-300 font-bold" id="linkVal">3</span>
+            </label>
+            <input type="range" min="0" max="10" value="3" id="linkSlider" oninput="updateSpamScore()">
+          </div>
+          <div>
+            <label class="text-sm text-slate-300 flex justify-between mb-1">
+              <span>💰 促销词频率</span><span class="text-indigo-300 font-bold" id="promoVal">20%</span>
+            </label>
+            <input type="range" min="0" max="100" value="20" id="promoSlider" oninput="updateSpamScore()">
+          </div>
+          <div>
+            <label class="text-sm text-slate-300 flex justify-between mb-1">
+              <span>❗ 感叹号数量</span><span class="text-indigo-300 font-bold" id="exclVal">2</span>
+            </label>
+            <input type="range" min="0" max="15" value="2" id="exclSlider" oninput="updateSpamScore()">
+          </div>
+          <div>
+            <label class="text-sm text-slate-300 flex justify-between mb-1">
+              <span>👤 发件人信誉</span><span class="text-indigo-300 font-bold" id="senderVal">高</span>
+            </label>
+            <input type="range" min="0" max="100" value="80" id="senderSlider" oninput="updateSpamScore()">
+          </div>
+        </div>
+        <div class="flex flex-col items-center justify-center">
+          <div class="relative w-36 h-36 mb-4">
+            <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12"/>
+              <circle cx="50" cy="50" r="40" fill="none" stroke-width="12" stroke-linecap="round"
+                id="spamCircle" stroke="url(#spamGrad)"
+                stroke-dasharray="251.2" stroke-dashoffset="200"/>
+              <defs>
+                <linearGradient id="spamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#6366f1"/>
+                  <stop offset="100%" stop-color="#ef4444"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-2xl font-black" id="spamPct">20%</span>
+              <span class="text-xs text-slate-400">垃圾概率</span>
+            </div>
+          </div>
+          <div id="spamVerdict" class="text-center">
+            <span class="text-2xl" id="spamIcon">✅</span>
+            <p class="font-bold mt-1" id="spamLabel">正常邮件</p>
+            <p class="text-xs text-slate-400 mt-1" id="spamReason"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== REGRESSION ===== -->
+  <div class="sim-panel" id="panel-regression">
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card p-6">
+        <h2 class="text-xl font-bold mb-2 text-cyan-300">📈 回归问题</h2>
+        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+          根据<strong class="text-white">历史数据</strong>预测未来的<strong class="text-white">连续数值</strong>。就像根据过往成绩预测下次考试分数。
+        </p>
+        <div class="card p-4 mb-4" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.3)">
+          <p class="text-xs text-cyan-300 font-semibold mb-1">🔑 核心特征</p>
+          <p class="text-sm text-slate-300">输出是<strong class="text-white">连续的数值</strong>，答案是具体的数字</p>
+        </div>
+        <div class="space-y-2 text-sm">
+          <div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-slate-300">交通预测（预测拥堵持续时间）</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-slate-300">气象预测（预测明天气温）</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-slate-300">成绩预测（预测下次考试分数）</span></div>
+        </div>
+        <div class="mt-4 p-3 rounded-lg text-xs" style="background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.2)">
+          <span class="text-cyan-400 font-semibold">🌍 真实案例：</span>
+          <span class="text-slate-300">谷歌 GraphCast 在1分钟内预测未来10天数百个天气变量</span>
+        </div>
+      </div>
+
+      <div class="card p-6">
+        <h3 class="font-bold mb-3 text-white">🎯 模拟：成绩预测器</h3>
+        <p class="text-sm text-slate-400 mb-3">点击画布添加历史成绩数据点，AI 自动拟合趋势线并预测！</p>
+        <div class="chart-wrap">
+          <canvas id="regressionCanvas"></canvas>
+        </div>
+        <div class="flex gap-3 mt-2">
+          <button onclick="clearRegressionData()" class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all" style="background:rgba(239,68,68,0.2);color:#fca5a5;border:1px solid rgba(239,68,68,0.3)">🗑️ 清除数据</button>
+          <button onclick="addRandomData()" class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all" style="background:rgba(6,182,212,0.2);color:#67e8f9;border:1px solid rgba(6,182,212,0.3)">🎲 随机数据</button>
+        </div>
+        <div id="regressionPrediction" class="hidden mt-3 card p-3 text-sm" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.3)">
+          <span class="text-cyan-300 font-semibold">📊 AI 预测：</span>
+          <span id="regressionPredText" class="text-white"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weather prediction -->
+    <div class="card p-6 mt-6">
+      <h3 class="font-bold mb-4 text-white">🌤️ 模拟：天气预测（回归）</h3>
+      <p class="text-sm text-slate-400 mb-4">调整大气参数，观察 AI 预测的气温变化</p>
+      <div class="grid md:grid-cols-3 gap-4 mb-4">
+        <div>
+          <label class="text-sm text-slate-300 flex justify-between mb-1">
+            <span>💨 风速 (km/h)</span><span class="text-cyan-300 font-bold" id="windVal">20</span>
+          </label>
+          <input type="range" min="0" max="100" value="20" id="windSlider" oninput="updateWeather()">
+        </div>
+        <div>
+          <label class="text-sm text-slate-300 flex justify-between mb-1">
+            <span>💧 湿度 (%)</span><span class="text-cyan-300 font-bold" id="humidVal">60</span>
+          </label>
+          <input type="range" min="0" max="100" value="60" id="humidSlider" oninput="updateWeather()">
+        </div>
+        <div>
+          <label class="text-sm text-slate-300 flex justify-between mb-1">
+            <span>☁️ 云量 (%)</span><span class="text-cyan-300 font-bold" id="cloudVal">30</span>
+          </label>
+          <input type="range" min="0" max="100" value="30" id="cloudSlider" oninput="updateWeather()">
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="weatherChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SEQUENTIAL ===== -->
+  <div class="sim-panel" id="panel-sequential">
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card p-6">
+        <h2 class="text-xl font-bold mb-2 text-emerald-300">🎮 序贯决策问题</h2>
+        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+          AI 根据<strong class="text-white">环境反馈</strong>不断调整决策。就像下棋时根据对手落子调整策略。
+        </p>
+        <div class="card p-4 mb-4" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3)">
+          <p class="text-xs text-emerald-300 font-semibold mb-1">🔑 核心特征</p>
+          <p class="text-sm text-slate-300">决策是<strong class="text-white">连续的、相互影响的</strong>，每步都依赖上一步的结果</p>
+        </div>
+        <div class="flex justify-center my-4">
+          <div class="flex items-center gap-2 text-sm">
+            <div class="card px-3 py-2 text-center" style="background:rgba(16,185,129,0.1)">
+              <div class="text-lg">🤖</div><div class="text-xs text-slate-400">AI</div>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+              <div class="text-xs text-emerald-300">→ 动作</div>
+              <div class="text-xs text-slate-500">← 反馈</div>
+            </div>
+            <div class="card px-3 py-2 text-center" style="background:rgba(16,185,129,0.1)">
+              <div class="text-lg">🌍</div><div class="text-xs text-slate-400">环境</div>
+            </div>
+          </div>
+        </div>
+        <div class="space-y-2 text-sm">
+          <div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-slate-300">自动驾驶（实时感知+连续决策）</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-slate-300">医疗决策（根据治疗反馈调整方案）</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-slate-300">游戏策略（AlphaGo 下围棋）</span></div>
+        </div>
+      </div>
+
+      <div class="card p-6">
+        <h3 class="font-bold mb-3 text-white">♟️ 模拟：AI 走迷宫</h3>
+        <p class="text-sm text-slate-400 mb-3">观察 AI 如何通过序贯决策找到出口！</p>
+        <div id="mazeContainer" class="flex justify-center mb-4">
+          <!-- filled by JS -->
+        </div>
+        <div class="flex gap-3 mb-3">
+          <button onclick="resetMaze()" class="flex-1 py-2 rounded-lg text-sm font-semibold" style="background:rgba(16,185,129,0.2);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3)">🔄 重置</button>
+          <button onclick="stepMaze()" id="mazeStepBtn" class="flex-1 py-2 rounded-lg text-sm font-semibold" style="background:rgba(16,185,129,0.3);color:#6ee7b7;border:1px solid rgba(16,185,129,0.4)">👣 走一步</button>
+          <button onclick="autoMaze()" id="mazeAutoBtn" class="flex-1 py-2 rounded-lg text-sm font-semibold" style="background:rgba(99,102,241,0.2);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3)">▶️ 自动</button>
+        </div>
+        <div id="mazeStatus" class="card p-3 text-sm text-center" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3)">
+          <span class="text-emerald-300">🤖 AI 准备就绪，等待出发...</span>
+        </div>
+        <div class="mt-3">
+          <div class="flex justify-between text-xs text-slate-400 mb-1">
+            <span>决策步数</span><span id="mazeSteps">0</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="mazeProgress" style="width:0%;background:linear-gradient(90deg,#10b981,#6ee7b7)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Driving sim -->
+    <div class="card p-6 mt-6">
+      <h3 class="font-bold mb-4 text-white">🚗 模拟：自动驾驶决策</h3>
+      <p class="text-sm text-slate-400 mb-4">改变道路状况，观察 AI 如何实时调整驾驶决策</p>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm text-slate-300 flex justify-between mb-1">
+              <span>🚦 前方障碍距离 (m)</span><span class="text-emerald-300 font-bold" id="obstVal">50</span>
+            </label>
+            <input type="range" min="5" max="100" value="50" id="obstSlider" oninput="updateDriving()">
+          </div>
+          <div>
+            <label class="text-sm text-slate-300 flex justify-between mb-1">
+              <span>🌧️ 路面湿滑程度</span><span class="text-emerald-300 font-bold" id="roadVal">干燥</span>
+            </label>
+            <input type="range" min="0" max="100" value="0" id="roadSlider" oninput="updateDriving()">
+          </div>
+          <div>
+            <label class="text-sm text-slate-300 flex justify-between mb-1">
+              <span>👁️ 能见度 (%)</span><span class="text-emerald-300 font-bold" id="visVal">100</span>
+            </label>
+            <input type="range" min="10" max="100" value="100" id="visSlider" oninput="updateDriving()">
+          </div>
+        </div>
+        <div id="drivingDecision" class="card p-4" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3)">
+          <p class="text-xs text-emerald-300 font-semibold mb-3">🤖 AI 实时决策</p>
+          <div class="space-y-3" id="drivingActions">
+            <!-- filled by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SEARCH ===== -->
+  <div class="sim-panel" id="panel-search">
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card p-6">
+        <h2 class="text-xl font-bold mb-2 text-amber-300">🔍 搜索问题</h2>
+        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+          从<strong class="text-white">初始状态</strong>出发，通过搜索所有可能路径，找到达到<strong class="text-white">目标状态</strong>的最优方案。
+        </p>
+        <div class="card p-4 mb-4" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3)">
+          <p class="text-xs text-amber-300 font-semibold mb-1">🔑 核心特征</p>
+          <p class="text-sm text-slate-300">有明确的<strong class="text-white">起点和终点</strong>，需要在规则约束下找最优路径</p>
+        </div>
+        <div class="flex items-center gap-4 my-4 text-sm">
+          <div class="card px-3 py-2 text-center flex-1" style="background:rgba(245,158,11,0.1)">
+            <div class="text-lg">🏁</div><div class="text-xs text-slate-400">初始状态</div>
+          </div>
+          <div class="text-slate-500">→ 搜索 →</div>
+          <div class="card px-3 py-2 text-center flex-1" style="background:rgba(245,158,11,0.1)">
+            <div class="text-lg">🏆</div><div class="text-xs text-slate-400">目标状态</div>
+          </div>
+        </div>
+        <div class="space-y-2 text-sm">
+          <div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-slate-300">GPS 路径规划（最短/最快路线）</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-slate-300">汉诺塔求解（最少步骤移动）</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✓</span><span class="text-slate-300">大学排课（满足所有约束的最优方案）</span></div>
+        </div>
+      </div>
+
+      <div class="card p-6">
+        <h3 class="font-bold mb-3 text-white">🗼 模拟：汉诺塔求解器</h3>
+        <p class="text-sm text-slate-400 mb-3">选择圆盘数量，观察 AI 如何搜索最优解！</p>
+        <div class="flex items-center gap-4 mb-4">
+          <label class="text-sm text-slate-300">圆盘数量：</label>
+          <div class="flex gap-2">
+            <button onclick="setHanoiDisks(2)" class="hanoi-size-btn px-3 py-1 rounded-lg text-sm font-bold transition-all" data-n="2" style="background:rgba(245,158,11,0.3);color:#fcd34d;border:1px solid rgba(245,158,11,0.4)">2</button>
+            <button onclick="setHanoiDisks(3)" class="hanoi-size-btn px-3 py-1 rounded-lg text-sm font-bold transition-all" data-n="3" style="background:rgba(245,158,11,0.1);color:#fcd34d;border:1px solid rgba(245,158,11,0.2)">3</button>
+            <button onclick="setHanoiDisks(4)" class="hanoi-size-btn px-3 py-1 rounded-lg text-sm font-bold transition-all" data-n="4" style="background:rgba(245,158,11,0.1);color:#fcd34d;border:1px solid rgba(245,158,11,0.2)">4</button>
+          </div>
+        </div>
+        <div id="hanoiDisplay" class="grid grid-cols-3 gap-2 mb-4">
+          <!-- filled by JS -->
+        </div>
+        <div class="flex gap-3 mb-3">
+          <button onclick="hanoiStep()" id="hanoiStepBtn" class="flex-1 py-2 rounded-lg text-sm font-semibold" style="background:rgba(245,158,11,0.2);color:#fcd34d;border:1px solid rgba(245,158,11,0.3)">👣 下一步</button>
+          <button onclick="hanoiAuto()" id="hanoiAutoBtn" class="flex-1 py-2 rounded-lg text-sm font-semibold" style="background:rgba(99,102,241,0.2);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3)">▶️ 自动演示</button>
+          <button onclick="resetHanoi()" class="flex-1 py-2 rounded-lg text-sm font-semibold" style="background:rgba(239,68,68,0.2);color:#fca5a5;border:1px solid rgba(239,68,68,0.3)">🔄 重置</button>
+        </div>
+        <div id="hanoiStatus" class="card p-3 text-sm text-center" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3)">
+          <span class="text-amber-300" id="hanoiStatusText">🔍 AI 已计算出最优解，共需 <span id="hanoiTotalSteps">3</span> 步</span>
+        </div>
+        <div class="mt-3">
+          <div class="flex justify-between text-xs text-slate-400 mb-1">
+            <span>搜索进度</span><span id="hanoiStepCount">0</span> / <span id="hanoiTotalCount">3</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="hanoiProgress" style="width:0%;background:linear-gradient(90deg,#f59e0b,#fcd34d)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GPS path -->
+    <div class="card p-6 mt-6">
+      <h3 class="font-bold mb-4 text-white">🗺️ 模拟：GPS 路径搜索</h3>
+      <p class="text-sm text-slate-400 mb-4">点击"搜索路径"，观察 AI 如何在地图上找到最优路线</p>
+      <div class="grid md:grid-cols-3 gap-4 mb-4">
+        <div>
+          <label class="text-sm text-slate-300 flex justify-between mb-1">
+            <span>🚗 优先策略</span>
+          </label>
+          <select id="pathStrategy" class="w-full bg-slate-800 border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-500 appearance-none cursor-pointer" onchange="updateGPS()">
+            <option value="shortest" class="bg-slate-800 text-slate-200">最短距离</option>
+            <option value="fastest" class="bg-slate-800 text-slate-200">最快速度</option>
+            <option value="avoid" class="bg-slate-800 text-slate-200">避开拥堵</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm text-slate-300 flex justify-between mb-1">
+            <span>🚦 拥堵程度</span><span class="text-amber-300 font-bold" id="trafficVal">中等</span>
+          </label>
+          <input type="range" min="0" max="100" value="50" id="trafficSlider" oninput="updateGPS()">
+        </div>
+        <div class="flex items-end">
+          <button onclick="runGPSSearch()" class="w-full py-2 rounded-lg text-sm font-semibold" style="background:rgba(245,158,11,0.3);color:#fcd34d;border:1px solid rgba(245,158,11,0.4)">🔍 搜索路径</button>
+        </div>
+      </div>
+      <div id="gpsMap" class="rounded-xl overflow-hidden" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);min-height:200px">
+        <canvas id="gpsCanvas" style="width:100%;display:block"></canvas>
+      </div>
+      <div id="gpsResult" class="hidden mt-3 card p-3 text-sm" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3)">
+        <span class="text-amber-300 font-semibold">📍 路径结果：</span>
+        <span id="gpsResultText" class="text-white"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== COMBO SECTION ===== -->
+<section class="max-w-5xl mx-auto px-4 py-8">
+  <div class="text-center mb-8">
+    <h2 class="section-title mb-2">🔗 真实世界：问题的组合</h2>
+    <p class="text-slate-400 text-sm">现实中的 AI 产品往往同时解决多种类型的问题</p>
+  </div>
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="card p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-3xl">🏥</span>
+        <div>
+          <h3 class="font-bold text-white">医学影像分析</h3>
+          <p class="text-xs text-slate-400">多问题组合案例</p>
+        </div>
+      </div>
+      <div class="space-y-2 mb-4">
+        <div class="combo-item" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3)">
+          <span class="text-indigo-300">🏷️</span>
+          <span class="text-sm text-slate-300"><strong class="text-white">分类问题：</strong>判断影像中是否有病灶</span>
+        </div>
+        <div class="combo-item" style="background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.3)">
+          <span class="text-cyan-300">📈</span>
+          <span class="text-sm text-slate-300"><strong class="text-white">回归问题：</strong>预测病情发展趋势</span>
+        </div>
+      </div>
+      <div id="medCombo" class="chart-wrap">
+        <canvas id="medChart"></canvas>
+      </div>
+    </div>
+    <div class="card p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-3xl">💬</span>
+        <div>
+          <h3 class="font-bold text-white">聊天机器人</h3>
+          <p class="text-xs text-slate-400">多问题组合案例</p>
+        </div>
+      </div>
+      <div class="space-y-2 mb-4">
+        <div class="combo-item" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3)">
+          <span class="text-indigo-300">🏷️</span>
+          <span class="text-sm text-slate-300"><strong class="text-white">分类问题：</strong>识别语言中的情感（积极/消极）</span>
+        </div>
+        <div class="combo-item" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3)">
+          <span class="text-emerald-300">🎮</span>
+          <span class="text-sm text-slate-300"><strong class="text-white">序贯决策：</strong>根据对话历史持续调整回复</span>
+        </div>
+      </div>
+      <div class="space-y-2" id="chatDemo">
+        <div class="flex gap-2 items-start">
+          <span class="text-lg">👤</span>
+          <div class="card px-3 py-2 text-sm flex-1" style="background:rgba(255,255,255,0.05)">今天天气真好，心情棒极了！</div>
+          <span class="badge text-xs" style="background:rgba(16,185,129,0.2);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3)">积极 😊</span>
+        </div>
+        <div class="flex gap-2 items-start">
+          <span class="text-lg">🤖</span>
+          <div class="card px-3 py-2 text-sm flex-1" style="background:rgba(99,102,241,0.1)">太好了！好天气确实让人心情愉快～</div>
+        </div>
+        <div class="flex gap-2 items-start">
+          <span class="text-lg">👤</span>
+          <div class="card px-3 py-2 text-sm flex-1" style="background:rgba(255,255,255,0.05)">但是作业太多了，有点烦...</div>
+          <span class="badge text-xs" style="background:rgba(239,68,68,0.2);color:#fca5a5;border:1px solid rgba(239,68,68,0.3)">消极 😔</span>
+        </div>
+        <div class="flex gap-2 items-start">
+          <span class="text-lg">🤖</span>
+          <div class="card px-3 py-2 text-sm flex-1" style="background:rgba(99,102,241,0.1)">理解你的感受，先休息一下再做吧！</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SUMMARY ===== -->
+<section class="max-w-5xl mx-auto px-4 py-8">
+  <div class="text-center mb-8">
+    <h2 class="section-title mb-2">🎓 我们的收获</h2>
+    <p class="text-slate-400 text-sm">学完这一章，你能做到这些了！</p>
+  </div>
+  <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="card p-5 text-center">
+      <div class="text-4xl mb-3">👦</div>
+      <p class="font-bold text-white text-sm mb-2">儿子说</p>
+      <p class="text-xs text-slate-400 leading-relaxed">买 AI 汽车时，我可以问销售员：这是 L几 的自动驾驶技术？</p>
+    </div>
+    <div class="card p-5 text-center">
+      <div class="text-4xl mb-3">👧</div>
+      <p class="font-bold text-white text-sm mb-2">女儿说</p>
+      <p class="text-xs text-slate-400 leading-relaxed">我准备给家里换一个 AI 音箱，只要说一句，就能播放喜欢的音乐！</p>
+    </div>
+    <div class="card p-5 text-center">
+      <div class="text-4xl mb-3">👨</div>
+      <p class="font-bold text-white text-sm mb-2">爸爸说</p>
+      <p class="text-xs text-slate-400 leading-relaxed">选扫地机器人，可以根据导航方式和建立家里模型图的能力来选！</p>
+    </div>
+    <div class="card p-5 text-center">
+      <div class="text-4xl mb-3">👩</div>
+      <p class="font-bold text-white text-sm mb-2">妈妈说</p>
+      <p class="text-xs text-slate-400 leading-relaxed">商家宣传"AI产品"时，我能判断是噱头还是真正的 AI 产品！</p>
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="card p-6">
+    <h3 class="font-bold text-white mb-4">🧠 快速测验：这是哪种 AI 问题？</h3>
+    <div id="quizContainer">
+      <!-- filled by JS -->
+    </div>
+  </div>
+</section>
+
+<footer class="text-center py-8 text-slate-600 text-sm">
+  <p>🤖 人工智能探索学习 · 交互式模拟</p>
+</footer>
+
+<script>
+// ============================================================
+// UTILITY
+// ============================================================
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+// ============================================================
+// CATEGORY TABS
+// ============================================================
+document.getElementById('catTabs').addEventListener('click', function(e) {
+  const btn = e.target.closest('.cat-tab');
+  if (!btn) return;
+  const cat = btn.dataset.cat;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.sim-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + cat).classList.add('active');
+  // Re-render charts after tab switch
+  setTimeout(() => {
+    if (cat === 'regression') { initWeatherChart(); }
+    if (cat === 'search') { drawGPSCanvas(); }
+  }, 100);
+});
+
+// ============================================================
+// CLASSIFICATION: Animal Grid
+// ============================================================
+const animals = [
+  { emoji: '🐱', label: '猫咪', type: 'cat', desc: '检测到猫科动物特征：尖耳朵、胡须、瞳孔形状' },
+  { emoji: '🐶', label: '小狗', type: 'dog', desc: '检测到犬科动物特征：耳朵形状、鼻子、体型' },
+  { emoji: '🐰', label: '兔子', type: 'rabbit', desc: '检测到兔科特征：长耳朵、短尾巴、体型' },
+  { emoji: '🍎', label: '苹果', type: 'apple', desc: '检测到水果特征：红色、圆形、果柄' },
+  { emoji: '🍌', label: '香蕉', type: 'banana', desc: '检测到水果特征：黄色、弯曲形状' },
+  { emoji: '🍊', label: '橙子', type: 'orange', desc: '检测到水果特征：橙色、圆形、纹理' },
+];
+
+const classConfigs = {
+  cat:    { label: '🐱 猫咪', bars: [['猫咪',92],['小狗',5],['兔子',3]], color: '#6366f1' },
+  dog:    { label: '🐶 小狗', bars: [['小狗',89],['猫咪',8],['兔子',3]], color: '#f59e0b' },
+  rabbit: { label: '🐰 兔子', bars: [['兔子',85],['猫咪',10],['小狗',5]], color: '#10b981' },
+  apple:  { label: '🍎 苹果', bars: [['苹果',95],['橙子',3],['香蕉',2]], color: '#ef4444' },
+  banana: { label: '🍌 香蕉', bars: [['香蕉',97],['苹果',2],['橙子',1]], color: '#fcd34d' },
+  orange: { label: '🍊 橙子', bars: [['橙子',91],['苹果',6],['香蕉',3]], color: '#f97316' },
+};
+
+(function initAnimalGrid() {
+  const grid = document.getElementById('animalGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  animals.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'animal-card';
+    div.innerHTML = `<div class="text-3xl mb-1">${a.emoji}</div><div class="text-xs text-slate-300">${a.label}</div>`;
+    div.onclick = () => selectAnimal(a);
+    grid.appendChild(div);
+  });
+})();
+
+function selectAnimal(a) {
+  try {
+    document.querySelectorAll('.animal-card').forEach(c => {
+      c.classList.remove('selected-cat','selected-dog','selected-fruit');
+    });
+    const cards = document.querySelectorAll('.animal-card');
+    const idx = animals.findIndex(x => x.type === a.type);
+    if (idx >= 0 && cards[idx]) {
+      const cls = ['cat','rabbit'].includes(a.type) ? 'selected-cat' : a.type === 'dog' ? 'selected-dog' : 'selected-fruit';
+      cards[idx].classList.add(cls);
+    }
+    const cfg = classConfigs[a.type];
+    if (!cfg) return;
+    const result = document.getElementById('classResult');
+    result.classList.remove('hidden');
+    document.getElementById('classResultIcon').textContent = a.emoji;
+    document.getElementById('classResultLabel').textContent = cfg.label;
+    document.getElementById('classResultDesc').textContent = a.desc;
+    const barsEl = document.getElementById('classConfidenceBars');
+    barsEl.innerHTML = '';
+    cfg.bars.forEach(([name, pct]) => {
+      barsEl.innerHTML += `
+        <div>
+          <div class="flex justify-between text-xs text-slate-400 mb-1"><span>${name}</span><span>${pct}%</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${cfg.color}"></div></div>
+        </div>`;
+    });
+  } catch(e) { console.error('selectAnimal error:', e); }
+}
+
+// ============================================================
+// CLASSIFICATION: Spam Score
+// ============================================================
+function updateSpamScore() {
+  try {
+    const links = parseInt(document.getElementById('linkSlider').value);
+    const promo = parseInt(document.getElementById('promoSlider').value);
+    const excl  = parseInt(document.getElementById('exclSlider').value);
+    const sender= parseInt(document.getElementById('senderSlider').value);
+
+    document.getElementById('linkVal').textContent = links;
+    document.getElementById('promoVal').textContent = promo + '%';
+    document.getElementById('exclVal').textContent = excl;
+    document.getElementById('senderVal').textContent = sender > 66 ? '高' : sender > 33 ? '中' : '低';
+
+    // Score formula
+    let score = links * 5 + promo * 0.4 + excl * 3 - (sender - 50) * 0.5;
+    score = clamp(Math.round(score), 0, 100);
+
+    const circle = document.getElementById('spamCircle');
+    const circumference = 251.2;
+    circle.style.strokeDashoffset = circumference - (circumference * score / 100);
+
+    document.getElementById('spamPct').textContent = score + '%';
+
+    const icon = document.getElementById('spamIcon');
+    const label = document.getElementById('spamLabel');
+    const reason = document.getElementById('spamReason');
+
+    if (score >= 70) {
+      icon.textContent = '🚫'; label.textContent = '垃圾邮件'; label.style.color = '#ef4444';
+      reason.textContent = '高风险：促销词多、链接多、发件人信誉低';
+    } else if (score >= 40) {
+      icon.textContent = '⚠️'; label.textContent = '可疑邮件'; label.style.color = '#f59e0b';
+      reason.textContent = '中等风险：建议人工审核';
+    } else {
+      icon.textContent = '✅'; label.textContent = '正常邮件'; label.style.color = '#10b981';
+      reason.textContent = '低风险：来自可信发件人，内容正常';
+    }
+  } catch(e) { console.error('updateSpamScore error:', e); }
+}
+updateSpamScore();
+
+// ============================================================
+// REGRESSION: Canvas scatter + trend line
+// ============================================================
+let regressionData = [];
+let regressionChart = null;
+
+function initRegressionChart() {
+  try {
+    const canvas = document.getElementById('regressionCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (regressionChart) { regressionChart.destroy(); regressionChart = null; }
+
+    regressionChart = new Chart(ctx, {
+      type: 'scatter',
+      data: {
+        datasets: [
+          {
+            label: '历史成绩',
+            data: [],
+            backgroundColor: 'rgba(6,182,212,0.8)',
+            pointRadius: 7,
+            pointHoverRadius: 9,
+          },
+          {
+            label: 'AI 趋势线',
+            data: [],
+            type: 'line',
+            borderColor: 'rgba(99,102,241,0.8)',
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false,
+            tension: 0.4,
+          },
+          {
+            label: 'AI 预测',
+            data: [],
+            backgroundColor: 'rgba(245,158,11,1)',
+            pointRadius: 10,
+            pointStyle: 'star',
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
+          tooltip: { callbacks: {
+            label: ctx => `第${ctx.parsed.x}次: ${ctx.parsed.y}分`
+          }}
+        },
+        scales: {
+          x: {
+            title: { display: true, text: '考试次数', color: '#64748b' },
+            min: 0, max: 8,
+            ticks: { color: '#64748b', stepSize: 1 },
+            grid: { color: 'rgba(255,255,255,0.05)' }
+          },
+          y: {
+            title: { display: true, text: '分数', color: '#64748b' },
+            min: 40, max: 100,
+            ticks: { color: '#64748b' },
+            grid: { color: 'rgba(255,255,255,0.05)' }
+          }
+        }
+      }
+    });
+
+    canvas.onclick = function(e) {
+      try {
+        const rect = canvas.getBoundingClientRect();
+        const xPx = e.clientX - rect.left;
+        const yPx = e.clientY - rect.top;
+        const xScale = regressionChart.scales.x;
+        const yScale = regressionChart.scales.y;
+        const xVal = Math.round(xScale.getValueForPixel(xPx) * 10) / 10;
+        const yVal = Math.round(yScale.getValueForPixel(yPx));
+        if (xVal >= 1 && xVal <= 7 && yVal >= 40 && yVal <= 100) {
+          regressionData.push({ x: xVal, y: yVal });
+          updateRegressionChart();
+        }
+      } catch(e) { console.error('regression click error:', e); }
+    };
+  } catch(e) { console.error('initRegressionChart error:', e); }
+}
+
+function linearRegression(pts) {
+  if (!Array.isArray(pts) || pts.length < 2) return null;
+  const n = pts.length;
+  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+  pts.forEach(p => { sumX += p.x; sumY += p.y; sumXY += p.x * p.y; sumX2 += p.x * p.x; });
+  const denom = n * sumX2 - sumX * sumX;
+  if (denom === 0) return null;
+  const m = (n * sumXY - sumX * sumY) / denom;
+  const b = (sumY - m * sumX) / n;
+  return { m, b };
+}
+
+function updateRegressionChart() {
+  try {
+    if (!regressionChart) return;
+    regressionChart.data.datasets[0].data = regressionData.map(p => ({ x: p.x, y: p.y }));
+
+    const reg = linearRegression(regressionData);
+    if (reg) {
+      const trendPts = [1, 2, 3, 4, 5, 6, 7].map(x => ({ x, y: Math.round(reg.m * x + reg.b) }));
+      regressionChart.data.datasets[1].data = trendPts;
+      const nextX = Math.max(...regressionData.map(p => p.x)) + 1;
+      if (nextX <= 8) {
+        const predY = clamp(Math.round(reg.m * nextX + reg.b), 40, 100);
+        regressionChart.data.datasets[2].data = [{ x: nextX, y: predY }];
+        const pred = document.getElementById('regressionPrediction');
+        pred.classList.remove('hidden');
+        document.getElementById('regressionPredText').textContent =
+          `第 ${nextX} 次考试预测得分：${predY} 分（趋势：${reg.m > 0 ? '📈 上升' : reg.m < 0 ? '📉 下降' : '➡️ 平稳'}）`;
+      }
+    } else {
+      regressionChart.data.datasets[1].data = [];
+      regressionChart.data.datasets[2].data = [];
+    }
+    regressionChart.update();
+  } catch(e) { console.error('updateRegressionChart error:', e); }
+}
+
+function clearRegressionData() {
+  regressionData = [];
+  if (regressionChart) {
+    regressionChart.data.datasets.forEach(d => d.data = []);
+    regressionChart.update();
+  }
+  document.getElementById('regressionPrediction').classList.add('hidden');
+}
+
+function addRandomData() {
+  regressionData = [];
+  const base = 55 + Math.random() * 15;
+  const slope = (Math.random() - 0.3) * 5;
+  for (let i = 1; i <= 5; i++) {
+    regressionData.push({ x: i, y: clamp(Math.round(base + slope * i + (Math.random() - 0.5) * 10), 40, 100) });
+  }
+  updateRegressionChart();
+}
+
+// ============================================================
+// REGRESSION: Weather Chart
+// ============================================================
+let weatherChart = null;
+
+function initWeatherChart() {
+  try {
+    const canvas = document.getElementById('weatherChart');
+    if (!canvas) return;
+    if (weatherChart) { weatherChart.destroy(); weatherChart = null; }
+    const ctx = canvas.getContext('2d');
+    const days = ['今天','明天','后天','第4天','第5天','第6天','第7天'];
+    weatherChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: days,
+        datasets: [
+          {
+            label: '预测气温 (°C)',
+            data: [22,23,21,20,19,21,24],
+            borderColor: '#06b6d4',
+            backgroundColor: 'rgba(6,182,212,0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#06b6d4',
+            pointRadius: 5,
+          },
+          {
+            label: '降水概率 (%)',
+            data: [20,30,60,70,50,30,10],
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99,102,241,0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#6366f1',
+            pointRadius: 5,
+            yAxisID: 'y2',
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: {
+            title: { display: true, text: '气温 (°C)', color: '#64748b' },
+            ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' }
+          },
+          y2: {
+            position: 'right',
+            title: { display: true, text: '降水概率 (%)', color: '#64748b' },
+            ticks: { color: '#64748b' }, grid: { display: false },
+            min: 0, max: 100
+          }
+        }
+      }
+    });
+  } catch(e) { console.error('initWeatherChart error:', e); }
+}
+
+function updateWeather() {
+  try {
+    const wind  = parseInt(document.getElementById('windSlider').value) || 0;
+    const humid = parseInt(document.getElementById('humidSlider').value) || 60;
+    const cloud = parseInt(document.getElementById('cloudSlider').value) || 30;
+
+    document.getElementById('windVal').textContent = wind;
+    document.getElementById('humidVal').textContent = humid;
+    document.getElementById('cloudVal').textContent = cloud;
+
+    if (!weatherChart) return;
+    // Simulate temperature effect
+    const baseTemp = 25 - cloud * 0.08 - wind * 0.05;
+    const temps = [0,1,2,3,4,5,6].map(i => Math.round(baseTemp + Math.sin(i * 0.8) * 2 + (Math.random() - 0.5)));
+    const rains = [0,1,2,3,4,5,6].map(i => clamp(Math.round(humid * 0.5 + cloud * 0.3 + Math.sin(i) * 10), 0, 100));
+    weatherChart.data.datasets[0].data = temps;
+    weatherChart.data.datasets[1].data = rains;
+    weatherChart.update();
+  } catch(e) { console.error('updateWeather error:', e); }
+}
+
+// ============================================================
+// SEQUENTIAL: Maze
+// ============================================================
+const MAZE_SIZE = 6;
+let mazeGrid = [];
+let mazePos = { x: 0, y: 0 };
+let mazePath = [];
+let mazePathIdx = 0;
+let mazeAutoTimer = null;
+
+function initMaze() {
+  // Simple maze: 0=open, 1=wall
+  mazeGrid = [
+    [0,0,1,0,0,0],
+    [1,0,1,0,1,0],
+    [0,0,0,0,1,0],
+    [0,1,1,0,0,0],
+    [0,0,0,1,0,1],
+    [1,0,0,0,0,0],
+  ];
+  mazePos = { x: 0, y: 0 };
+  mazePath = [];
+  mazePathIdx = 0;
+  // BFS to find path
+  mazePath = bfsMaze(mazeGrid, {x:0,y:0}, {x:MAZE_SIZE-1,y:MAZE_SIZE-1});
+  renderMaze();
+  document.getElementById('mazeSteps').textContent = '0';
+  document.getElementById('mazeProgress').style.width = '0%';
+  document.getElementById('mazeStatus').innerHTML = '<span class="text-emerald-300">🤖 AI 已规划路径，共 ' + (mazePath.length - 1) + ' 步，等待出发...</span>';
+  if (mazeAutoTimer) { clearInterval(mazeAutoTimer); mazeAutoTimer = null; }
+}
+
+function bfsMaze(grid, start, end) {
+  const queue = [[start]];
+  const visited = new Set();
+  visited.add(start.y + ',' + start.x);
+  const dirs = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}];
+  while (queue.length > 0) {
+    const path = queue.shift();
+    const cur = path[path.length - 1];
+    if (cur.x === end.x && cur.y === end.y) return path;
+    for (const d of dirs) {
+      const nx = cur.x + d.dx, ny = cur.y + d.dy;
+      if (nx >= 0 && nx < MAZE_SIZE && ny >= 0 && ny < MAZE_SIZE &&
+          grid[ny][nx] === 0 && !visited.has(ny + ',' + nx)) {
+        visited.add(ny + ',' + nx);
+        queue.push([...path, {x:nx,y:ny}]);
+      }
+    }
+  }
+  return [start];
+}
+
+function renderMaze() {
+  try {
+    const container = document.getElementById('mazeContainer');
+    if (!container) return;
+    const pathSet = new Set(mazePath.slice(0, mazePathIdx + 1).map(p => p.y + ',' + p.x));
+    let html = '<div style="display:grid;grid-template-columns:repeat(6,40px);gap:3px">';
+    for (let y = 0; y < MAZE_SIZE; y++) {
+      for (let x = 0; x < MAZE_SIZE; x++) {
+        const isWall = mazeGrid[y][x] === 1;
+        const isCur = mazePos.x === x && mazePos.y === y;
+        const isStart = x === 0 && y === 0;
+        const isEnd = x === MAZE_SIZE-1 && y === MAZE_SIZE-1;
+        const inPath = pathSet.has(y + ',' + x);
+        let bg = 'rgba(255,255,255,0.05)';
+        let content = '';
+        if (isWall) { bg = 'rgba(255,255,255,0.15)'; content = '🧱'; }
+        else if (isCur) { bg = 'rgba(16,185,129,0.4)'; content = '🤖'; }
+        else if (isEnd) { bg = 'rgba(245,158,11,0.3)'; content = '🏆'; }
+        else if (isStart && !isCur) { bg = 'rgba(99,102,241,0.2)'; content = '🏁'; }
+        else if (inPath) { bg = 'rgba(16,185,129,0.15)'; content = '·'; }
+        html += `<div class="grid-cell" style="background:${bg};font-size:${isWall?'14px':'18px'}">${content}</div>`;
+      }
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  } catch(e) { console.error('renderMaze error:', e); }
+}
+
+function stepMaze() {
+  try {
+    if (mazePathIdx >= mazePath.length - 1) {
+      document.getElementById('mazeStatus').innerHTML = '<span class="text-amber-300">🏆 已到达目标！AI 成功完成序贯决策！</span>';
+      return;
+    }
+    mazePathIdx++;
+    mazePos = mazePath[mazePathIdx];
+    renderMaze();
+    document.getElementById('mazeSteps').textContent = mazePathIdx;
+    const pct = Math.round(mazePathIdx / (mazePath.length - 1) * 100);
+    document.getElementById('mazeProgress').style.width = pct + '%';
+    const dirs = ['右','左','下','上'];
+    const prev = mazePath[mazePathIdx - 1];
+    const dx = mazePos.x - prev.x, dy = mazePos.y - prev.y;
+    let dir = dx === 1 ? '→ 右' : dx === -1 ? '← 左' : dy === 1 ? '↓ 下' : '↑ 上';
+    if (mazePathIdx >= mazePath.length - 1) {
+      document.getElementById('mazeStatus').innerHTML = '<span class="text-amber-300">🏆 已到达目标！AI 成功完成序贯决策！</span>';
+      if (mazeAutoTimer) { clearInterval(mazeAutoTimer); mazeAutoTimer = null; }
+    } else {
+      document.getElementById('mazeStatus').innerHTML = `<span class="text-emerald-300">🤖 决策 #${mazePathIdx}：向 ${dir} 移动，感知周围环境...</span>`;
+    }
+  } catch(e) { console.error('stepMaze error:', e); }
+}
+
+function autoMaze() {
+  if (mazeAutoTimer) { clearInterval(mazeAutoTimer); mazeAutoTimer = null; return; }
+  mazeAutoTimer = setInterval(() => {
+    if (mazePathIdx >= mazePath.length - 1) {
+      clearInterval(mazeAutoTimer); mazeAutoTimer = null; return;
+    }
+    stepMaze();
+  }, 500);
+}
+
+function resetMaze() {
+  if (mazeAutoTimer) { clearInterval(mazeAutoTimer); mazeAutoTimer = null; }
+  initMaze();
+}
+
+// ============================================================
+// SEQUENTIAL: Driving
+// ============================================================
+function updateDriving() {
+  try {
+    const obst = parseInt(document.getElementById('obstSlider').value) || 50;
+    const road = parseInt(document.getElementById('roadSlider').value) || 0;
+    const vis  = parseInt(document.getElementById('visSlider').value) || 100;
+
+    document.getElementById('obstVal').textContent = obst + 'm';
+    document.getElementById('roadVal').textContent = road < 33 ? '干燥' : road < 66 ? '潮湿' : '湿滑';
+    document.getElementById('visVal').textContent = vis + '%';
+
+    const speed = clamp(Math.round(60 * (obst / 100) * (vis / 100) * (1 - road * 0.004)), 0, 80);
+    const brake = obst < 20 ? '紧急制动' : obst < 40 ? '减速' : '正常';
+    const lane  = obst < 30 && road < 50 ? '考虑变道' : '保持车道';
+    const alert = vis < 40 ? '开启雾灯' : vis < 70 ? '开启近光灯' : '正常行驶';
+
+    const actions = [
+      { icon: '🚗', label: '建议车速', value: speed + ' km/h', color: speed > 50 ? '#10b981' : speed > 20 ? '#f59e0b' : '#ef4444' },
+      { icon: '🛑', label: '制动策略', value: brake, color: brake === '紧急制动' ? '#ef4444' : brake === '减速' ? '#f59e0b' : '#10b981' },
+      { icon: '↔️', label: '车道决策', value: lane, color: lane === '考虑变道' ? '#f59e0b' : '#10b981' },
+      { icon: '💡', label: '灯光控制', value: alert, color: alert === '正常行驶' ? '#10b981' : '#f59e0b' },
+    ];
+
+    const el = document.getElementById('drivingActions');
+    el.innerHTML = actions.map(a => `
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-slate-400">${a.icon} ${a.label}</span>
+        <span class="badge" style="background:${a.color}22;color:${a.color};border:1px solid ${a.color}44">${a.value}</span>
+      </div>`).join('');
+  } catch(e) { console.error('updateDriving error:', e); }
+}
+updateDriving();
+
+// ============================================================
+// SEARCH: Hanoi
+// ============================================================
+let hanoiDisks = 3;
+let hanoiPegs = [[], [], []];
+let hanoiMoves = [];
+let hanoiMoveIdx = 0;
+let hanoiAutoTimer = null;
+
+const diskColors = ['#ef4444','#f97316','#f59e0b','#10b981'];
+
+function setHanoiDisks(n) {
+  hanoiDisks = n;
+  document.querySelectorAll('.hanoi-size-btn').forEach(b => {
+    const active = parseInt(b.dataset.n) === n;
+    b.style.background = active ? 'rgba(245,158,11,0.3)' : 'rgba(245,158,11,0.1)';
+    b.style.borderColor = active ? 'rgba(245,158,11,0.4)' : 'rgba(245,158,11,0.2)';
+  });
+  resetHanoi();
+}
+
+function resetHanoi() {
+  if (hanoiAutoTimer) { clearInterval(hanoiAutoTimer); hanoiAutoTimer = null; }
+  hanoiPegs = [[], [], []];
+  for (let i = hanoiDisks; i >= 1; i--) hanoiPegs[0].push(i);
+  hanoiMoves = [];
+  hanoiMoveIdx = 0;
+  generateHanoiMoves(hanoiDisks, 0, 2, 1);
+  renderHanoi();
+  const total = hanoiMoves.length;
+  document.getElementById('hanoiTotalSteps').textContent = total;
+  document.getElementById('hanoiTotalCount').textContent = total;
+  document.getElementById('hanoiStepCount').textContent = '0';
+  document.getElementById('hanoiProgress').style.width = '0%';
+  document.getElementById('hanoiStatusText').innerHTML = `🔍 AI 已计算出最优解，共需 <span id="hanoiTotalSteps">${total}</span> 步`;
+}
+
+function generateHanoiMoves(n, from, to, aux) {
+  if (n === 0) return;
+  generateHanoiMoves(n - 1, from, aux, to);
+  hanoiMoves.push({ from, to });
+  generateHanoiMoves(n - 1, aux, to, from);
+}
+
+function renderHanoi() {
+  try {
+    const display = document.getElementById('hanoiDisplay');
+    if (!display) return;
+    const pegNames = ['A 柱', 'B 柱', 'C 柱'];
+    const pegColors = ['rgba(99,102,241,0.2)', 'rgba(6,182,212,0.2)', 'rgba(245,158,11,0.2)'];
+    display.innerHTML = '';
+    hanoiPegs.forEach((peg, i) => {
+      const col = document.createElement('div');
+      col.className = 'card p-2 text-center';
+      col.style.background = pegColors[i];
+      col.style.borderColor = 'rgba(255,255,255,0.1)';
+      col.innerHTML = `<div class="text-xs text-slate-400 mb-2">${pegNames[i]}</div>`;
+      const pegDiv = document.createElement('div');
+      pegDiv.className = 'hanoi-peg';
+      const pole = document.createElement('div'); pole.className = 'hanoi-pole';
+      const base = document.createElement('div'); base.className = 'hanoi-base';
+      pegDiv.appendChild(pole);
+      pegDiv.appendChild(base);
+      peg.forEach(disk => {
+        const d = document.createElement('div');
+        d.className = 'hanoi-disk';
+        const w = 30 + disk * 18;
+        d.style.width = w + 'px';
+        d.style.background = diskColors[(disk - 1) % diskColors.length];
+        d.style.boxShadow = `0 2px 8px ${diskColors[(disk-1)%diskColors.length]}66`;
+        d.textContent = disk;
+        pegDiv.appendChild(d);
+      });
+      col.appendChild(pegDiv);
+      display.appendChild(col);
+    });
+  } catch(e) { console.error('renderHanoi error:', e); }
+}
+
+function hanoiStep() {
+  try {
+    if (hanoiMoveIdx >= hanoiMoves.length) {
+      document.getElementById('hanoiStatusText').textContent = '🏆 汉诺塔已完成！AI 找到了最优解！';
+      return;
+    }
+    const move = hanoiMoves[hanoiMoveIdx];
+    const disk = hanoiPegs[move.from].pop();
+    hanoiPegs[move.to].push(disk);
+    hanoiMoveIdx++;
+    renderHanoi();
+    document.getElementById('hanoiStepCount').textContent = hanoiMoveIdx;
+    const pct = Math.round(hanoiMoveIdx / hanoiMoves.length * 100);
+    document.getElementById('hanoiProgress').style.width = pct + '%';
+    const pegNames = ['A','B','C'];
+    if (hanoiMoveIdx >= hanoiMoves.length) {
+      document.getElementById('hanoiStatusText').textContent = '🏆 汉诺塔已完成！AI 找到了最优解！';
+      if (hanoiAutoTimer) { clearInterval(hanoiAutoTimer); hanoiAutoTimer = null; }
+    } else {
+      document.getElementById('hanoiStatusText').textContent = `步骤 ${hanoiMoveIdx}：将圆盘 ${disk} 从 ${pegNames[move.from]} 移到 ${pegNames[move.to]}`;
+    }
+  } catch(e) { console.error('hanoiStep error:', e); }
+}
+
+function hanoiAuto() {
+  if (hanoiAutoTimer) { clearInterval(hanoiAutoTimer); hanoiAutoTimer = null; return; }
+  hanoiAutoTimer = setInterval(() => {
+    if (hanoiMoveIdx >= hanoiMoves.length) { clearInterval(hanoiAutoTimer); hanoiAutoTimer = null; return; }
+    hanoiStep();
+  }, 600);
+}
+
+// ============================================================
+// SEARCH: GPS Canvas
+// ============================================================
+const GPS_NODES = [
+  { id: 'A', x: 0.1, y: 0.5, label: '出发地' },
+  { id: 'B', x: 0.3, y: 0.2, label: '路口B', hasLight: true },
+  { id: 'C', x: 0.3, y: 0.7, label: '路口C' },
+  { id: 'D', x: 0.55, y: 0.15, label: '路口D', hasLight: true },
+  { id: 'E', x: 0.55, y: 0.5, label: '路口E' },
+  { id: 'F', x: 0.55, y: 0.8, label: '路口F' },
+  { id: 'G', x: 0.9, y: 0.5, label: '目的地' },
+];
+const GPS_EDGES = [
+  { from: 'A', to: 'B', dist: 3 },
+  { from: 'A', to: 'C', dist: 4 },
+  { from: 'B', to: 'D', dist: 2 },
+  { from: 'B', to: 'E', dist: 3 },
+  { from: 'C', to: 'E', dist: 2 },
+  { from: 'C', to: 'F', dist: 3 },
+  { from: 'D', to: 'G', dist: 5 },
+  { from: 'E', to: 'G', dist: 3 },
+  { from: 'F', to: 'G', dist: 4 },
+];
+
+let gpsHighlightPath = [];
+let gpsAnimFrame = 0;
+
+function getNodeById(id) { return GPS_NODES.find(n => n.id === id); }
+
+function drawGPSCanvas(highlightPath) {
+  try {
+    const canvas = document.getElementById('gpsCanvas');
+    if (!canvas) return;
+    const container = document.getElementById('gpsMap');
+    const W = container.clientWidth || 500;
+    const H = 200;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+
+    const traffic = parseInt(document.getElementById('trafficSlider').value);
+    const pathSet = new Set();
+    if (Array.isArray(highlightPath)) {
+      for (let i = 0; i < highlightPath.length - 1; i++) {
+        pathSet.add(highlightPath[i] + '-' + highlightPath[i+1]);
+        pathSet.add(highlightPath[i+1] + '-' + highlightPath[i]);
+      }
+    }
+
+    // Draw edges
+    GPS_EDGES.forEach(e => {
+      const a = getNodeById(e.from), b = getNodeById(e.to);
+      if (!a || !b) return;
+      const inPath = pathSet.has(e.from + '-' + e.to);
+      ctx.beginPath();
+      ctx.moveTo(a.x * W, a.y * H);
+      ctx.lineTo(b.x * W, b.y * H);
+      if (inPath) {
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([]);
+      } else {
+        const congested = traffic > 60 && (e.from === 'B' || e.to === 'D');
+        ctx.strokeStyle = congested ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Distance label
+      const mx = (a.x + b.x) / 2 * W, my = (a.y + b.y) / 2 * H;
+      ctx.fillStyle = inPath ? '#fcd34d' : '#64748b';
+      ctx.font = '10px sans-serif';
+      ctx.fillText(e.dist + 'km', mx - 8, my - 4);
+    });
+
+    // Draw nodes
+    GPS_NODES.forEach(n => {
+      const px = n.x * W, py = n.y * H;
+      const inPath = Array.isArray(highlightPath) && highlightPath.includes(n.id);
+      const isStart = n.id === 'A', isEnd = n.id === 'G';
+      ctx.beginPath();
+      ctx.arc(px, py, isStart || isEnd ? 14 : 10, 0, Math.PI * 2);
+      ctx.fillStyle = isStart ? 'rgba(99,102,241,0.8)' : isEnd ? 'rgba(245,158,11,0.8)' : inPath ? 'rgba(16,185,129,0.8)' : 'rgba(255,255,255,0.15)';
+      ctx.fill();
+      ctx.strokeStyle = inPath ? '#10b981' : 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${isStart||isEnd?'12':'10'}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(isStart ? '出发' : isEnd ? '到达' : n.id, px, py);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '9px sans-serif';
+      ctx.fillText(n.label, px, py + 18);
+
+      // Draw traffic light if exists
+      if (n.hasLight) {
+        ctx.fillStyle = '#1e1e3f';
+        ctx.fillRect(px + 12, py - 15, 10, 24);
+        ctx.beginPath();
+        ctx.arc(px + 17, py - 9, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#ef4444'; // red
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(px + 17, py - 1, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#f59e0b'; // yellow
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(px + 17, py + 7, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#10b981'; // green
+        ctx.fill();
+      }
+    });
+  } catch(e) { console.error('drawGPSCanvas error:', e); }
+}
+
+function updateGPS() {
+  try {
+    const traffic = parseInt(document.getElementById('trafficSlider').value);
+    document.getElementById('trafficVal').textContent = traffic < 33 ? '畅通' : traffic < 66 ? '中等' : '拥堵';
+    drawGPSCanvas(gpsHighlightPath);
+  } catch(e) { console.error('updateGPS error:', e); }
+}
+
+function runGPSSearch() {
+  try {
+    const strategy = document.getElementById('pathStrategy').value;
+    const traffic = parseInt(document.getElementById('trafficSlider').value);
+
+    // Simple path selection based on strategy
+    let path, desc;
+    if (strategy === 'shortest') {
+      path = ['A','B','E','G']; // dist: 3+3+3=9
+      desc = '最短路径：A→B→E→G，总距离 9km';
+    } else if (strategy === 'fastest') {
+      path = ['A','C','E','G']; // dist: 4+2+3=9
+      desc = '最快路径：A→C→E→G，避开红绿灯，预计18分钟';
+    } else {
+      if (traffic > 60) {
+        path = ['A','C','F','G']; // avoid congested B-D
+        desc = '避堵路径：A→C→F→G，绕开拥堵路段，总距离 11km';
+      } else {
+        path = ['A','B','E','G'];
+        desc = '当前路况畅通，推荐最短路径：A→B→E→G，总距离 9km';
+      }
+    }
+
+    gpsHighlightPath = path;
+    drawGPSCanvas(path);
+    const result = document.getElementById('gpsResult');
+    result.classList.remove('hidden');
+    document.getElementById('gpsResultText').textContent = desc;
+  } catch(e) { console.error('runGPSSearch error:', e); }
+}
+
+// ============================================================
+// COMBO: Medical Chart
+// ============================================================
+function initMedChart() {
+  try {
+    const canvas = document.getElementById('medChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['正常', '轻度', '中度', '重度'],
+        datasets: [
+          {
+            label: '分类置信度 (%)',
+            data: [5, 15, 65, 15],
+            backgroundColor: ['rgba(16,185,129,0.6)','rgba(245,158,11,0.6)','rgba(239,68,68,0.6)','rgba(139,92,246,0.6)'],
+            borderRadius: 6,
+          },
+          {
+            label: '6个月后预测 (%)',
+            data: [8, 20, 50, 22],
+            backgroundColor: ['rgba(16,185,129,0.3)','rgba(245,158,11,0.3)','rgba(239,68,68,0.3)','rgba(139,92,246,0.3)'],
+            borderRadius: 6,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#94a3b8', font: { size: 10 } } },
+          title: { display: true, text: '病情分类 + 趋势预测', color: '#94a3b8', font: { size: 11 } }
+        },
+        scales: {
+          x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' }, max: 100 }
+        }
+      }
+    });
+  } catch(e) { console.error('initMedChart error:', e); }
+}
+
+// ============================================================
+// QUIZ
+// ============================================================
+const quizData = [
+  {
+    q: '🎵 AI 音箱根据你说的话播放对应的音乐，这主要是哪种问题？',
+    opts: ['分类问题', '回归问题', '序贯决策', '搜索问题'],
+    ans: 0,
+    exp: '将语音指令分类为不同的音乐类别，是典型的分类问题！'
+  },
+  {
+    q: '🏠 扫地机器人规划从充电桩出发，清扫所有房间后返回，这是哪种问题？',
+    opts: ['分类问题', '回归问题', '序贯决策', '搜索问题'],
+    ans: 3,
+    exp: '有明确的起点（充电桩）和目标（清扫完毕返回），需要搜索最优路径！'
+  },
+  {
+    q: '📊 根据过去几年的房价数据，预测明年的房价，这是哪种问题？',
+    opts: ['分类问题', '回归问题', '序贯决策', '搜索问题'],
+    ans: 1,
+    exp: '预测连续数值（房价）是典型的回归问题！'
+  },
+  {
+    q: '🎮 游戏中的 AI 对手根据你的每一步操作调整策略，这是哪种问题？',
+    opts: ['分类问题', '回归问题', '序贯决策', '搜索问题'],
+    ans: 2,
+    exp: '根据对手行为持续调整决策，是典型的序贯决策问题！'
+  },
+];
+
+let quizAnswered = [];
+
+function initQuiz() {
+  try {
+    quizAnswered = new Array(quizData.length).fill(null);
+    const container = document.getElementById('quizContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    quizData.forEach((q, qi) => {
+      const div = document.createElement('div');
+      div.className = 'card p-4 mb-4';
+      div.style.background = 'rgba(255,255,255,0.03)';
+      div.innerHTML = `
+        <p class="font-semibold text-white mb-3 text-sm">${qi+1}. ${q.q}</p>
+        <div class="grid grid-cols-2 gap-2" id="quiz-opts-${qi}">
+          ${q.opts.map((opt, oi) => `
+            <button onclick="answerQuiz(${qi},${oi})" id="quiz-btn-${qi}-${oi}"
+              class="py-2 px-3 rounded-lg text-sm text-left transition-all"
+              style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#94a3b8">
+              ${['A','B','C','D'][oi]}. ${opt}
+            </button>`).join('')}
+        </div>
+        <div id="quiz-exp-${qi}" class="hidden mt-3 p-3 rounded-lg text-xs" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);color:#6ee7b7"></div>
+      `;
+      container.appendChild(div);
+    });
+  } catch(e) { console.error('initQuiz error:', e); }
+}
+
+function answerQuiz(qi, oi) {
+  try {
+    if (quizAnswered[qi] !== null) return;
+    quizAnswered[qi] = oi;
+    const q = quizData[qi];
+    const correct = oi === q.ans;
+    for (let i = 0; i < q.opts.length; i++) {
+      const btn = document.getElementById(`quiz-btn-${qi}-${i}`);
+      if (!btn) continue;
+      if (i === q.ans) {
+        btn.style.background = 'rgba(16,185,129,0.3)';
+        btn.style.borderColor = 'rgba(16,185,129,0.5)';
+        btn.style.color = '#6ee7b7';
+      } else if (i === oi && !correct) {
+        btn.style.background = 'rgba(239,68,68,0.3)';
+        btn.style.borderColor = 'rgba(239,68,68,0.5)';
+        btn.style.color = '#fca5a5';
+      }
+    }
+    const expEl = document.getElementById(`quiz-exp-${qi}`);
+    if (expEl) {
+      expEl.classList.remove('hidden');
+      expEl.textContent = (correct ? '✅ 正确！' : '❌ 再想想～') + ' ' + q.exp;
+      if (!correct) { expEl.style.background = 'rgba(239,68,68,0.1)'; expEl.style.borderColor = 'rgba(239,68,68,0.2)'; expEl.style.color = '#fca5a5'; }
+    }
+  } catch(e) { console.error('answerQuiz error:', e); }
+}
+
+// ============================================================
+// INIT ALL
+// ============================================================
+window.addEventListener('load', function() {
+  try {
+    initRegressionChart();
+    initWeatherChart();
+    initMaze();
+    resetHanoi();
+    drawGPSCanvas([]);
+    initMedChart();
+    initQuiz();
+    updateSpamScore();
+    updateDriving();
+    console.log('All components initialized successfully');
+  } catch(e) { console.error('Init error:', e); }
+});
+</script>
+<script>window.parent.postMessage({ action: "ready" }, "*"); 
+ 
+window.console = new Proxy(console, {
+  get(target, prop) {
+    if (['log', 'warn', 'error'].includes(prop)) {
+      return new Proxy(target[prop], {
+        apply(fn, thisArg, args) {
+          fn.apply(thisArg, args);
+          window.parent.postMessage({ action: 'console', 
+            type: prop, 
+            args: args.map((arg) => {
+              try {
+                return JSON.stringify(arg).replace(/^["']|["']$/g, '');
+              } catch (e) {
+                return arg;
+              }
+            }) 
+          }, '*');
+        }
+      });
+    }
+    return target[prop];
+  }
+});
+</script></body>
+</html>

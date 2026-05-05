@@ -1,0 +1,1513 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI安全标准 - 探索学习</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --primary: #6366f1;
+    --secondary: #8b5cf6;
+    --accent: #06b6d4;
+    --good: #10b981;
+    --bad: #ef4444;
+    --warn: #f59e0b;
+  }
+  body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #0f172a; color: #e2e8f0; }
+  .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+  .card { background: rgba(30,41,59,0.8); border: 1px solid rgba(99,102,241,0.3); border-radius: 16px; }
+  .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; color: white; padding: 10px 20px; border-radius: 10px; cursor: pointer; transition: all 0.3s; font-size: 14px; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
+  .btn-good { background: linear-gradient(135deg, #10b981, #059669); }
+  .btn-bad { background: linear-gradient(135deg, #ef4444, #dc2626); }
+  .btn-warn { background: linear-gradient(135deg, #f59e0b, #d97706); }
+  .tab-btn { padding: 10px 20px; border-radius: 10px; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(99,102,241,0.3); background: transparent; color: #94a3b8; font-size: 14px; }
+  .tab-btn.active { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border-color: transparent; }
+  .progress-bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+  .scenario-card { border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
+  .scenario-card:hover { transform: translateY(-3px); }
+  .scenario-card.selected-good { border-color: #10b981; background: rgba(16,185,129,0.15); }
+  .scenario-card.selected-bad { border-color: #ef4444; background: rgba(239,68,68,0.15); }
+  .emoji-big { font-size: 2.5rem; }
+  .fade-in { animation: fadeIn 0.5s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+  .chart-container { position: relative; min-height: 220px; max-height: 320px; margin-bottom: 1rem; }
+  .slider-custom { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.2); outline: none; }
+  .slider-custom::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #6366f1; cursor: pointer; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; margin: 2px; }
+  .tag-good { background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4); }
+  .tag-bad { background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid rgba(239,68,68,0.4); }
+  .notification { position: fixed; top: 20px; right: 20px; z-index: 1000; padding: 12px 20px; border-radius: 10px; font-size: 14px; animation: slideIn 0.3s ease; max-width: 300px; }
+  @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  .robot-chat { background: rgba(99,102,241,0.15); border-left: 3px solid #6366f1; border-radius: 0 10px 10px 0; padding: 12px 16px; margin: 8px 0; }
+  .user-chat { background: rgba(16,185,129,0.15); border-right: 3px solid #10b981; border-radius: 10px 0 0 10px; padding: 12px 16px; margin: 8px 0; text-align: right; }
+  .section-header { background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(99,102,241,0.4); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
+  .trolley-track { stroke: #94a3b8; stroke-width: 3; fill: none; }
+  .trolley-car { fill: #6366f1; }
+  .person-icon { fill: #f59e0b; }
+  .danger-person { fill: #ef4444; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="min-h-screen">
+  <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 50%, #1e293b 100%); padding: 40px 20px 20px;">
+    <div class="max-w-5xl mx-auto text-center">
+      <div class="text-6xl mb-4">🤖</div>
+      <h1 class="text-4xl font-bold mb-3" style="background: linear-gradient(135deg, #818cf8, #c084fc, #67e8f9); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        AI安全标准探索
+      </h1>
+      <p class="text-slate-400 text-lg mb-6">AI技术没有对错，但使用它的人有责任。让我们一起探索AI的四大安全标准！</p>
+      <div class="flex flex-wrap justify-center gap-3">
+        <span class="tag tag-good">✅ 行善非恶</span>
+        <span class="tag" style="background:rgba(99,102,241,0.2);color:#818cf8;border:1px solid rgba(99,102,241,0.4);">⚖️ 明确责任</span>
+        <span class="tag" style="background:rgba(6,182,212,0.2);color:#67e8f9;border:1px solid rgba(6,182,212,0.4);">🌈 公平</span>
+        <span class="tag" style="background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);">🔒 数据保护</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Navigation Tabs -->
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <div class="flex flex-wrap gap-2 mb-8 justify-center">
+      <button class="tab-btn active" onclick="showSection('intro')">🏠 导言</button>
+      <button class="tab-btn" onclick="showSection('good-evil')">✅ 行善非恶</button>
+      <button class="tab-btn" onclick="showSection('responsibility')">⚖️ 明确责任</button>
+      <button class="tab-btn" onclick="showSection('fairness')">🌈 公平</button>
+      <button class="tab-btn" onclick="showSection('data')">🔒 数据保护</button>
+      <button class="tab-btn" onclick="showSection('quiz')">🎯 综合测验</button>
+    </div>
+
+    <!-- SECTION: INTRO -->
+    <div id="section-intro" class="fade-in">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="card p-6">
+          <h2 class="text-xl font-bold mb-4 text-indigo-300">🤔 思考一下</h2>
+          <div class="robot-chat">
+            <span class="text-indigo-400 font-bold">🤖 AI说：</span>
+            <p class="mt-1 text-slate-300">我只是提供了技术部分，比如识别、生成模型，怎么使用主要看人类自己。</p>
+          </div>
+          <div class="user-chat">
+            <span class="text-green-400 font-bold">👦 小乐说：</span>
+            <p class="mt-1 text-slate-300">对，虽然你有替我写作业的能力，但我不能让你替我做作业呀。</p>
+          </div>
+          <div class="mt-4 p-4 rounded-lg" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);">
+            <p class="text-amber-300 text-sm">💡 <strong>关键洞察：</strong>AI技术本身没有对错，但应用的人可以把它用在好地方，也可以用在不好的地方。</p>
+          </div>
+        </div>
+        <div class="card p-6">
+          <h2 class="text-xl font-bold mb-4 text-indigo-300">📋 四大安全标准</h2>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 rounded-lg" style="background:rgba(16,185,129,0.1);">
+              <span class="text-2xl">✅</span>
+              <div>
+                <div class="font-bold text-green-400">行善非恶</div>
+                <div class="text-xs text-slate-400">AI应用于帮助人们，而非伤害</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg" style="background:rgba(99,102,241,0.1);">
+              <span class="text-2xl">⚖️</span>
+              <div>
+                <div class="font-bold text-indigo-400">明确责任</div>
+                <div class="text-xs text-slate-400">出了问题，谁来负责？</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg" style="background:rgba(6,182,212,0.1);">
+              <span class="text-2xl">🌈</span>
+              <div>
+                <div class="font-bold text-cyan-400">公平</div>
+                <div class="text-xs text-slate-400">避免AI的无意识偏见</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg" style="background:rgba(245,158,11,0.1);">
+              <span class="text-2xl">🔒</span>
+              <div>
+                <div class="font-bold text-amber-400">数据保护</div>
+                <div class="text-xs text-slate-400">个人信息不能随意使用</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card p-6 text-center">
+        <h3 class="text-lg font-bold mb-3 text-slate-300">准备好探索了吗？</h3>
+        <p class="text-slate-400 mb-4">点击上方标签页，逐一探索四大AI安全标准，完成互动练习！</p>
+        <button class="btn-primary" onclick="showSection('good-evil')">开始探索 →</button>
+      </div>
+    </div>
+
+    <!-- SECTION: GOOD VS EVIL -->
+    <div id="section-good-evil" class="fade-in hidden">
+      <div class="section-header">
+        <h2 class="text-2xl font-bold text-green-400">✅ 标准一：行善非恶</h2>
+        <p class="text-slate-400 mt-1">AI技术不应当用于触犯法律或不道德的事情，它应当用于帮助人们改善生活，解放劳动力。</p>
+      </div>
+
+      <!-- Interactive Sorting Game -->
+      <div class="card p-6 mb-6">
+        <h3 class="text-lg font-bold mb-2 text-slate-200">🎮 互动分类：判断AI应用的善恶</h3>
+        <p class="text-slate-400 text-sm mb-4">点击每个AI应用场景，判断它是"行善"还是"作恶"。看看你能得几分！</p>
+        <div id="score-display" class="text-center mb-4">
+          <span class="text-2xl font-bold text-indigo-400" id="score-num">0</span>
+          <span class="text-slate-400"> / </span>
+          <span class="text-slate-400" id="total-num">0</span>
+          <span class="text-slate-400"> 题已答</span>
+          <span class="ml-4 text-green-400 font-bold" id="correct-num">✓ 0 正确</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="scenario-grid">
+          <!-- Scenarios injected by JS -->
+        </div>
+        <div id="result-panel" class="hidden mt-4 p-4 rounded-lg text-center">
+          <div class="text-3xl mb-2" id="result-emoji"></div>
+          <div class="text-lg font-bold" id="result-text"></div>
+          <button class="btn-primary mt-3" onclick="resetScenarios()">再来一次</button>
+        </div>
+      </div>
+
+      <!-- AI Impact Simulator -->
+      <div class="card p-6 mb-6">
+        <h3 class="text-lg font-bold mb-4 text-slate-200">📊 AI应用影响力模拟器</h3>
+        <p class="text-slate-400 text-sm mb-4">调整滑块，观察不同AI应用对社会的正面/负面影响变化</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <div class="mb-4">
+              <label class="text-sm text-slate-400 mb-2 block">🌤️ AI天气预报准确度: <span id="weather-val" class="text-cyan-400 font-bold">70</span>%</label>
+              <input type="range" class="slider-custom" min="0" max="100" value="70" oninput="updateImpact('weather', this.value)">
+            </div>
+            <div class="mb-4">
+              <label class="text-sm text-slate-400 mb-2 block">🎓 AI辅助学习覆盖率: <span id="edu-val" class="text-green-400 font-bold">50</span>%</label>
+              <input type="range" class="slider-custom" min="0" max="100" value="50" oninput="updateImpact('edu', this.value)">
+            </div>
+            <div class="mb-4">
+              <label class="text-sm text-slate-400 mb-2 block">🦠 AI网络攻击频率: <span id="attack-val" class="text-red-400 font-bold">30</span>%</label>
+              <input type="range" class="slider-custom" min="0" max="100" value="30" oninput="updateImpact('attack', this.value)">
+            </div>
+            <div class="mb-4">
+              <label class="text-sm text-slate-400 mb-2 block">😈 AI换脸诈骗活跃度: <span id="fraud-val" class="text-red-400 font-bold">20</span>%</label>
+              <input type="range" class="slider-custom" min="0" max="100" value="20" oninput="updateImpact('fraud', this.value)">
+            </div>
+          </div>
+          <div>
+            <div class="chart-container">
+              <canvas id="impactChart"></canvas>
+            </div>
+            <div id="impact-summary" class="p-3 rounded-lg text-sm" style="background:rgba(99,102,241,0.1);">
+              <div class="font-bold text-indigo-300 mb-1">社会影响评估</div>
+              <div id="impact-text" class="text-slate-400">调整滑块查看影响...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION: RESPONSIBILITY -->
+    <div id="section-responsibility" class="fade-in hidden">
+      <div class="section-header">
+        <h2 class="text-2xl font-bold text-indigo-400">⚖️ 标准二：明确责任</h2>
+        <p class="text-slate-400 mt-1">当AI出现问题时，责任应当归属于谁？</p>
+      </div>
+
+      <!-- Autonomous Driving Simulator -->
+      <div class="card p-6 mb-6">
+        <h3 class="text-lg font-bold mb-2 text-slate-200">🚗 自动驾驶事故责任模拟</h3>
+        <p class="text-slate-400 text-sm mb-4">选择事故场景，分析责任归属</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <div class="text-sm text-slate-400 mb-2">选择事故类型：</div>
+            <div class="space-y-2" id="accident-types">
+              <button class="w-full text-left p-3 rounded-lg border border-slate-600 hover:border-indigo-400 transition-all text-sm" onclick="selectAccident(0)">
+                🚦 驾驶员操作失误，闯红灯
+              </button>
+              <button class="w-full text-left p-3 rounded-lg border border-slate-600 hover:border-indigo-400 transition-all text-sm" onclick="selectAccident(1)">
+                🔧 刹车按钮故障，无法正常回弹
+              </button>
+              <button class="w-full text-left p-3 rounded-lg border border-slate-600 hover:border-indigo-400 transition-all text-sm" onclick="selectAccident(2)">
+                👁️ AI识别错误，把翻倒的面包车白色车顶认成了白云
+              </button>
+              <button class="w-full text-left p-3 rounded-lg border border-slate-600 hover:border-indigo-400 transition-all text-sm" onclick="selectAccident(3)">
+                📋 监管机构未充分测试就批准上路
+              </button>
+            </div>
+          </div>
+          <div id="responsibility-result" class="p-4 rounded-lg" style="background:rgba(30,41,59,0.6);min-height:200px;">
+            <div class="text-slate-500 text-center mt-8">← 选择一个事故类型</div>
+          </div>
+        </div>
+
+        <!-- Responsibility Pie Chart -->
+        <div class="mt-4">
+          <h4 class="text-sm font-bold text-slate-400 mb-2">责任分配可视化（拖动滑块调整）</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div class="mb-2">
+                <label class="text-xs text-slate-400">👤 驾驶员责任: <span id="r-driver" class="text-yellow-400 font-bold">25</span>%</label>
+                <input type="range" class="slider-custom" min="0" max="100" value="25" oninput="updateResponsibility('driver', this.value)">
+              </div>
+              <div class="mb-2">
+                <label class="text-xs text-slate-400">🏭 汽车制造商: <span id="r-maker" class="text-blue-400 font-bold">25</span>%</label>
+                <input type="range" class="slider-custom" min="0" max="100" value="25" oninput="updateResponsibility('maker', this.value)">
+              </div>
+              <div class="mb-2">
+                <label class="text-xs text-slate-400">💻 软件开发商: <span id="r-dev" class="text-purple-400 font-bold">25</span>%</label>
+                <input type="range" class="slider-custom" min="0" max="100" value="25" oninput="updateResponsibility('dev', this.value)">
+              </div>
+              <div class="mb-2">
+                <label class="text-xs text-slate-400">🏛️ 监管机构: <span id="r-gov" class="text-green-400 font-bold">25</span>%</label>
+                <input type="range" class="slider-custom" min="0" max="100" value="25" oninput="updateResponsibility('gov', this.value)">
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="responsibilityChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trolley Problem -->
+      <div class="card p-6 mb-6">
+        <h3 class="text-lg font-bold mb-2 text-slate-200">🚃 有轨电车难题 - AI版</h3>
+        <p class="text-slate-400 text-sm mb-4">这是一个经典的伦理困境。当AI面临两难选择时，它应该怎么做？</p>
+        <div class="p-4 rounded-lg mb-4" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);">
+          <p class="text-amber-300 text-sm">
+            <strong>场景：</strong>自动驾驶汽车的刹车失灵，前方轨道上有5个人，如果转向，另一条路上有1个人。AI必须在0.1秒内做出决定。
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <button class="scenario-card" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);" onclick="trolleyChoice('straight')">
+            <div class="text-2xl mb-2">⬆️</div>
+            <div class="font-bold text-red-400">直行</div>
+            <div class="text-xs text-slate-400 mt-1">5人受到伤害，1人安全</div>
+          </button>
+          <button class="scenario-card" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3);" onclick="trolleyChoice('turn')">
+            <div class="text-2xl mb-2">↩️</div>
+            <div class="font-bold text-amber-400">转向</div>
+            <div class="text-xs text-slate-400 mt-1">1人受到伤害，5人安全</div>
+          </button>
+          <button class="scenario-card" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.3);" onclick="trolleyChoice('stop')">
+            <div class="text-2xl mb-2">🛑</div>
+            <div class="font-bold text-indigo-400">紧急制动</div>
+            <div class="text-xs text-slate-400 mt-1">尝试停车（刹车已失灵）</div>
+          </button>
+        </div>
+        <div id="trolley-result" class="hidden p-4 rounded-lg" style="background:rgba(30,41,59,0.8);">
+        </div>
+        <div class="mt-4 p-3 rounded-lg" style="background:rgba(99,102,241,0.1);">
+          <p class="text-indigo-300 text-sm">💭 <strong>思考：</strong>这个问题没有标准答案。这就是为什么"明确责任"如此重要——当AI做出决策时，必须有人为结果负责。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION: FAIRNESS -->
+    <div id="section-fairness" class="fade-in hidden">
+      <div class="section-header">
+        <h2 class="text-2xl font-bold text-cyan-400">🌈 标准三：公平</h2>
+        <p class="text-slate-400 mt-1">AI的无意识偏见——当训练数据不够全面时，AI会做出不公平的判断</p>
+      </div>
+
+      <!-- Cat Recognition Simulator -->
+      <div class="card p-6 mb-6">
+        <h3 class="text-lg font-bold mb-2 text-slate-200">🐱 猫咪识别模拟器</h3>
+        <p class="text-slate-400 text-sm mb-4">模拟"猫咪之家"的AI识别系统。训练数据的多样性会影响识别结果！</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 class="text-sm font-bold text-slate-300 mb-3">📚 训练数据设置</h4>
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs text-slate-400">🐱 普通猫咪样本数量: <span id="normal-cat-val" class="text-cyan-400 font-bold">100</span></label>
+                <input type="range" class="slider-custom" min="10" max="200" value="100" oninput="updateCatTraining('normal', this.value)">
+              </div>
+              <div>
+                <label class="text-xs text-slate-400">🦱 无毛猫样本数量: <span id="hairless-cat-val" class="text-cyan-400 font-bold">5</span></label>
+                <input type="range" class="slider-custom" min="0" max="100" value="5" oninput="updateCatTraining('hairless', this.value)">
+              </div>
+              <div>
+                <label class="text-xs text-slate-400">🐈 花色猫样本数量: <span id="color-cat-val" class="text-cyan-400 font-bold">30</span></label>
+                <input type="range" class="slider-custom" min="0" max="100" value="30" oninput="updateCatTraining('color', this.value)">
+              </div>
+            </div>
+            <button class="btn-primary mt-4 w-full" onclick="trainCatAI()">🤖 训练AI</button>
+            <div id="training-status" class="mt-2 text-xs text-slate-500 text-center"></div>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-slate-300 mb-3">🔍 测试识别</h4>
+            <div class="grid grid-cols-3 gap-2 mb-3">
+              <button class="p-3 rounded-lg text-center text-sm border border-slate-600 hover:border-cyan-400 transition-all" onclick="testCat('normal')">
+                <div class="text-2xl">🐱</div>
+                <div class="text-xs text-slate-400">普通猫</div>
+              </button>
+              <button class="p-3 rounded-lg text-center text-sm border border-slate-600 hover:border-cyan-400 transition-all" onclick="testCat('hairless')">
+                <div class="text-2xl">🐈</div>
+                <div class="text-xs text-slate-400">无毛猫</div>
+              </button>
+              <button class="p-3 rounded-lg text-center text-sm border border-slate-600 hover:border-cyan-400 transition-all" onclick="testCat('dog')">
+                <div class="text-2xl">🐕</div>
+                <div class="text-xs text-slate-400">小狗</div>
+              </button>
+            </div>
+            <div id="cat-result" class="p-4 rounded-lg min-h-24" style="background:rgba(30,41,59,0.6);">
+              <div class="text-slate-500 text-sm text-center mt-4">先训练AI，再测试识别</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <div class="chart-container" style="max-height:200px;">
+            <canvas id="catAccuracyChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Google Photos Case -->
+      <div class="card p-6 mb-6">
+        <h3 class="text-lg font-bold mb-3 text-slate-200">📰 真实案例：谷歌照片事件</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 rounded-lg" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);">
+            <div class="font-bold text-red-400 mb-2">❌ 2015年发生了什么？</div>
+            <p class="text-slate-300 text-sm">软件工程师Jacky指出，Google Photos中的图像识别算法，将他的黑人朋友归类为"大猩猩"。这是严重的种族歧视错误。</p>
+          </div>
+          <div class="p-4 rounded-lg" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);">
+            <div class="font-bold text-amber-400 mb-2">⚠️ 8年后怎样了？</div>
+            <p class="text-slate-300 text-sm">谷歌的做法是：阻止图像被识别成大猩猩。你用大猩猩的图片给它，它也不能被识别为大猩猩。问题并没有真正解决。</p>
+          </div>
+        </div>
+        <div class="mt-4 p-4 rounded-lg" style="background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);">
+          <div class="font-bold text-cyan-400 mb-2">💡 虚拟背景失效的故事</div>
+          <p class="text-slate-300 text-sm">如果AI将你识别为"大猩猩"而非人类，视频会议的虚拟背景功能就会失效——因为算法只对识别为人类的对象进行抠像。这意味着你的背景会暴露给所有同学。</p>
+        </div>
+      </div>
+
+      <!-- Bias Quiz -->
+      <div class="card p-6 mb-6">
+        <h3 class="text-lg font-bold mb-3 text-slate-200">🤔 练习：这些说法有偏见吗？</h3>
+        <div class="space-y-4" id="bias-questions">
+          <!-- Injected by JS -->
+        </div>
+        <button class="btn-primary mt-4" onclick="checkBiasAnswers()">提交答案</button>
+        <div id="bias-result" class="hidden mt-4 p-4 rounded-lg" style="background:rgba(30,41,59,0.8);"></div>
+      </div>
+    </div>
+
+    <!-- SECTION: DATA PROTECTION -->
+    <div id="section-data" class="fade-in hidden">
+      <div class="section-header">
+        <h2 class="text-2xl font-bold text-amber-400">🔒 标准四：数据保护</h2>
+        <p class="text-slate-400 mt-1">个人数据是宝贵的，不能被随意收集、使用或出售</p>
+      </div>
+
+      <!-- Data Leak Simulator -->
+      <div class="card p-6 mb-6">
+        <h3 class="text-lg font-bold mb-2 text-slate-200">📱 数据泄露模拟器</h3>
+        <p class="text-slate-400 text-sm mb-4">模拟个人数据如何被收集和泄露，以及可能造成的危害</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 class="text-sm font-bold text-slate-300 mb-3">你的数字足迹</h4>
+            <div class="space-y-2" id="data-checkboxes">
+              <label class="flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-slate-700 transition-all">
+                <input type="checkbox" class="data-check" data-type="phone" checked> 
+                <span class="text-sm">📞 手机号码</span>
+                <span class="tag tag-bad ml-auto">高风险</span>
+              </label>
+              <label class="flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-slate-700 transition-all">
+                <input type="checkbox" class="data-check" data-type="location" checked>
+                <span class="text-sm">📍 位置信息</span>
+                <span class="tag tag-bad ml-auto">高风险</span>
+              </label>
+              <label class="flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-slate-700 transition-all">
+                <input type="checkbox" class="data-check" data-type="purchase">
+                <span class="text-sm">🛒 购物记录</span>
+                <span class="tag" style="background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);" class="ml-auto">中风险</span>
+              </label>
+              <label class="flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-slate-700 transition-all">
+                <input type="checkbox" class="data-check" data-type="browsing">
+                <span class="text-sm">🌐 浏览记录</span>
+                <span class="tag" style="background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);" class="ml-auto">中风险</span>
+              </label>
+              <label class="flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-slate-700 transition-all">
+                <input type="checkbox" class="data-check" data-type="face">
+                <span class="text-sm">😊 人脸数据</span>
+                <span class="tag tag-bad ml-auto">极高风险</span>
+              </label>
+              <label class="flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-slate-700 transition-all">
+                <input type="checkbox" class="data-check" data-type="id">
+                <span class="text-sm">🪪 身份证信息</span>
+                <span class="tag tag-bad ml-auto">极高风险</span>
+              </label>
+            </div>
+            <button class="btn-primary mt-4 w-full" onclick="simulateDataLeak()">模拟数据泄露后果</button>
+          </div>
+          <div>
+            <div id="leak-result" class="p-4 rounded-lg min-h-48" style="background:rgba(30,41,59,0.6);">
+              <div class="text-slate-500 text-sm text-center mt-8">勾选数据类型，点击模拟</div>
+            </div>
+            <div class="chart-container mt-3" style="max-height:180px;">
+              <canvas id="riskChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legal Cases -->
+      <div class="card p-6 mb-6">
+        <h3 class="text-lg font-bold mb-3 text-slate-200">⚖️ 真实法律案例</h3>
+        <div class="space-y-4">
+          <div class="p-4 rounded-lg" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);">
+            <div class="flex items-start gap-3">
+              <span class="text-2xl">🇨🇳</span>
+              <div>
+                <div class="font-bold text-red-400">东莞法院案例</div>
+                <p class="text-slate-300 text-sm mt-1">江某平收集500万条公民个人信息（车辆、房产、股票、保险等），通过网络平台出售。被判处有期徒刑5年，罚款3万元。</p>
+                <div class="mt-2 flex gap-2 flex-wrap">
+                  <span class="tag tag-bad">侵犯公民个人信息罪</span>
+                  <span class="tag tag-bad">500万条数据</span>
+                  <span class="tag tag-bad">判刑5年</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="p-4 rounded-lg" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);">
+            <div class="flex items-start gap-3">
+              <span class="text-2xl">🇮🇹</span>
+              <div>
+                <div class="font-bold text-amber-400">意大利封禁ChatGPT</div>
+                <p class="text-slate-300 text-sm mt-1">2023年3月31日，意大利政府下令封禁ChatGPT，指控OpenAI"非法收集个人数据"。约一个月后，问题解决后才恢复使用。</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-4 rounded-lg" style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);">
+            <div class="flex items-start gap-3">
+              <span class="text-2xl">📚</span>
+              <div>
+                <div class="font-bold text-indigo-400">知网被罚5000万</div>
+                <p class="text-slate-300 text-sm mt-1">2023年9月，国家互联网信息办公室指出知网违反必要原则收集个人信息、未经同意收集个人信息等多项违法行为，处以5000万元罚款。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Privacy Protection Tips -->
+      <div class="card p-6 mb-6">
+        <h3 class="text-lg font-bold mb-3 text-slate-200">🛡️ 我能做什么？隐私保护小测验</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="privacy-tips">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION: QUIZ -->
+    <div id="section-quiz" class="fade-in hidden">
+      <div class="section-header">
+        <h2 class="text-2xl font-bold text-purple-400">🎯 综合测验</h2>
+        <p class="text-slate-400 mt-1">测试你对AI四大安全标准的理解</p>
+      </div>
+      <div class="card p-6 mb-6">
+        <div id="quiz-container">
+          <!-- Injected by JS -->
+        </div>
+        <div id="quiz-result" class="hidden mt-6 p-6 rounded-lg text-center" style="background:rgba(30,41,59,0.8);">
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Notification -->
+<div id="notification" class="notification hidden"></div>
+
+<script>
+// ============================================================
+// GLOBAL STATE
+// ============================================================
+let impactChart = null;
+let responsibilityChart = null;
+let catAccuracyChart = null;
+let riskChart = null;
+
+let catTrainingData = { normal: 100, hairless: 5, color: 30 };
+let catAITrained = false;
+let responsibilityData = { driver: 25, maker: 25, dev: 25, gov: 25 };
+let impactData = { weather: 70, edu: 50, attack: 30, fraud: 20 };
+let scenarioAnswers = {};
+let quizAnswers = {};
+let currentQuizQ = 0;
+
+// ============================================================
+// SCENARIOS DATA
+// ============================================================
+const scenarios = [
+  { id: 0, emoji: '🌤️', title: 'AI天气预报', desc: '预测软件使天气预测效率和准确性提高，可以预测10分钟后雨是否会停', correct: 'good' },
+  { id: 1, emoji: '📚', title: 'AI英文口语训练', desc: '帮用户分析发音是否清楚、语法是否正确、说法是否地道', correct: 'good' },
+  { id: 2, emoji: '⚖️', title: 'AI电子秤自助结账', desc: '图像识别电子秤只要把商品放在称上就知道买的是什么商品', correct: 'good' },
+  { id: 3, emoji: '💻', title: 'AI网络攻击', desc: '黑客使用AI技术发起更加精密和隐藏的网络攻击，窃取用户数据或勒索网络拥有者', correct: 'bad' },
+  { id: 4, emoji: '😈', title: 'AI换脸诈骗', desc: 'AI换脸技术生成逼真的换脸视频，被坏人用于电信诈骗', correct: 'bad' },
+  { id: 5, emoji: '📰', title: 'AI制作虚假信息', desc: '通过AI技术制作虚假的新闻、视频和照片，散播谣言或误导公众', correct: 'bad' },
+];
+
+const accidentData = [
+  {
+    title: '驾驶员操作失误',
+    responsible: '驾驶员',
+    icon: '👤',
+    color: '#f59e0b',
+    explanation: '驾驶员主动操作失误（如闯红灯），责任主要归属于驾驶员本人。即使是自动驾驶汽车，驾驶员也有监督义务。',
+    distribution: { driver: 70, maker: 10, dev: 10, gov: 10 }
+  },
+  {
+    title: '刹车按钮故障',
+    responsible: '汽车制造商',
+    icon: '🏭',
+    color: '#3b82f6',
+    explanation: '硬件故障（如按钮无法正常回弹）属于制造缺陷，责任主要归属于汽车制造商。他们有义务确保硬件质量。',
+    distribution: { driver: 10, maker: 70, dev: 10, gov: 10 }
+  },
+  {
+    title: 'AI识别错误',
+    responsible: '软件开发商',
+    icon: '💻',
+    color: '#8b5cf6',
+    explanation: '把翻倒的面包车白色车顶认成白云，这是AI算法的识别错误。责任主要归属于自动驾驶软件开发商，他们需要确保算法的准确性。',
+    distribution: { driver: 5, maker: 15, dev: 65, gov: 15 }
+  },
+  {
+    title: '监管机构未充分测试',
+    responsible: '监管机构',
+    icon: '🏛️',
+    color: '#10b981',
+    explanation: '如果监管机构在没有充分测试的情况下批准了不安全的自动驾驶汽车上路，他们需要承担相应的监管责任。',
+    distribution: { driver: 5, maker: 20, dev: 20, gov: 55 }
+  }
+];
+
+const biasQuestions = [
+  { text: '女孩子就应该报舞蹈社团，不要学人工智能，学不懂的。', hasBias: true, explanation: '这是性别偏见。女孩子完全可以学习人工智能，能力与性别无关。' },
+  { text: '她长得这么漂亮，就应该在合唱团里做领唱。', hasBias: true, explanation: '这是外貌偏见。领唱应该根据歌唱能力来决定，而不是外貌。' },
+  { text: '龙生龙，凤生凤，他父母都是名校生，他肯定聪明的。', hasBias: true, explanation: '这是出身偏见。每个人的能力是独立的，不能因为父母的成就就断定孩子一定聪明。' },
+];
+
+const privacyTips = [
+  { icon: '⚙️', title: '检查隐私设置', desc: '在手机和电脑的"隐私与安全性"中，控制自己信息对外的可见程度', safe: true },
+  { icon: '🔗', title: '不随便点击链接', desc: '不明链接可能含有恶意软件，会窃取你的个人信息', safe: true },
+  { icon: '📱', title: '扫码要谨慎', desc: '街上"扫二维码送玩具"的活动，可能是收集个人信息的陷阱', safe: true },
+  { icon: '📋', title: '阅读用户协议', desc: '注册新软件时，尽量了解你同意了什么，特别是数据使用条款', safe: true },
+  { icon: '🔑', title: '使用强密码', desc: '不同平台使用不同密码，避免一个平台泄露导致所有账号被盗', safe: true },
+  { icon: '🚫', title: '不分享敏感信息', desc: '不在不可信的网站输入身份证号、银行卡号等敏感信息', safe: true },
+];
+
+const quizQuestions = [
+  {
+    q: '以下哪种AI应用违反了"行善非恶"原则？',
+    options: ['AI辅助天气预报', 'AI英文口语训练', 'AI换脸电信诈骗', 'AI图像识别电子秤'],
+    correct: 2,
+    standard: '行善非恶',
+    explanation: 'AI换脸电信诈骗利用AI技术欺骗他人，是典型的"作恶"行为，违反了行善非恶原则。'
+  },
+  {
+    q: '自动驾驶汽车的AI算法将翻倒的面包车白色车顶识别成白云，导致事故。责任主要归属于？',
+    options: ['驾驶员', '汽车制造商', '软件开发商', '道路管理部门'],
+    correct: 2,
+    standard: '明确责任',
+    explanation: 'AI识别错误属于算法问题，责任主要归属于自动驾驶软件开发商。'
+  },
+  {
+    q: '"猫咪之家"的AI无法识别无毛猫，这属于什么问题？',
+    options: ['硬件故障', 'AI的无意识偏见', '网络连接问题', '电力不足'],
+    correct: 1,
+    standard: '公平',
+    explanation: '由于训练数据中无毛猫样本不足，AI无法正确识别，这是典型的AI无意识偏见。'
+  },
+  {
+    q: '2015年，Google Photos将黑人用户归类为"大猩猩"，8年后谷歌的解决方案是？',
+    options: ['完全修复了算法', '阻止识别大猩猩图片', '关闭了图像识别功能', '向用户赔偿'],
+    correct: 1,
+    standard: '公平',
+    explanation: '谷歌的做法是阻止图像被识别成大猩猩，而不是真正修复了算法的偏见问题。'
+  },
+  {
+    q: '江某平收集500万条公民个人信息并出售，被判处？',
+    options: ['罚款1万元', '有期徒刑1年', '有期徒刑5年并罚款3万元', '警告处分'],
+    correct: 2,
+    standard: '数据保护',
+    explanation: '法院认定江某平构成侵犯公民个人信息罪，判处有期徒刑5年，并处罚款3万元。'
+  },
+  {
+    q: '以下哪种行为有助于保护个人数据安全？',
+    options: ['随意扫街上的二维码', '在所有平台使用相同密码', '定期检查手机隐私设置', '把个人信息发给陌生人'],
+    correct: 2,
+    standard: '数据保护',
+    explanation: '定期检查手机和电脑的隐私设置，控制个人信息的可见程度，是保护数据安全的有效方法。'
+  }
+];
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showSection(name) {
+  try {
+    const sections = ['intro', 'good-evil', 'responsibility', 'fairness', 'data', 'quiz'];
+    sections.forEach(s => {
+      const el = document.getElementById('section-' + s);
+      if (el) el.classList.add('hidden');
+    });
+    const target = document.getElementById('section-' + name);
+    if (target) {
+      target.classList.remove('hidden');
+      target.classList.add('fade-in');
+    }
+    document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+      btn.classList.remove('active');
+      if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(name)) {
+        btn.classList.add('active');
+      }
+    });
+    // Init charts after tab switch
+    setTimeout(() => {
+      if (name === 'good-evil') initImpactChart();
+      if (name === 'responsibility') { initResponsibilityChart(); }
+      if (name === 'fairness') { initCatAccuracyChart(); initBiasQuestions(); }
+      if (name === 'data') { initRiskChart(); initPrivacyTips(); }
+      if (name === 'quiz') initQuiz();
+    }, 100);
+  } catch(e) { console.error('showSection error:', e); }
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+function showNotification(msg, type) {
+  try {
+    const el = document.getElementById('notification');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'notification';
+    if (type === 'success') el.style.background = 'rgba(16,185,129,0.9)';
+    else if (type === 'error') el.style.background = 'rgba(239,68,68,0.9)';
+    else el.style.background = 'rgba(99,102,241,0.9)';
+    el.style.color = 'white';
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 3000);
+  } catch(e) { console.error('notification error:', e); }
+}
+
+// ============================================================
+// SECTION 1: GOOD VS EVIL
+// ============================================================
+function initScenarios() {
+  try {
+    const grid = document.getElementById('scenario-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    scenarioAnswers = {};
+    scenarios.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'scenario-card glass';
+      div.id = 'scenario-' + s.id;
+      div.style.background = 'rgba(30,41,59,0.6)';
+      div.innerHTML = `
+        <div class="flex items-start gap-3 mb-3">
+          <span class="text-3xl">${s.emoji}</span>
+          <div>
+            <div class="font-bold text-slate-200 text-sm">${s.title}</div>
+            <div class="text-xs text-slate-400 mt-1">${s.desc}</div>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn-primary btn-good flex-1 text-xs" onclick="answerScenario(${s.id}, 'good')">✅ 行善</button>
+          <button class="btn-primary btn-bad flex-1 text-xs" onclick="answerScenario(${s.id}, 'bad')">❌ 作恶</button>
+        </div>
+        <div id="scenario-feedback-${s.id}" class="hidden mt-2 text-xs p-2 rounded"></div>
+      `;
+      grid.appendChild(div);
+    });
+    updateScoreDisplay();
+  } catch(e) { console.error('initScenarios error:', e); }
+}
+
+function answerScenario(id, answer) {
+  try {
+    if (scenarioAnswers[id] !== undefined) return;
+    const scenario = scenarios.find(s => s.id === id);
+    if (!scenario) return;
+    scenarioAnswers[id] = answer;
+    const card = document.getElementById('scenario-' + id);
+    const feedback = document.getElementById('scenario-feedback-' + id);
+    const isCorrect = answer === scenario.correct;
+    if (card) {
+      card.classList.add(isCorrect ? 'selected-good' : 'selected-bad');
+    }
+    if (feedback) {
+      feedback.classList.remove('hidden');
+      feedback.style.background = isCorrect ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
+      feedback.style.color = isCorrect ? '#10b981' : '#ef4444';
+      feedback.textContent = isCorrect ? '✓ 正确！' : `✗ 这是"${scenario.correct === 'good' ? '行善' : '作恶'}"的例子`;
+    }
+    updateScoreDisplay();
+    if (Object.keys(scenarioAnswers).length === scenarios.length) showFinalResult();
+  } catch(e) { console.error('answerScenario error:', e); }
+}
+
+function updateScoreDisplay() {
+  try {
+    const total = Object.keys(scenarioAnswers).length;
+    const correct = Object.entries(scenarioAnswers).filter(([id, ans]) => {
+      const s = scenarios.find(sc => sc.id === parseInt(id));
+      return s && s.correct === ans;
+    }).length;
+    const scoreNum = document.getElementById('score-num');
+    const totalNum = document.getElementById('total-num');
+    const correctNum = document.getElementById('correct-num');
+    if (scoreNum) scoreNum.textContent = total;
+    if (totalNum) totalNum.textContent = scenarios.length;
+    if (correctNum) correctNum.textContent = '✓ ' + correct + ' 正确';
+  } catch(e) { console.error('updateScoreDisplay error:', e); }
+}
+
+function showFinalResult() {
+  try {
+    const correct = Object.entries(scenarioAnswers).filter(([id, ans]) => {
+      const s = scenarios.find(sc => sc.id === parseInt(id));
+      return s && s.correct === ans;
+    }).length;
+    const panel = document.getElementById('result-panel');
+    const emoji = document.getElementById('result-emoji');
+    const text = document.getElementById('result-text');
+    if (!panel || !emoji || !text) return;
+    panel.classList.remove('hidden');
+    if (correct === 6) {
+      panel.style.background = 'rgba(16,185,129,0.15)';
+      emoji.textContent = '🏆';
+      text.textContent = '满分！你对AI善恶的判断非常准确！';
+      text.style.color = '#10b981';
+    } else if (correct >= 4) {
+      panel.style.background = 'rgba(245,158,11,0.15)';
+      emoji.textContent = '👍';
+      text.textContent = `答对 ${correct}/6 题，不错！再想想那些答错的题目。`;
+      text.style.color = '#f59e0b';
+    } else {
+      panel.style.background = 'rgba(239,68,68,0.15)';
+      emoji.textContent = '💪';
+      text.textContent = `答对 ${correct}/6 题，继续加油！重新阅读内容再试试。`;
+      text.style.color = '#ef4444';
+    }
+  } catch(e) { console.error('showFinalResult error:', e); }
+}
+
+function resetScenarios() {
+  try {
+    const panel = document.getElementById('result-panel');
+    if (panel) panel.classList.add('hidden');
+    initScenarios();
+  } catch(e) { console.error('resetScenarios error:', e); }
+}
+
+// ============================================================
+// IMPACT CHART
+// ============================================================
+function initImpactChart() {
+  try {
+    const canvas = document.getElementById('impactChart');
+    if (!canvas) return;
+    if (impactChart) { impactChart.destroy(); impactChart = null; }
+    const ctx = canvas.getContext('2d');
+    impactChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['天气预报', 'AI教育', '网络攻击', '换脸诈骗'],
+        datasets: [
+          {
+            label: '正面影响',
+            data: [impactData.weather, impactData.edu, 0, 0],
+            backgroundColor: ['rgba(16,185,129,0.7)', 'rgba(16,185,129,0.7)', 'rgba(16,185,129,0.1)', 'rgba(16,185,129,0.1)'],
+            borderColor: ['#10b981', '#10b981', 'transparent', 'transparent'],
+            borderWidth: 1
+          },
+          {
+            label: '负面影响',
+            data: [0, 0, impactData.attack, impactData.fraud],
+            backgroundColor: ['rgba(239,68,68,0.1)', 'rgba(239,68,68,0.1)', 'rgba(239,68,68,0.7)', 'rgba(239,68,68,0.7)'],
+            borderColor: ['transparent', 'transparent', '#ef4444', '#ef4444'],
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#94a3b8', font: { size: 11 } } }
+        },
+        scales: {
+          x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' }, max: 100 }
+        }
+      }
+    });
+    updateImpactSummary();
+  } catch(e) { console.error('initImpactChart error:', e); }
+}
+
+function updateImpact(type, value) {
+  try {
+    impactData[type] = parseInt(value) || 0;
+    const valEl = document.getElementById(type + '-val');
+    if (valEl) valEl.textContent = value;
+    if (impactChart) {
+      impactChart.data.datasets[0].data = [impactData.weather, impactData.edu, 0, 0];
+      impactChart.data.datasets[1].data = [0, 0, impactData.attack, impactData.fraud];
+      impactChart.update();
+    }
+    updateImpactSummary();
+  } catch(e) { console.error('updateImpact error:', e); }
+}
+
+function updateImpactSummary() {
+  try {
+    const positive = (impactData.weather + impactData.edu) / 2;
+    const negative = (impactData.attack + impactData.fraud) / 2;
+    const textEl = document.getElementById('impact-text');
+    if (!textEl) return;
+    if (positive > negative * 1.5) {
+      textEl.textContent = '✅ 当前AI应用以正面影响为主，社会整体受益。';
+      textEl.style.color = '#10b981';
+    } else if (negative > positive * 1.5) {
+      textEl.textContent = '⚠️ 当前负面AI应用过多，社会面临较大风险！';
+      textEl.style.color = '#ef4444';
+    } else {
+      textEl.textContent = '⚖️ 正负面影响相当，需要加强监管和引导。';
+      textEl.style.color = '#f59e0b';
+    }
+  } catch(e) { console.error('updateImpactSummary error:', e); }
+}
+
+// ============================================================
+// RESPONSIBILITY CHART
+// ============================================================
+function initResponsibilityChart() {
+  try {
+    const canvas = document.getElementById('responsibilityChart');
+    if (!canvas) return;
+    if (responsibilityChart) { responsibilityChart.destroy(); responsibilityChart = null; }
+    const ctx = canvas.getContext('2d');
+    responsibilityChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['驾驶员', '汽车制造商', '软件开发商', '监管机构'],
+        datasets: [{
+          data: [responsibilityData.driver, responsibilityData.maker, responsibilityData.dev, responsibilityData.gov],
+          backgroundColor: ['rgba(245,158,11,0.7)', 'rgba(59,130,246,0.7)', 'rgba(139,92,246,0.7)', 'rgba(16,185,129,0.7)'],
+          borderColor: ['#f59e0b', '#3b82f6', '#8b5cf6', '#10b981'],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 }, padding: 8 } }
+        }
+      }
+    });
+  } catch(e) { console.error('initResponsibilityChart error:', e); }
+}
+
+function updateResponsibility(type, value) {
+  try {
+    responsibilityData[type] = parseInt(value) || 0;
+    const el = document.getElementById('r-' + type);
+    if (el) el.textContent = value;
+    if (responsibilityChart) {
+      responsibilityChart.data.datasets[0].data = [
+        responsibilityData.driver, responsibilityData.maker,
+        responsibilityData.dev, responsibilityData.gov
+      ];
+      responsibilityChart.update();
+    }
+  } catch(e) { console.error('updateResponsibility error:', e); }
+}
+
+function selectAccident(index) {
+  try {
+    if (index < 0 || index >= accidentData.length) return;
+    const accident = accidentData[index];
+    const resultEl = document.getElementById('responsibility-result');
+    if (!resultEl) return;
+    resultEl.innerHTML = `
+      <div class="text-center mb-3">
+        <span class="text-4xl">${accident.icon}</span>
+        <div class="font-bold mt-2" style="color:${accident.color}">${accident.title}</div>
+      </div>
+      <div class="p-3 rounded-lg mb-3" style="background:rgba(30,41,59,0.8);border:1px solid ${accident.color}40;">
+        <div class="text-xs font-bold mb-1" style="color:${accident.color}">主要责任方：${accident.responsible}</div>
+        <p class="text-xs text-slate-300">${accident.explanation}</p>
+      </div>
+    `;
+    // Update sliders and chart
+    responsibilityData = { ...accident.distribution };
+    ['driver', 'maker', 'dev', 'gov'].forEach(key => {
+      const slider = document.querySelector(`input[oninput*="'${key}'"]`);
+      if (slider) slider.value = responsibilityData[key];
+      const label = document.getElementById('r-' + key);
+      if (label) label.textContent = responsibilityData[key];
+    });
+    if (responsibilityChart) {
+      responsibilityChart.data.datasets[0].data = [
+        responsibilityData.driver, responsibilityData.maker,
+        responsibilityData.dev, responsibilityData.gov
+      ];
+      responsibilityChart.update();
+    }
+    // Highlight selected button
+    document.querySelectorAll('#accident-types button').forEach((btn, i) => {
+      btn.style.borderColor = i === index ? '#6366f1' : 'rgba(100,116,139,0.5)';
+      btn.style.background = i === index ? 'rgba(99,102,241,0.15)' : 'transparent';
+    });
+  } catch(e) { console.error('selectAccident error:', e); }
+}
+
+function trolleyChoice(choice) {
+  try {
+    const resultEl = document.getElementById('trolley-result');
+    if (!resultEl) return;
+    resultEl.classList.remove('hidden');
+    const responses = {
+      straight: {
+        emoji: '😰',
+        title: '选择直行',
+        text: '5人受到伤害，1人安全。从功利主义角度，这造成了更多伤害。但AI没有主动"选择"伤害任何人。',
+        color: '#ef4444',
+        responsibility: '软件开发商需要解释为什么算法做出了这个选择，监管机构需要审查这一决策逻辑是否合理。'
+      },
+      turn: {
+        emoji: '😔',
+        title: '选择转向',
+        text: '1人受到伤害，5人安全。从功利主义角度，这减少了总体伤害。但AI主动"选择"了伤害那1个人。',
+        color: '#f59e0b',
+        responsibility: '这引发了更深的伦理问题：AI是否有权决定谁受到伤害？软件开发商和监管机构都需要为这一决策逻辑负责。'
+      },
+      stop: {
+        emoji: '🤖',
+        title: '尝试紧急制动',
+        text: '刹车已失灵，制动无效。这个选择虽然"无害"，但实际上没有解决问题，可能导致更严重的后果。',
+        color: '#6366f1',
+        responsibility: '这说明AI系统存在严重缺陷——在关键时刻无法做出有效决策。软件开发商和监管机构都有责任确保系统的可靠性。'
+      }
+    };
+    const r = responses[choice];
+    if (!r) return;
+    resultEl.style.borderLeft = `4px solid ${r.color}`;
+    resultEl.innerHTML = `
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-3xl">${r.emoji}</span>
+        <div class="font-bold" style="color:${r.color}">${r.title}</div>
+      </div>
+      <p class="text-slate-300 text-sm mb-3">${r.text}</p>
+      <div class="p-3 rounded-lg text-xs" style="background:rgba(99,102,241,0.1);color:#818cf8;">
+        <strong>责任分析：</strong>${r.responsibility}
+      </div>
+    `;
+  } catch(e) { console.error('trolleyChoice error:', e); }
+}
+
+// ============================================================
+// CAT RECOGNITION SIMULATOR
+// ============================================================
+function updateCatTraining(type, value) {
+  try {
+    catTrainingData[type] = parseInt(value) || 0;
+    const el = document.getElementById(type + '-cat-val') || document.getElementById(type.replace('-','') + '-cat-val');
+    // Map IDs
+    const idMap = { normal: 'normal-cat-val', hairless: 'hairless-cat-val', color: 'color-cat-val' };
+    const targetEl = document.getElementById(idMap[type]);
+    if (targetEl) targetEl.textContent = value;
+    catAITrained = false;
+    const status = document.getElementById('training-status');
+    if (status) status.textContent = '数据已更新，请重新训练AI';
+  } catch(e) { console.error('updateCatTraining error:', e); }
+}
+
+function trainCatAI() {
+  try {
+    catAITrained = true;
+    const status = document.getElementById('training-status');
+    if (status) {
+      status.textContent = '✅ AI训练完成！';
+      status.style.color = '#10b981';
+    }
+    updateCatAccuracyChart();
+    showNotification('AI训练完成！现在可以测试识别了', 'success');
+  } catch(e) { console.error('trainCatAI error:', e); }
+}
+
+function testCat(type) {
+  try {
+    if (!catAITrained) {
+      showNotification('请先训练AI！', 'error');
+      return;
+    }
+    const resultEl = document.getElementById('cat-result');
+    if (!resultEl) return;
+    
+    // Calculate accuracy based on training data
+    const total = catTrainingData.normal + catTrainingData.hairless + catTrainingData.color;
+    let confidence = 0;
+    let result = '';
+    let color = '';
+    let explanation = '';
+
+    if (type === 'normal') {
+      confidence = Math.min(95, 50 + (catTrainingData.normal / total) * 60);
+      result = confidence >= 85 ? '✅ 识别为猫咪！可以进入猫咪之家' : '❌ 无法确认是猫咪';
+      color = confidence >= 85 ? '#10b981' : '#ef4444';
+      explanation = '普通猫咪样本充足，识别准确率高。';
+    } else if (type === 'hairless') {
+      confidence = Math.min(90, 20 + (catTrainingData.hairless / Math.max(1, total)) * 80);
+      result = confidence >= 85 ? '✅ 识别为猫咪！可以进入猫咪之家' : `❌ 识别失败（置信度${confidence.toFixed(0)}%，需要≥85%）`;
+      color = confidence >= 85 ? '#10b981' : '#ef4444';
+      explanation = catTrainingData.hairless < 20 
+        ? '⚠️ 无毛猫训练样本太少！AI不认识无毛猫，这就是AI的无意识偏见。增加无毛猫样本可以改善识别。'
+        : '无毛猫样本充足，识别准确率提高了。';
+    } else if (type === 'dog') {
+      confidence = 15;
+      result = '✅ 识别为非猫咪，不能进入猫咪之家';
+      color = '#10b981';
+      explanation = '小狗的特征与猫咪差异明显，AI能正确区分。';
+    }
+
+    resultEl.innerHTML = `
+      <div class="text-center mb-3">
+        <div class="text-4xl mb-2">${type === 'normal' ? '🐱' : type === 'hairless' ? '🐈' : '🐕'}</div>
+        <div class="font-bold text-sm" style="color:${color}">${result}</div>
+      </div>
+      <div class="mb-2">
+        <div class="text-xs text-slate-400 mb-1">置信度: ${confidence.toFixed(0)}%</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${confidence}%;background:${confidence >= 85 ? '#10b981' : '#ef4444'}"></div>
+        </div>
+        <div class="text-xs text-slate-500 mt-1">识别阈值: 85%</div>
+      </div>
+      <p class="text-xs mt-2" style="color:${color === '#10b981' ? '#6ee7b7' : '#fca5a5'}">${explanation}</p>
+    `;
+  } catch(e) { console.error('testCat error:', e); }
+}
+
+function initCatAccuracyChart() {
+  try {
+    const canvas = document.getElementById('catAccuracyChart');
+    if (!canvas) return;
+    if (catAccuracyChart) { catAccuracyChart.destroy(); catAccuracyChart = null; }
+    const ctx = canvas.getContext('2d');
+    catAccuracyChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['普通猫', '无毛猫', '花色猫', '小狗(正确拒绝)'],
+        datasets: [{
+          label: '识别准确率(%)',
+          data: [85, 30, 60, 95],
+          backgroundColor: ['rgba(16,185,129,0.7)', 'rgba(239,68,68,0.7)', 'rgba(245,158,11,0.7)', 'rgba(99,102,241,0.7)'],
+          borderColor: ['#10b981', '#ef4444', '#f59e0b', '#6366f1'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: '初始训练数据下的识别准确率', color: '#94a3b8', font: { size: 11 } }
+        },
+        scales: {
+          x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' }, max: 100 }
+        }
+      }
+    });
+  } catch(e) { console.error('initCatAccuracyChart error:', e); }
+}
+
+function updateCatAccuracyChart() {
+  try {
+    if (!catAccuracyChart) return;
+    const total = Math.max(1, catTrainingData.normal + catTrainingData.hairless + catTrainingData.color);
+    const normalAcc = Math.min(95, 50 + (catTrainingData.normal / total) * 60);
+    const hairlessAcc = Math.min(90, 20 + (catTrainingData.hairless / total) * 80);
+    const colorAcc = Math.min(92, 40 + (catTrainingData.color / total) * 65);
+    catAccuracyChart.data.datasets[0].data = [normalAcc, hairlessAcc, colorAcc, 95];
+    catAccuracyChart.update();
+  } catch(e) { console.error('updateCatAccuracyChart error:', e); }
+}
+
+// ============================================================
+// BIAS QUESTIONS
+// ============================================================
+function initBiasQuestions() {
+  try {
+    const container = document.getElementById('bias-questions');
+    if (!container) return;
+    container.innerHTML = '';
+    biasQuestions.forEach((q, i) => {
+      const div = document.createElement('div');
+      div.className = 'p-4 rounded-lg';
+      div.style.background = 'rgba(30,41,59,0.6)';
+      div.innerHTML = `
+        <p class="text-slate-300 text-sm mb-3"><strong>${i+1}.</strong> "${q.text}"</p>
+        <div class="flex gap-3">
+          <button class="btn-primary text-xs flex-1" onclick="selectBias(${i}, true)" id="bias-yes-${i}">有偏见</button>
+          <button class="btn-primary text-xs flex-1" style="background:linear-gradient(135deg,#475569,#334155)" onclick="selectBias(${i}, false)" id="bias-no-${i}">没有偏见</button>
+        </div>
+        <div id="bias-feedback-${i}" class="hidden mt-2 text-xs p-2 rounded"></div>
+      `;
+      container.appendChild(div);
+    });
+  } catch(e) { console.error('initBiasQuestions error:', e); }
+}
+
+let biasSelections = {};
+function selectBias(index, hasBias) {
+  try {
+    biasSelections[index] = hasBias;
+    const yesBtn = document.getElementById('bias-yes-' + index);
+    const noBtn = document.getElementById('bias-no-' + index);
+    if (yesBtn) yesBtn.style.opacity = hasBias ? '1' : '0.4';
+    if (noBtn) noBtn.style.opacity = hasBias ? '0.4' : '1';
+  } catch(e) { console.error('selectBias error:', e); }
+}
+
+function checkBiasAnswers() {
+  try {
+    let correct = 0;
+    biasQuestions.forEach((q, i) => {
+      const feedback = document.getElementById('bias-feedback-' + i);
+      if (!feedback) return;
+      const selected = biasSelections[i];
+      if (selected === undefined) return;
+      const isCorrect = selected === q.hasBias;
+      if (isCorrect) correct++;
+      feedback.classList.remove('hidden');
+      feedback.style.background = isCorrect ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
+      feedback.style.color = isCorrect ? '#10b981' : '#ef4444';
+      feedback.textContent = (isCorrect ? '✓ 正确！' : '✗ 错误。') + ' ' + q.explanation;
+    });
+    const resultEl = document.getElementById('bias-result');
+    if (resultEl) {
+      resultEl.classList.remove('hidden');
+      resultEl.innerHTML = `<div class="font-bold text-lg mb-2">答对 ${correct}/${biasQuestions.length} 题</div>
+        <p class="text-slate-400 text-sm">这三种说法都是带有偏见的，犯了以偏概全的逻辑错误。AI也会犯同样的错误——当训练数据存在偏见时，AI的判断也会有偏见。</p>`;
+      resultEl.style.borderLeft = '4px solid #6366f1';
+    }
+  } catch(e) { console.error('checkBiasAnswers error:', e); }
+}
+
+// ============================================================
+// DATA PROTECTION
+// ============================================================
+function initRiskChart() {
+  try {
+    const canvas = document.getElementById('riskChart');
+    if (!canvas) return;
+    if (riskChart) { riskChart.destroy(); riskChart = null; }
+    const ctx = canvas.getContext('2d');
+    riskChart = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: ['诈骗风险', '身份盗用', '骚扰电话', '位置追踪', '数据贩卖'],
+        datasets: [{
+          label: '当前风险等级',
+          data: [30, 20, 40, 50, 25],
+          backgroundColor: 'rgba(239,68,68,0.2)',
+          borderColor: '#ef4444',
+          borderWidth: 2,
+          pointBackgroundColor: '#ef4444'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          r: {
+            ticks: { color: '#94a3b8', font: { size: 9 }, backdropColor: 'transparent' },
+            grid: { color: 'rgba(255,255,255,0.1)' },
+            pointLabels: { color: '#94a3b8', font: { size: 10 } },
+            min: 0, max: 100
+          }
+        }
+      }
+    });
+  } catch(e) { console.error('initRiskChart error:', e); }
+}
+
+function simulateDataLeak() {
+  try {
+    const checkboxes = document.querySelectorAll('.data-check');
+    const selected = [];
+    checkboxes.forEach(cb => { if (cb.checked) selected.push(cb.getAttribute('data-type')); });
+    
+    const riskMap = {
+      phone: { fraud: 40, identity: 10, spam: 60, location: 5, sell: 30 },
+      location: { fraud: 20, identity: 5, spam: 10, location: 80, sell: 25 },
+      purchase: { fraud: 30, identity: 15, spam: 40, location: 10, sell: 50 },
+      browsing: { fraud: 25, identity: 10, spam: 35, location: 20, sell: 45 },
+      face: { fraud: 60, identity: 70, spam: 10, location: 30, sell: 40 },
+      id: { fraud: 80, identity: 90, spam: 20, location: 5, sell: 60 }
+    };
+    
+    let totalRisk = { fraud: 0, identity: 0, spam: 0, location: 0, sell: 0 };
+    selected.forEach(type => {
+      if (riskMap[type]) {
+        Object.keys(totalRisk).forEach(k => {
+          totalRisk[k] = Math.min(100, totalRisk[k] + (riskMap[type][k] || 0));
+        });
+      }
+    });
+    
+    const resultEl = document.getElementById('leak-result');
+    if (resultEl) {
+      if (selected.length === 0) {
+        resultEl.innerHTML = '<div class="text-green-400 text-center mt-4">✅ 没有数据泄露，风险极低！</div>';
+      } else {
+        const maxRisk = Math.max(...Object.values(totalRisk));
+        const riskLevel = maxRisk > 70 ? '极高' : maxRisk > 40 ? '中等' : '较低';
+        const riskColor = maxRisk > 70 ? '#ef4444' : maxRisk > 40 ? '#f59e0b' : '#10b981';
+        resultEl.innerHTML = `
+          <div class="font-bold mb-2" style="color:${riskColor}">⚠️ 风险等级：${riskLevel}</div>
+          <div class="space-y-2 text-xs">
+            ${Object.entries({ fraud: '诈骗风险', identity: '身份盗用', spam: '骚扰电话', location: '位置追踪', sell: '数据贩卖' }).map(([k, label]) => `
+              <div>
+                <div class="flex justify-between mb-1"><span class="text-slate-400">${label}</span><span style="color:${totalRisk[k]>60?'#ef4444':totalRisk[k]>30?'#f59e0b':'#10b981'}">${totalRisk[k]}%</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${totalRisk[k]}%;background:${totalRisk[k]>60?'#ef4444':totalRisk[k]>30?'#f59e0b':'#10b981'}"></div></div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+    }
+    
+    if (riskChart) {
+      riskChart.data.datasets[0].data = [
+        totalRisk.fraud, totalRisk.identity, totalRisk.spam, totalRisk.location, totalRisk.sell
+      ];
+      riskChart.update();
+    }
+  } catch(e) { console.error('simulateDataLeak error:', e); }
+}
+
+function initPrivacyTips() {
+  try {
+    const container = document.getElementById('privacy-tips');
+    if (!container) return;
+    container.innerHTML = '';
+    privacyTips.forEach(tip => {
+      const div = document.createElement('div');
+      div.className = 'p-4 rounded-lg';
+      div.style.background = 'rgba(16,185,129,0.1)';
+      div.style.border = '1px solid rgba(16,185,129,0.3)';
+      div.innerHTML = `
+        <div class="flex items-start gap-3">
+          <span class="text-2xl">${tip.icon}</span>
+          <div>
+            <div class="font-bold text-green-400 text-sm">${tip.title}</div>
+            <div class="text-xs text-slate-400 mt-1">${tip.desc}</div>
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  } catch(e) { console.error('initPrivacyTips error:', e); }
+}
+
+// ============================================================
+// QUIZ
+// ============================================================
+function initQuiz() {
+  try {
+    quizAnswers = {};
+    currentQuizQ = 0;
+    renderQuizQuestion();
+  } catch(e) { console.error('initQuiz error:', e); }
+}
+
+function renderQuizQuestion() {
+  try {
+    const container = document.getElementById('quiz-container');
+    const resultEl = document.getElementById('quiz-result');
+    if (!container) return;
+    if (resultEl) resultEl.classList.add('hidden');
+    
+    if (currentQuizQ >= quizQuestions.length) {
+      showQuizResult();
+      return;
+    }
+    
+    const q = quizQuestions[currentQuizQ];
+    const standardColors = {
+      '行善非恶': '#10b981',
+      '明确责任': '#6366f1',
+      '公平': '#06b6d4',
+      '数据保护': '#f59e0b'
+    };
+    const color = standardColors[q.standard] || '#6366f1';
+    
+    container.innerHTML = `
+      <div class="mb-4 flex items-center justify-between">
+        <span class="text-sm text-slate-400">第 ${currentQuizQ + 1} / ${quizQuestions.length} 题</span>
+        <span class="tag" style="background:${color}30;color:${color};border:1px solid ${color}60;">${q.standard}</span>
+      </div>
+      <div class="progress-bar mb-6">
+        <div class="progress-fill" style="width:${(currentQuizQ/quizQuestions.length)*100}%;background:${color}"></div>
+      </div>
+      <h3 class="text-lg font-bold text-slate-200 mb-6">${q.q}</h3>
+      <div class="space-y-3" id="quiz-options">
+        ${q.options.map((opt, i) => `
+          <button class="w-full text-left p-4 rounded-lg border border-slate-600 hover:border-indigo-400 transition-all text-sm text-slate-300" 
+            onclick="selectQuizAnswer(${i})" id="quiz-opt-${i}">
+            <span class="inline-block w-6 h-6 rounded-full border border-slate-500 text-center text-xs leading-6 mr-2">${String.fromCharCode(65+i)}</span>
+            ${opt}
+          </button>
+        `).join('')}
+      </div>
+      <div id="quiz-feedback" class="hidden mt-4 p-4 rounded-lg"></div>
+      <button id="quiz-next-btn" class="hidden btn-primary mt-4 w-full" onclick="nextQuizQuestion()">
+        ${currentQuizQ < quizQuestions.length - 1 ? '下一题 →' : '查看结果 🎯'}
+      </button>
+    `;
+  } catch(e) { console.error('renderQuizQuestion error:', e); }
+}
+
+function selectQuizAnswer(optIndex) {
+  try {
+    if (quizAnswers[currentQuizQ] !== undefined) return;
+    quizAnswers[currentQuizQ] = optIndex;
+    const q = quizQuestions[currentQuizQ];
+    const isCorrect = optIndex === q.correct;
+    
+    // Highlight options
+    q.options.forEach((_, i) => {
+      const btn = document.getElementById('quiz-opt-' + i);
+      if (!btn) return;
+      if (i === q.correct) {
+        btn.style.borderColor = '#10b981';
+        btn.style.background = 'rgba(16,185,129,0.15)';
+        btn.style.color = '#10b981';
+      } else if (i === optIndex && !isCorrect) {
+        btn.style.borderColor = '#ef4444';
+        btn.style.background = 'rgba(239,68,68,0.15)';
+        btn.style.color = '#ef4444';
+      }
+      btn.disabled = true;
+    });
+    
+    const feedback = document.getElementById('quiz-feedback');
+    if (feedback) {
+      feedback.classList.remove('hidden');
+      feedback.style.background = isCorrect ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+      feedback.style.borderLeft = `4px solid ${isCorrect ? '#10b981' : '#ef4444'}`;
+      feedback.innerHTML = `
+        <div class="font-bold mb-1" style="color:${isCorrect ? '#10b981' : '#ef4444'}">${isCorrect ? '✅ 回答正确！' : '❌ 回答错误'}</div>
+        <p class="text-slate-300 text-sm">${q.explanation}</p>
+      `;
+    }
+    
+    const nextBtn = document.getElementById('quiz-next-btn');
+    if (nextBtn) nextBtn.classList.remove('hidden');
+  } catch(e) { console.error('selectQuizAnswer error:', e); }
+}
+
+function nextQuizQuestion() {
+  try {
+    currentQuizQ++;
+    renderQuizQuestion();
+  } catch(e) { console.error('nextQuizQuestion error:', e); }
+}
+
+function showQuizResult() {
+  try {
+    const container = document.getElementById('quiz-container');
+    const resultEl = document.getElementById('quiz-result');
+    if (!container || !resultEl) return;
+    container.innerHTML = '';
+    
+    const correct = Object.entries(quizAnswers).filter(([i, ans]) => {
+      const q = quizQuestions[parseInt(i)];
+      return q && q.correct === ans;
+    }).length;
+    
+    const total = quizQuestions.length;
+    const pct = Math.round((correct / total) * 100);
+    
+    let grade, emoji, color, msg;
+    if (pct >= 90) { grade = 'S'; emoji = '🏆'; color = '#f59e0b'; msg = '太棒了！你对AI安全标准掌握得非常好！'; }
+    else if (pct >= 70) { grade = 'A'; emoji = '🌟'; color = '#10b981'; msg = '很好！你对大部分内容都理解了。'; }
+    else if (pct >= 50) { grade = 'B'; emoji = '👍'; color = '#6366f1'; msg = '不错！再复习一下错误的题目吧。'; }
+    else { grade = 'C'; emoji = '💪'; color = '#ef4444'; msg = '继续加油！重新阅读内容后再试试。'; }
+    
+    resultEl.classList.remove('hidden');
+    resultEl.style.borderTop = `4px solid ${color}`;
+    resultEl.innerHTML = `
+      <div class="text-6xl mb-3">${emoji}</div>
+      <div class="text-4xl font-bold mb-2" style="color:${color}">${grade}</div>
+      <div class="text-2xl font-bold text-slate-200 mb-2">${correct} / ${total} 题正确</div>
+      <div class="text-slate-400 mb-4">${msg}</div>
+      <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
+        ${quizQuestions.map((q, i) => `
+          <div class="p-2 rounded text-left" style="background:${quizAnswers[i]===q.correct?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'}">
+            <span style="color:${quizAnswers[i]===q.correct?'#10b981':'#ef4444'}">${quizAnswers[i]===q.correct?'✓':'✗'}</span>
+            <span class="text-xs text-slate-400 ml-1">${q.standard}</span>
+          </div>
+        `).join('')}
+      </div>
+      <button class="btn-primary" onclick="initQuiz()">重新测验</button>
+    `;
+  } catch(e) { console.error('showQuizResult error:', e); }
+}
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    initScenarios();
+    // Init impact chart for first visible section
+    setTimeout(() => {
+      initImpactChart();
+    }, 200);
+    console.log('AI Safety Standards Explorer initialized successfully');
+  } catch(e) {
+    console.error('Initialization error:', e);
+  }
+});
+</script>
+<script>window.parent.postMessage({ action: "ready" }, "*"); 
+ 
+window.console = new Proxy(console, {
+  get(target, prop) {
+    if (['log', 'warn', 'error'].includes(prop)) {
+      return new Proxy(target[prop], {
+        apply(fn, thisArg, args) {
+          fn.apply(thisArg, args);
+          window.parent.postMessage({ action: 'console', 
+            type: prop, 
+            args: args.map((arg) => {
+              try {
+                return JSON.stringify(arg).replace(/^["']|["']$/g, '');
+              } catch (e) {
+                return arg;
+              }
+            }) 
+          }, '*');
+        }
+      });
+    }
+    return target[prop];
+  }
+});
+</script></body>
+</html>
