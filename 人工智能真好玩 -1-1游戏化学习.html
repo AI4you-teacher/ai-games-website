@@ -1,0 +1,1308 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第一章：开门！人工智能来啦</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #6366f1;
+    --secondary: #ec4899;
+    --accent: #f59e0b;
+    --success: #10b981;
+    --bg: #f0f4ff;
+  }
+  body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); }
+  .section-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(99,102,241,0.10);
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+  .section-header {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    padding: 1.2rem 1.8rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .tab-btn {
+    padding: 0.5rem 1.2rem;
+    border-radius: 999px;
+    border: 2px solid #6366f1;
+    color: #6366f1;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    font-size: 0.9rem;
+  }
+  .tab-btn.active {
+    background: #6366f1;
+    color: white;
+  }
+  .tab-btn:hover:not(.active) {
+    background: #eef2ff;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .slider-container { margin: 1rem 0; }
+  .slider-label { display: flex; justify-content: space-between; font-size: 0.85rem; color: #64748b; margin-bottom: 0.3rem; }
+  input[type=range] {
+    width: 100%;
+    accent-color: #6366f1;
+    height: 6px;
+    border-radius: 3px;
+  }
+  .emotion-btn {
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    background: white;
+  }
+  .emotion-btn:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99,102,241,0.15); }
+  .emotion-btn.selected { border-color: #6366f1; background: #eef2ff; }
+  .level-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+  }
+  .level-card:hover { border-color: #6366f1; }
+  .level-card.active { border-color: #6366f1; background: #eef2ff; }
+  .level-badge {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+  .chart-wrap {
+    position: relative;
+    min-height: 260px;
+    max-height: 380px;
+    margin-bottom: 1rem;
+  }
+  .chart-wrap canvas { max-height: 360px; }
+  .recommend-card {
+    border-radius: 14px;
+    padding: 1rem;
+    margin-bottom: 0.7rem;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .recommend-card:hover { transform: translateX(4px); }
+  .tag {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 0.15rem;
+  }
+  .progress-bar {
+    height: 10px;
+    border-radius: 5px;
+    background: #e2e8f0;
+    overflow: hidden;
+    margin: 0.3rem 0;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.6s ease;
+  }
+  .ai-chat-bubble {
+    border-radius: 18px;
+    padding: 0.8rem 1.2rem;
+    margin: 0.5rem 0;
+    max-width: 85%;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .ai-bubble { background: #eef2ff; border-bottom-left-radius: 4px; align-self: flex-start; }
+  .user-bubble { background: #6366f1; color: white; border-bottom-right-radius: 4px; align-self: flex-end; }
+  .pulse-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulse 1.5s infinite;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+  .car-road {
+    background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    height: 120px;
+  }
+  .car-icon {
+    position: absolute;
+    font-size: 2.5rem;
+    transition: left 1s ease;
+    bottom: 10px;
+  }
+  .obstacle {
+    position: absolute;
+    font-size: 1.8rem;
+    bottom: 10px;
+  }
+  .road-line {
+    position: absolute;
+    top: 50%;
+    width: 60px;
+    height: 4px;
+    background: #fbbf24;
+    border-radius: 2px;
+    animation: roadMove 1s linear infinite;
+  }
+  @keyframes roadMove {
+    from { transform: translateX(0); }
+    to { transform: translateX(-80px); }
+  }
+  .aigc-demo {
+    background: linear-gradient(135deg, #fdf4ff, #fce7f3);
+    border-radius: 14px;
+    padding: 1.2rem;
+    border: 2px solid #f0abfc;
+  }
+  .typing-cursor::after {
+    content: '|';
+    animation: blink 0.8s infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  .nav-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #c7d2fe;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-dot.active { background: #6366f1; transform: scale(1.3); }
+  .section-num {
+    background: rgba(255,255,255,0.25);
+    border-radius: 50%;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .quiz-option {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    text-align: left;
+    width: 100%;
+    font-size: 0.95rem;
+  }
+  .quiz-option:hover { border-color: #6366f1; background: #eef2ff; }
+  .quiz-option.correct { border-color: #10b981; background: #d1fae5; }
+  .quiz-option.wrong { border-color: #ef4444; background: #fee2e2; }
+  .device-item {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.8rem;
+    text-align: center;
+    cursor: grab;
+    transition: all 0.2s;
+    background: white;
+    user-select: none;
+  }
+  .device-item:hover { border-color: #6366f1; transform: scale(1.03); }
+  .drop-zone {
+    border: 2px dashed #c7d2fe;
+    border-radius: 12px;
+    padding: 0.8rem;
+    min-height: 80px;
+    transition: all 0.2s;
+    background: #f8faff;
+  }
+  .drop-zone.drag-over { border-color: #6366f1; background: #eef2ff; }
+  .drop-zone.has-item { border-style: solid; border-color: #10b981; background: #d1fae5; }
+  .hero-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  }
+  .floating {
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Hero Section -->
+<div class="hero-gradient text-white py-12 px-4 mb-8">
+  <div class="max-w-4xl mx-auto text-center">
+    <div class="floating text-6xl mb-4">🤖</div>
+    <h1 class="text-3xl md:text-4xl font-black mb-3">第一章：开门！人工智能来啦</h1>
+    <p class="text-lg opacity-90 mb-6">探索你身边的 AI 世界 · 互动模拟学习</p>
+    <div class="flex justify-center gap-3 flex-wrap">
+      <span class="bg-white bg-opacity-20 rounded-full px-4 py-1.5 text-sm font-semibold">🏠 智能家居</span>
+      <span class="bg-white bg-opacity-20 rounded-full px-4 py-1.5 text-sm font-semibold">🚗 自动驾驶</span>
+      <span class="bg-white bg-opacity-20 rounded-full px-4 py-1.5 text-sm font-semibold">🎵 推荐系统</span>
+      <span class="bg-white bg-opacity-20 rounded-full px-4 py-1.5 text-sm font-semibold">✨ 生成式AI</span>
+    </div>
+    <!-- Progress dots -->
+    <div class="flex justify-center gap-2 mt-6" id="navDots"></div>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 pb-12" id="mainContent">
+
+  <!-- ===== SECTION 1: AI写作测试 ===== -->
+  <div class="section-card" id="sec1">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      你能分辨 AI 写的文字吗？
+    </div>
+    <div class="p-6">
+      <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-5 mb-5 border border-indigo-100">
+        <p class="text-sm text-indigo-500 font-semibold mb-2">📄 请阅读下面这段文字：</p>
+        <p class="text-gray-700 leading-relaxed text-base" id="aiTextDisplay">
+          人工智能技术正在改变我们的生活，从智能语音助手到自动驾驶汽车，从智能家居到医疗诊断，它的应用越来越广泛，为我们带来了许多便利。例如，智能语音助手可以帮助我们进行语音搜索、设定提醒和发送短信，自动驾驶汽车可以减少交通事故和交通拥堵，智能家居可以让我们更加方便地控制家中的设备。
+        </p>
+      </div>
+
+      <p class="font-bold text-gray-800 mb-4 text-center text-lg">🤔 你猜这段文字是谁写的？</p>
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        <button class="quiz-option" onclick="guessAuthor('human', this)">👤 人类写的</button>
+        <button class="quiz-option" onclick="guessAuthor('ai', this)">🤖 AI 写的</button>
+      </div>
+      <div id="authorReveal" class="hidden bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-5">
+        <p class="font-bold text-amber-700 text-lg mb-1">🎉 揭晓答案！</p>
+        <p class="text-gray-700">这段文字是由 AI 大语言模型 <strong>「文心一言」</strong> 写的！你猜对了吗？</p>
+        <p class="text-sm text-gray-500 mt-2">现在的 AI 写作已经非常流畅自然，很难从文字本身判断是否由 AI 生成。</p>
+      </div>
+
+      <p class="font-bold text-gray-800 mb-3 text-center">知道是 AI 写的之后，你的情绪是？</p>
+      <div class="grid grid-cols-3 gap-3 mb-4" id="emotionBtns">
+        <div class="emotion-btn" onclick="selectEmotion('surprise', this)">
+          <div class="text-3xl mb-1">😲</div>
+          <div class="font-semibold text-sm">惊讶</div>
+          <div class="text-xs text-gray-500 mt-1">完全看不出来！</div>
+        </div>
+        <div class="emotion-btn" onclick="selectEmotion('fear', this)">
+          <div class="text-3xl mb-1">😨</div>
+          <div class="font-semibold text-sm">害怕</div>
+          <div class="text-xs text-gray-500 mt-1">AI 太厉害了…</div>
+        </div>
+        <div class="emotion-btn" onclick="selectEmotion('excited', this)">
+          <div class="text-3xl mb-1">🤩</div>
+          <div class="font-semibold text-sm">兴奋</div>
+          <div class="text-xs text-gray-500 mt-1">以后可以帮我写！</div>
+        </div>
+      </div>
+      <div id="emotionResponse" class="hidden rounded-2xl p-4 border-2"></div>
+
+    </div>
+  </div>
+
+  <!-- ===== SECTION 2: 智能家居 ===== -->
+  <div class="section-card" id="sec2">
+    <div class="section-header" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
+      <div class="section-num">2</div>
+      🏠 小乐家的智能家居
+    </div>
+    <div class="p-6">
+      <p class="text-gray-600 mb-4 text-center">小乐家有很多智能设备，它们各有不同的 AI 能力。点击设备来了解它们！</p>
+
+      <!-- 设备展示 -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div class="level-card text-center" onclick="showDevice('speaker')">
+          <div class="text-4xl mb-2">🔊</div>
+          <div class="font-bold text-sm">智能音箱</div>
+          <div class="text-xs text-gray-500">小艺小艺</div>
+        </div>
+        <div class="level-card text-center" onclick="showDevice('camera')">
+          <div class="text-4xl mb-2">📷</div>
+          <div class="font-bold text-sm">智能摄像头</div>
+          <div class="text-xs text-gray-500">人形检测</div>
+        </div>
+        <div class="level-card text-center" onclick="showDevice('tv')">
+          <div class="text-4xl mb-2">📺</div>
+          <div class="font-bold text-sm">智能电视</div>
+          <div class="text-xs text-gray-500">语音控制</div>
+        </div>
+        <div class="level-card text-center" onclick="showDevice('elevator')">
+          <div class="text-4xl mb-2">🛗</div>
+          <div class="font-bold text-sm">智慧电梯</div>
+          <div class="text-xs text-gray-500">人脸识别</div>
+        </div>
+      </div>
+
+      <!-- 设备详情 -->
+      <div id="deviceDetail" class="hidden bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-5 border-2 border-amber-200 mb-6">
+        <div id="deviceContent"></div>
+      </div>
+
+      <!-- 练习1：连线题 -->
+      <div class="bg-gradient-to-r from-green-50 to-temerald-50 rounded-2xl p-5 border border-green-200">
+        <p class="font-bold text-green-700 mb-1">📝 练习1：设备能力分类</p>
+        <p class="text-sm text-gray-600 mb-4">下面这些设备，它会看、会说、会听吗？点击设备，再点击对应的能力来连线！</p>
+        <div id="matchGame">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="font-semibold text-sm text-gray-700 mb-2">设备</p>
+              <div class="space-y-2" id="deviceList">
+                <div class="device-item" onclick="selectDevice('phone')" id="dev-phone">📱 手机</div>
+                <div class="device-item" onclick="selectDevice('pen')" id="dev-pen">✏️ 翻译笔</div>
+                <div class="device-item" onclick="selectDevice('speaker2')" id="dev-speaker2">🔊 智能音箱</div>
+                <div class="device-item" onclick="selectDevice('camera2')" id="dev-camera2">📷 摄像头</div>
+              </div>
+            </div>
+            <div>
+              <p class="font-semibold text-sm text-gray-700 mb-2">能力（可多选）</p>
+              <div class="space-y-2">
+                <div class="drop-zone" id="zone-see" onclick="assignAbility('see')">
+                  <p class="text-xs text-gray-500 font-semibold mb-1">👁️ 会看</p>
+                  <div id="see-items" class="flex flex-wrap gap-1"></div>
+                </div>
+                <div class="drop-zone" id="zone-speak" onclick="assignAbility('speak')">
+                  <p class="text-xs text-gray-500 font-semibold mb-1">💬 会说</p>
+                  <div id="speak-items" class="flex flex-wrap gap-1"></div>
+                </div>
+                <div class="drop-zone" id="zone-hear" onclick="assignAbility('hear')">
+                  <p class="text-xs text-gray-500 font-semibold mb-1">👂 会听</p>
+                  <div id="hear-items" class="flex flex-wrap gap-1"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <button onclick="checkMatch()" class="bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-600 transition-colors">✅ 检查答案</button>
+            <button onclick="resetMatch()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-gray-300 transition-colors">🔄 重置</button>
+          </div>
+          <div id="matchResult" class="hidden mt-3 rounded-xl p-3 text-sm"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 3: 自动驾驶 ===== -->
+  <div class="section-card" id="sec3">
+    <div class="section-header" style="background: linear-gradient(135deg, #0ea5e9, #0284c7);">
+      <div class="section-num">3</div>
+      🚗 自动驾驶汽车等级模拟
+    </div>
+    <div class="p-6">
+      <p class="text-gray-600 mb-5 text-center">小强爸爸的车可以自动停进车位！自动驾驶汽车分为 L1~L5 五个等级，等级越高越智能。</p>
+
+      <!-- 等级选择 -->
+      <div class="flex gap-2 flex-wrap justify-center mb-5">
+        <button class="tab-btn active" onclick="selectLevel(1, this)">L1 辅助</button>
+        <button class="tab-btn" onclick="selectLevel(2, this)">L2 部分自动</button>
+        <button class="tab-btn" onclick="selectLevel(3, this)">L3 有条件</button>
+        <button class="tab-btn" onclick="selectLevel(4, this)">L4 高度自动</button>
+        <button class="tab-btn" onclick="selectLevel(5, this)">L5 完全自动</button>
+      </div>
+
+      <!-- 等级详情 -->
+      <div id="levelDetail" class="bg-gradient-to-r from-sky-50 to-blue-50 rounded-2xl p-5 border-2 border-sky-200 mb-5">
+        <div id="levelContent"></div>
+      </div>
+
+      <!-- 驾驶模拟器 -->
+      <div class="bg-gray-800 rounded-2xl p-5 mb-5">
+        <p class="text-white font-bold mb-3 text-center">🎮 驾驶场景模拟器</p>
+        <div class="car-road mb-3" id="roadScene">
+          <div class="road-line" style="left: 10%"></div>
+          <div class="road-line" style="left: 30%"></div>
+          <div class="road-line" style="left: 50%"></div>
+          <div class="road-line" style="left: 70%"></div>
+          <div class="road-line" style="left: 90%"></div>
+          <div class="car-icon" id="simCar" style="left: 10%">🚗</div>
+          <div class="obstacle" id="obstacle1" style="right: 20%">🚙</div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label class="text-white text-xs font-semibold block mb-1">车速 (km/h)</label>
+            <input type="range" min="0" max="120" value="60" id="speedSlider" oninput="updateSimulation()">
+            <div class="text-sky-300 text-sm font-bold" id="speedDisplay">60 km/h</div>
+          </div>
+          <div>
+            <label class="text-white text-xs font-semibold block mb-1">前车距离 (m)</label>
+            <input type="range" min="5" max="100" value="50" id="distSlider" oninput="updateSimulation()">
+            <div class="text-sky-300 text-sm font-bold" id="distDisplay">50 m</div>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 mb-3">
+          <button onclick="triggerScenario('rain')" class="bg-blue-600 text-white text-xs py-2 rounded-lg hover:bg-blue-700 transition-colors">🌧️ 下雨天</button>
+          <button onclick="triggerScenario('fatigue')" class="bg-orange-600 text-white text-xs py-2 rounded-lg hover:bg-orange-700 transition-colors">😴 疲劳驾驶</button>
+          <button onclick="triggerScenario('emergency')" class="bg-red-600 text-white text-xs py-2 rounded-lg hover:bg-red-700 transition-colors">🚨 紧急制动</button>
+        </div>
+        <div id="simFeedback" class="bg-gray-700 rounded-xl p-3 text-sm text-gray-200 min-h-12">
+          <span class="pulse-dot"></span>系统待机中，请调整参数或触发场景...
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== SECTION 4: 推荐系统 ===== -->
+  <div class="section-card" id="sec4">
+    <div class="section-header" style="background: linear-gradient(135deg, #ec4899, #be185d);">
+      <div class="section-num">4</div>
+      🎵 推荐系统：AI 最了解你
+    </div>
+    <div class="p-6">
+      <p class="text-gray-600 mb-5 text-center">小美发现妈妈手机上的音乐推荐和自己的完全不同！这是为什么呢？</p>
+
+      <!-- 用户画像构建 -->
+      <div class="bg-gradient-to-r from-pink-50 to-rose-50 rounded-2xl p-5 border border-pink-200 mb-5">
+        <p class="font-bold text-pink-700 mb-3">🎭 构建你的用户画像</p>
+        <p class="text-sm text-gray-600 mb-4">调整下面的参数，看看推荐系统会给你推荐什么！</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="text-sm font-semibold text-gray-700 block mb-2">🎵 音乐偏好</label>
+            <div class="flex flex-wrap gap-2" id="musicTags">
+              <span class="tag bg-pink-100 text-pink-700 cursor-pointer hover:bg-pink-200 transition-colors" onclick="toggleTag(this, 'music')">流行</span>
+              <span class="tag bg-pink-100 text-pink-700 cursor-pointer hover:bg-pink-200 transition-colors" onclick="toggleTag(this, 'music')">古风</span>
+              <span class="tag bg-pink-100 text-pink-700 cursor-pointer hover:bg-pink-200 transition-colors" onclick="toggleTag(this, 'music')">摇滚</span>
+              <span class="tag bg-pink-100 text-pink-700 cursor-pointer hover:bg-pink-200 transition-colors" onclick="toggleTag(this, 'music')">古典</span>
+              <span class="tag bg-pink-100 text-pink-700 cursor-pointer hover:bg-pink-200 transition-colors" onclick="toggleTag(this, 'music')">电子</span>
+              <span class="tag bg-pink-100 text-pink-700 cursor-pointer hover:bg-pink-200 transition-colors" onclick="toggleTag(this, 'music')">民谣</span>
+            </div>
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-gray-700 block mb-2">📱 使用习惯</label>
+            <div class="space-y-2">
+              <div class="slider-container">
+                <div class="slider-label"><span>每天听歌时长</span><span id="listenTimeVal">1小时</span></div>
+                <input type="range" min="0" max="5" value="1" id="listenTime" oninput="updateRecommend()">
+              </div>
+              <div class="slider-container">
+                <div class="slider-label"><span>点赞频率</span><span id="likeFreqVal">偶尔</span></div>
+                <input type="range" min="0" max="3" value="1" id="likeFreq" oninput="updateRecommend()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-sm font-semibold text-gray-700 block mb-2">🕐 活跃时间段</label>
+          <div class="flex flex-wrap gap-2" id="timeTags">
+            <span class="tag bg-indigo-100 text-indigo-700 cursor-pointer hover:bg-indigo-200 transition-colors" onclick="toggleTag(this, 'time')">早晨</span>
+            <span class="tag bg-indigo-100 text-indigo-700 cursor-pointer hover:bg-indigo-200 transition-colors" onclick="toggleTag(this, 'time')">上午</span>
+            <span class="tag bg-indigo-100 text-indigo-700 cursor-pointer hover:bg-indigo-200 transition-colors" onclick="toggleTag(this, 'time')">下午</span>
+            <span class="tag bg-indigo-100 text-indigo-700 cursor-pointer hover:bg-indigo-200 transition-colors" onclick="toggleTag(this, 'time')">晚上</span>
+            <span class="tag bg-indigo-100 text-indigo-700 cursor-pointer hover:bg-indigo-200 transition-colors" onclick="toggleTag(this, 'time')">深夜</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 推荐结果 -->
+      <div class="bg-white rounded-2xl p-4 border-2 border-pink-100 mb-5">
+        <p class="font-bold text-gray-700 mb-3">🎯 根据你的画像，AI 为你推荐：</p>
+        <div id="recommendResult">
+          <p class="text-gray-400 text-sm text-center py-4">请先选择你的偏好标签...</p>
+        </div>
+      </div>
+
+      <!-- 推荐系统原理图 -->
+      <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-5 border border-indigo-100 mb-5">
+        <p class="font-bold text-indigo-700 mb-3">🔄 推荐系统工作原理</p>
+        <div class="chart-wrap">
+          <canvas id="recommendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- 各平台推荐系统 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="recommend-card bg-gradient-to-r from-red-50 to-orange-50 border-red-200 border-2">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-2xl">📱</span>
+            <span class="font-bold text-red-700">短视频平台（抖音）</span>
+          </div>
+          <p class="text-sm text-gray-600">根据<strong>停留时长、点赞、评论</strong>推荐你可能喜欢的视频</p>
+        </div>
+        <div class="recommend-card bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200 border-2">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-2xl">🛒</span>
+            <span class="font-bold text-orange-700">购物平台（淘宝）</span>
+          </div>
+          <p class="text-sm text-gray-600">根据<strong>搜索、浏览记录</strong>推荐你近期可能购买的商品</p>
+        </div>
+        <div class="recommend-card bg-gradient-to-r from-green-50 to-teal-50 border-green-200 border-2">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-2xl">🍜</span>
+            <span class="font-bold text-green-700">外卖平台（美团）</span>
+          </div>
+          <p class="text-sm text-gray-600">根据<strong>历史订单、口味偏好、点餐时间</strong>推荐个性化餐食</p>
+        </div>
+        <div class="recommend-card bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200 border-2">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-2xl">🚕</span>
+            <span class="font-bold text-blue-700">打车平台（滴滴）</span>
+          </div>
+          <p class="text-sm text-gray-600">根据<strong>历史打车记录</strong>预测相似时段你要去的目的地</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 5: 生成式AI ===== -->
+  <div class="section-card" id="sec5">
+    <div class="section-header" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+      <div class="section-num">5</div>
+      ✨ 生成式人工智能（AIGC）
+    </div>
+    <div class="p-6">
+      <div class="bg-violet-50 rounded-2xl p-5 mb-6 border border-violet-100">
+        <p class="font-bold text-violet-700 mb-2">🧪 指令实验：亲自指挥 AI！</p>
+        <p class="text-gray-600 text-sm mb-4">生成式 AI 最神奇的地方在于，它能听懂你的指令并创造出全新的内容。现在，请打开一个通用生成式人工智能工具（如 <strong>豆包</strong>、<strong>DeepSeek</strong> 或 <strong>文心一言</strong>），尝试输入以下指令：</p>
+        
+        <div class="space-y-4">
+          <!-- 题目1 -->
+          <div class="bg-white p-4 rounded-xl border border-violet-200 shadow-sm">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="bg-violet-100 text-violet-700 text-xs font-bold px-2 py-0.5 rounded">任务 1</span>
+              <span class="font-bold text-gray-800">诗歌创作</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">输入指令：</p>
+            <div class="bg-gray-50 p-3 rounded-lg text-sm font-mono text-indigo-600 border border-dashed border-indigo-200">
+              请以“春天的小草”为题，写一首优美的现代诗。
+            </div>
+          </div>
+
+          <!-- 题目2 -->
+          <div class="bg-white p-4 rounded-xl border border-violet-200 shadow-sm">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="bg-violet-100 text-violet-700 text-xs font-bold px-2 py-0.5 rounded">任务 2</span>
+              <span class="font-bold text-gray-800">续写故事</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">输入指令：</p>
+            <div class="bg-gray-50 p-3 rounded-lg text-sm font-mono text-indigo-600 border border-dashed border-indigo-200">
+              续写这个故事：小强在森林里发现了一个发光的山洞，他好奇地走进去，发现里面竟然...
+            </div>
+          </div>
+
+          <!-- 题目3 -->
+          <div class="bg-white p-4 rounded-xl border border-violet-200 shadow-sm">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="bg-violet-100 text-violet-700 text-xs font-bold px-2 py-0.5 rounded">任务 3</span>
+              <span class="font-bold text-gray-800">文生图</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">输入指令：</p>
+            <div class="bg-gray-50 p-3 rounded-lg text-sm font-mono text-indigo-600 border border-dashed border-indigo-200">
+              画一张画：一只戴着墨镜的可爱大熊猫在月球上悠闲地吃着竹子。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AIGC 工具推荐 -->
+      <div class="bg-gradient-to-r from-gray-50 to-slate-50 rounded-2xl p-5 border border-gray-200">
+        <p class="font-bold text-gray-700 mb-3">🛠️ 国内优质 AIGC 工具推荐</p>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+          <div class="text-center p-3 bg-white rounded-xl border border-gray-100 hover:border-indigo-300 transition-colors cursor-pointer">
+            <div class="text-2xl mb-1">🐋</div>
+            <div class="text-xs font-bold">DeepSeek</div>
+            <div class="text-xs text-gray-400">深度求索</div>
+          </div>
+          <div class="text-center p-3 bg-white rounded-xl border border-gray-100 hover:border-indigo-300 transition-colors cursor-pointer">
+            <div class="text-2xl mb-1">🌊</div>
+            <div class="text-xs font-bold">通义千问</div>
+            <div class="text-xs text-gray-400">阿里</div>
+          </div>
+          <div class="text-center p-3 bg-white rounded-xl border border-gray-100 hover:border-indigo-300 transition-colors cursor-pointer">
+            <div class="text-2xl mb-1">🧠</div>
+            <div class="text-xs font-bold">文心一言</div>
+            <div class="text-xs text-gray-400">百度</div>
+          </div>
+          <div class="text-center p-3 bg-white rounded-xl border border-gray-100 hover:border-indigo-300 transition-colors cursor-pointer">
+            <div class="text-2xl mb-1">🫘</div>
+            <div class="text-xs font-bold">豆包</div>
+            <div class="text-xs text-gray-400">字节</div>
+          </div>
+          <div class="text-center p-3 bg-white rounded-xl border border-gray-100 hover:border-indigo-300 transition-colors cursor-pointer">
+            <div class="text-2xl mb-1">🌙</div>
+            <div class="text-xs font-bold">Kimi</div>
+            <div class="text-xs text-gray-400">月之暗面</div>
+          </div>
+          <div class="text-center p-3 bg-white rounded-xl border border-gray-100 hover:border-indigo-300 transition-colors cursor-pointer">
+            <div class="text-2xl mb-1">🔥</div>
+            <div class="text-xs font-bold">混元</div>
+            <div class="text-xs text-gray-400">腾讯</div>
+          </div>
+        </div>
+        <p class="text-xs text-gray-400 mt-3 text-center">⚠️ 注意：AI 生成的内容偶尔会有错误，不要认为 AI 说的一定是正确的哦！</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 总结 ===== -->
+  <div class="section-card" id="sec6">
+    <div class="section-header" style="background: linear-gradient(135deg, #10b981, #059669);">
+      <div class="section-num">🎓</div>
+      本章知识总结
+    </div>
+    <div class="p-6">
+      <div class="chart-wrap mb-5">
+        <canvas id="summaryChart"></canvas>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-2xl p-4 border border-indigo-100">
+          <p class="font-bold text-indigo-700 mb-2">🏠 智能家居</p>
+          <ul class="text-sm text-gray-600 space-y-1">
+            <li>• 智能音箱：语音识别 + 语音合成</li>
+            <li>• 智能摄像头：计算机视觉（人形检测）</li>
+            <li>• 智慧电梯：人脸识别技术</li>
+          </ul>
+        </div>
+        <div class="bg-gradient-to-r from-sky-50 to-cyan-50 rounded-2xl p-4 border border-sky-100">
+          <p class="font-bold text-sky-700 mb-2">🚗 自动驾驶</p>
+          <ul class="text-sm text-gray-600 space-y-1">
+            <li>• L1-L2：辅助驾驶，人类主导</li>
+            <li>• L3-L4：条件/高度自动，系统主导</li>
+            <li>• L5：完全自动，无需人类干预</li>
+          </ul>
+        </div>
+        <div class="bg-gradient-to-r from-pink-50 to-rose-50 rounded-2xl p-4 border border-pink-100">
+          <p class="font-bold text-pink-700 mb-2">🎵 推荐系统</p>
+          <ul class="text-sm text-gray-600 space-y-1">
+            <li>• 收集用户行为数据</li>
+            <li>• 分析偏好和规律</li>
+            <li>• 预测并推荐个性化内容</li>
+          </ul>
+        </div>
+        <div class="bg-gradient-to-r from-violet-50 to-purple-50 rounded-2xl p-4 border border-violet-100">
+          <p class="font-bold text-violet-700 mb-2">✨ 生成式AI</p>
+          <ul class="text-sm text-gray-600 space-y-1">
+            <li>• 学习样例，生成相似内容</li>
+            <li>• 文字、图片、音乐、视频</li>
+            <li>• 科研：新材料、生物医药</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-5 bg-amber-50 rounded-2xl p-4 border border-amber-200 text-center">
+        <p class="text-amber-700 font-bold text-lg mb-1">💭 思考题</p>
+        <p class="text-gray-700">当 L5 级完全自动驾驶汽车普及后，未来的汽车内部会是什么样子？<br>发挥你的想象力，画出你心目中的未来汽车！</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// 全局状态
+// ============================================================
+var selectedEmotion = null;
+var selectedDeviceForMatch = null;
+var matchAssignments = {}; // deviceId -> [abilities]
+var currentLevel = 1;
+var levelChartInstance = null;
+var recommendChartInstance = null;
+var summaryChartInstance = null;
+var selectedMusicTags = [];
+var selectedTimeTags = [];
+
+// ============================================================
+// 导航点
+// ============================================================
+function initNavDots() {
+  try {
+    var container = document.getElementById('navDots');
+    if (!container) return;
+    var sections = ['sec1','sec2','sec3','sec4','sec5','sec6'];
+    sections.forEach(function(id, i) {
+      var dot = document.createElement('div');
+      dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+      dot.onclick = function() {
+        var el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      };
+      container.appendChild(dot);
+    });
+  } catch(e) { console.error('initNavDots error:', e); }
+}
+
+// ============================================================
+// Section 1: AI写作检测
+// ============================================================
+function guessAuthor(type, btn) {
+  try {
+    var reveal = document.getElementById('authorReveal');
+    if (!reveal) return;
+    reveal.classList.remove('hidden');
+    var btns = btn.parentElement.querySelectorAll('.quiz-option');
+    btns.forEach(function(b) { b.classList.remove('correct','wrong'); });
+    if (type === 'ai') {
+      btn.classList.add('correct');
+    } else {
+      btn.classList.add('wrong');
+      btns.forEach(function(b) {
+        if (b !== btn) b.classList.add('correct');
+      });
+    }
+  } catch(e) { console.error('guessAuthor error:', e); }
+}
+
+function selectEmotion(type, el) {
+  try {
+    selectedEmotion = type;
+    var btns = document.querySelectorAll('.emotion-btn');
+    btns.forEach(function(b) { b.classList.remove('selected'); });
+    el.classList.add('selected');
+    var resp = document.getElementById('emotionResponse');
+    if (!resp) return;
+    var responses = {
+      surprise: { bg: 'bg-yellow-50 border-yellow-300', text: '😲 你的感受很正常！现代 AI 的语言能力已经非常强大，生成的文字流畅自然，很难从表面区分。这正是 AI 技术令人惊叹的地方！', color: 'text-yellow-700' },
+      fear: { bg: 'bg-blue-50 border-blue-300', text: '😨 不用害怕！AI 是工具，就像计算器帮助我们计算一样。AI 擅长处理大量数据和重复性任务，但创造力、情感和批判性思维仍然是人类的优势。', color: 'text-blue-700' },
+      excited: { bg: 'bg-green-50 border-green-300', text: '🤩 兴奋是好事！不过要注意：用 AI 帮你写作业是不诚实的行为，而且现在有"AI 内容检测器"可以识别 AI 写的文章哦。AI 更适合作为学习助手，帮你理解知识！', color: 'text-green-700' }
+    };
+    var r = responses[type];
+    if (r) {
+      resp.className = 'rounded-2xl p-4 border-2 ' + r.bg;
+      resp.innerHTML = '<p class="' + r.color + ' text-sm">' + r.text + '</p>';
+      resp.classList.remove('hidden');
+    }
+  } catch(e) { console.error('selectEmotion error:', e); }
+}
+
+// ============================================================
+// Section 2: 智能家居
+// ============================================================
+var deviceData = {
+  speaker: {
+    icon: '🔊',
+    name: '智能音箱',
+    desc: '只需连续叫两遍它的名字，告诉它要播放的音乐名，它就能播放！',
+    abilities: ['👂 会听（语音识别）', '💬 会说（语音合成）'],
+    demo: '小艺小艺，播放《孤勇者》→ "爱你孤身走暗巷..."',
+    color: 'from-purple-50 to-indigo-50',
+    border: 'border-purple-200'
+  },
+  camera: {
+    icon: '📷',
+    name: '智能摄像头',
+    desc: '开启人形检测功能时，有人进入摄像头范围会自动报警。',
+    abilities: ['👁️ 会看（计算机视觉）'],
+    demo: '"您已进入警示范围，您已进入警示范围！"',
+    color: 'from-red-50 to-orange-50',
+    border: 'border-red-200',
+    think: '💭 思考：如果坏人穿上舞狮的衣服进来，会被检测到吗？'
+  },
+  tv: {
+    icon: '📺',
+    name: '智能电视',
+    desc: '不仅能选节目，还能记录上一次看到了第几集，从中断的位置开始播放。',
+    abilities: ['👂 会听（语音识别）', '💬 会说（语音合成）'],
+    demo: '小艺小艺，播放《西游记》→ "好嘞，为您找到《西游记》"',
+    color: 'from-blue-50 to-cyan-50',
+    border: 'border-blue-200'
+  },
+  elevator: {
+    icon: '🛗',
+    name: '智慧电梯',
+    desc: '需要人脸识别才能使用，只有已录入人脸信息的人，才能按下电梯按钮。',
+    abilities: ['👁️ 会看（人脸识别）'],
+    demo: '未录入人脸 → 无法按下按钮 | 已录入人脸 → 正常使用',
+    color: 'from-green-50 to-teal-50',
+    border: 'border-green-200'
+  }
+};
+
+function showDevice(id) {
+  try {
+    var data = deviceData[id];
+    if (!data) return;
+    var detail = document.getElementById('deviceDetail');
+    var content = document.getElementById('deviceContent');
+    if (!detail || !content) return;
+    var abilitiesHtml = data.abilities.map(function(a) {
+      return '<span class="tag bg-white border border-gray-200 text-gray-700">' + a + '</span>';
+    }).join('');
+    var thinkHtml = data.think ? '<div class="mt-3 bg-yellow-50 rounded-xl p-3 text-sm text-yellow-700">' + data.think + '</div>' : '';
+    content.innerHTML = '<div class="flex items-center gap-3 mb-3">' +
+      '<span class="text-4xl">' + data.icon + '</span>' +
+      '<div><p class="font-bold text-lg text-gray-800">' + data.name + '</p>' +
+      '<div class="flex flex-wrap gap-1 mt-1">' + abilitiesHtml + '</div></div></div>' +
+      '<p class="text-gray-600 text-sm mb-2">' + data.desc + '</p>' +
+      '<div class="bg-white rounded-xl p-3 border border-gray-100 text-sm text-gray-500 italic">' + data.demo + '</div>' +
+      thinkHtml;
+    detail.className = 'bg-gradient-to-r ' + data.color + ' rounded-2xl p-5 border-2 ' + data.border + ' mb-6';
+    detail.classList.remove('hidden');
+    // 高亮选中的卡片
+    document.querySelectorAll('.level-card').forEach(function(c) { c.classList.remove('active'); });
+    event.currentTarget.classList.add('active');
+  } catch(e) { console.error('showDevice error:', e); }
+}
+
+// 连线题
+var matchAnswers = {
+  phone: ['see', 'speak', 'hear'],
+  pen: ['speak', 'hear'],
+  speaker2: ['speak', 'hear'],
+  camera2: ['see']
+};
+
+function selectDevice(id) {
+  try {
+    selectedDeviceForMatch = id;
+    document.querySelectorAll('.device-item').forEach(function(el) {
+      el.style.borderColor = '#e2e8f0';
+      el.style.background = 'white';
+    });
+    var el = document.getElementById('dev-' + id);
+    if (el) {
+      el.style.borderColor = '#6366f1';
+      el.style.background = '#eef2ff';
+    }
+  } catch(e) { console.error('selectDevice error:', e); }
+}
+
+function assignAbility(ability) {
+  try {
+    if (!selectedDeviceForMatch) {
+      alert('请先点击左边的设备！');
+      return;
+    }
+    if (!matchAssignments[selectedDeviceForMatch]) {
+      matchAssignments[selectedDeviceForMatch] = [];
+    }
+    if (matchAssignments[selectedDeviceForMatch].indexOf(ability) === -1) {
+      matchAssignments[selectedDeviceForMatch].push(ability);
+    }
+    renderMatchItems();
+  } catch(e) { console.error('assignAbility error:', e); }
+}
+
+var deviceNames = { phone: '📱手机', pen: '✏️翻译笔', speaker2: '🔊音箱', camera2: '📷摄像头' };
+
+function renderMatchItems() {
+  try {
+    var zones = { see: [], speak: [], hear: [] };
+    Object.keys(matchAssignments).forEach(function(devId) {
+      var abilities = matchAssignments[devId];
+      if (!Array.isArray(abilities)) return;
+      abilities.forEach(function(ab) {
+        if (zones[ab]) zones[ab].push(devId);
+      });
+    });
+    ['see', 'speak', 'hear'].forEach(function(zone) {
+      var container = document.getElementById(zone + '-items');
+      if (!container) return;
+      container.innerHTML = zones[zone].map(function(devId) {
+        return '<span class="tag bg-indigo-100 text-indigo-700">' + (deviceNames[devId] || devId) + '</span>';
+      }).join('');
+      var zoneEl = document.getElementById('zone-' + zone);
+      if (zoneEl) {
+        zoneEl.className = 'drop-zone' + (zones[zone].length > 0 ? ' has-item' : '');
+      }
+    });
+  } catch(e) { console.error('renderMatchItems error:', e); }
+}
+
+function checkMatch() {
+  try {
+    var result = document.getElementById('matchResult');
+    if (!result) return;
+    var correct = 0;
+    var total = Object.keys(matchAnswers).length;
+    var feedback = [];
+    Object.keys(matchAnswers).forEach(function(devId) {
+      var expected = matchAnswers[devId].sort();
+      var actual = (matchAssignments[devId] || []).slice().sort();
+      var isCorrect = JSON.stringify(expected) === JSON.stringify(actual);
+      if (isCorrect) {
+        correct++;
+        feedback.push('<span class="text-green-600">✅ ' + (deviceNames[devId] || devId) + '：正确！</span>');
+      } else {
+        feedback.push('<span class="text-red-600">❌ ' + (deviceNames[devId] || devId) + '：参考答案是 ' + expected.map(function(a) { return ({see:'会看',speak:'会说',hear:'会听'})[a]; }).join('+') + '</span>');
+      }
+    });
+    result.innerHTML = '<p class="font-bold mb-2">得分：' + correct + '/' + total + '</p>' + feedback.join('<br>');
+    result.className = 'mt-3 rounded-xl p-3 text-sm ' + (correct === total ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200');
+    result.classList.remove('hidden');
+  } catch(e) { console.error('checkMatch error:', e); }
+}
+
+function resetMatch() {
+  try {
+    matchAssignments = {};
+    selectedDeviceForMatch = null;
+    document.querySelectorAll('.device-item').forEach(function(el) {
+      el.style.borderColor = '#e2e8f0';
+      el.style.background = 'white';
+    });
+    ['see', 'speak', 'hear'].forEach(function(zone) {
+      var container = document.getElementById(zone + '-items');
+      if (container) container.innerHTML = '';
+      var zoneEl = document.getElementById('zone-' + zone);
+      if (zoneEl) zoneEl.className = 'drop-zone';
+    });
+    var result = document.getElementById('matchResult');
+    if (result) result.classList.add('hidden');
+  } catch(e) { console.error('resetMatch error:', e); }
+}
+
+// ============================================================
+// Section 3: 自动驾驶
+// ============================================================
+var levelData = [
+  {
+    level: 1,
+    name: 'L1 驾驶辅助',
+    color: '#10b981',
+    badge: 'bg-green-100 text-green-700',
+    human: 90, system: 10,
+    features: ['定速巡航：无需人控制，车辆自动保持车速', '自动泊车：车辆能自动停入停车位'],
+    desc: '系统只提供辅助，人类驾驶汽车。小强爸爸的车就是这个级别！',
+    icon: '🚗'
+  },
+  {
+    level: 2,
+    name: 'L2 部分自动辅助',
+    color: '#3b82f6',
+    badge: 'bg-blue-100 text-blue-700',
+    human: 70, system: 30,
+    features: ['车道保持辅助：检测车道，防止疲劳驾驶偏离', '自适应巡航控制：根据前后车距自动调整车速'],
+    desc: '40%的交通事故由疲劳、分心导致车道偏离，L2 可以有效预防！',
+    icon: '🚙'
+  },
+  {
+    level: 3,
+    name: 'L3 有条件自动驾驶',
+    color: '#f59e0b',
+    badge: 'bg-amber-100 text-amber-700',
+    human: 30, system: 70,
+    features: ['车速60km/h以内', '限定允许开启的路段', '天气较好时才能开启', '驾驶员需在10秒内接管'],
+    desc: '满足限制条件时，可以让系统驾驶车辆。2023年已获得法律支持！',
+    icon: '🏎️'
+  },
+  {
+    level: 4,
+    name: 'L4 高度自动驾驶',
+    color: '#8b5cf6',
+    badge: 'bg-violet-100 text-violet-700',
+    human: 10, system: 90,
+    features: ['特定道路下大部分环境可自动驾驶', '驾驶员可以不响应系统介入请求', '武汉已有近500辆无驾驶人车辆运营'],
+    desc: '武汉已在12个行政区支持全无人车常态化试点服务！',
+    icon: '🤖'
+  },
+  {
+    level: 5,
+    name: 'L5 完全自动驾驶',
+    color: '#ec4899',
+    badge: 'bg-pink-100 text-pink-700',
+    human: 0, system: 100,
+    features: ['任何天气、地理环境均可自动驾驶', '无需方向盘和踏板', '车内空间可完全重新设计'],
+    desc: '未来的终极目标！届时汽车内部结构将与现在完全不同。',
+    icon: '🚀'
+  }
+];
+
+function selectLevel(n, btn) {
+  try {
+    currentLevel = n;
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    var data = levelData[n - 1];
+    if (!data) return;
+    var content = document.getElementById('levelContent');
+    if (!content) return;
+    var featuresHtml = data.features.map(function(f) {
+      return '<li class="text-sm text-gray-600">• ' + f + '</li>';
+    }).join('');
+    content.innerHTML = '<div class="flex items-center gap-3 mb-3">' +
+      '<span class="text-4xl">' + data.icon + '</span>' +
+      '<div><span class="level-badge ' + data.badge + '">' + data.name + '</span>' +
+      '<div class="flex gap-2 mt-1">' +
+      '<span class="text-xs text-gray-500">👤 人类控制 ' + data.human + '%</span>' +
+      '<span class="text-xs text-gray-500">🤖 系统控制 ' + data.system + '%</span>' +
+      '</div></div></div>' +
+      '<div class="grid grid-cols-2 gap-2 mb-3">' +
+      '<div><div class="slider-label"><span class="text-xs">👤 人类</span><span class="text-xs">' + data.human + '%</span></div>' +
+      '<div class="progress-bar"><div class="progress-fill bg-blue-400" style="width:' + data.human + '%"></div></div></div>' +
+      '<div><div class="slider-label"><span class="text-xs">🤖 系统</span><span class="text-xs">' + data.system + '%</span></div>' +
+      '<div class="progress-bar"><div class="progress-fill bg-purple-400" style="width:' + data.system + '%"></div></div></div>' +
+      '</div>' +
+      '<ul class="mb-2">' + featuresHtml + '</ul>' +
+      '<p class="text-sm text-indigo-600 font-semibold">' + data.desc + '</p>';
+    updateSimulation();
+  } catch(e) { console.error('selectLevel error:', e); }
+}
+
+function updateSimulation() {
+  try {
+    var speedSlider = document.getElementById('speedSlider');
+    var distSlider = document.getElementById('distSlider');
+    var speedDisplay = document.getElementById('speedDisplay');
+    var distDisplay = document.getElementById('distDisplay');
+    var feedback = document.getElementById('simFeedback');
+    if (!speedSlider || !distSlider || !feedback) return;
+    var speed = parseInt(speedSlider.value) || 60;
+    var dist = parseInt(distSlider.value) || 50;
+    if (speedDisplay) speedDisplay.textContent = speed + ' km/h';
+    if (distDisplay) distDisplay.textContent = dist + ' m';
+    var data = levelData[currentLevel - 1];
+    if (!data) return;
+    var msgs = [];
+    var alertLevel = 'normal';
+    if (dist < 15) { msgs.push('⚠️ 前车距离过近！'); alertLevel = 'danger'; }
+    if (speed > 100) { msgs.push('🚨 车速过高！'); alertLevel = 'danger'; }
+    if (currentLevel >= 2 && dist < 20) msgs.push('🤖 L2 自适应巡航：自动减速中...');
+    if (currentLevel >= 2 && speed > 80) msgs.push('🤖 L2 车道保持：监控车道偏离...');
+    if (currentLevel >= 3 && speed <= 60) msgs.push('✅ L3 条件满足：可开启自动驾驶');
+    if (currentLevel >= 3 && speed > 60) msgs.push('❌ L3 条件不满足：车速超过60km/h限制');
+    if (currentLevel >= 4) msgs.push('🤖 L4 高度自动：系统全面接管驾驶');
+    if (currentLevel >= 5) msgs.push('🚀 L5 完全自动：无需任何人工干预');
+    if (msgs.length === 0) msgs.push('系统正常运行中...');
+    var color = alertLevel === 'danger' ? 'text-red-300' : 'text-green-300';
+    feedback.innerHTML = '<span class="pulse-dot"></span><span class="' + color + '">' + msgs.join(' | ') + '</span>';
+    // 移动小车
+    var car = document.getElementById('simCar');
+    if (car) {
+      var pos = Math.min(60, 10 + (speed / 120) * 50);
+      car.style.left = pos + '%';
+    }
+  } catch(e) { console.error('updateSimulation error:', e); }
+}
+
+function triggerScenario(type) {
+  try {
+    var feedback = document.getElementById('simFeedback');
+    if (!feedback) return;
+    var scenarios = {
+      rain: { msg: '🌧️ 下雨天场景：L3 自动驾驶已关闭（天气条件不满足）。L1/L2 辅助功能仍可使用，但需驾驶员格外注意！', color: 'text-blue-300' },
+      fatigue: { msg: '😴 疲劳驾驶检测：L2 车道保持辅助触发！检测到车道偏离，方向盘自动纠正，同时发出警报提醒驾驶员！', color: 'text-orange-300' },
+      emergency: { msg: '🚨 紧急制动！前方障碍物检测，自动紧急刹车系统（AEB）激活！车辆已安全停止。', color: 'text-red-300' }
+    };
+    var s = scenarios[type];
+    if (s) {
+      feedback.innerHTML = '<span class="pulse-dot"></span><span class="' + s.color + '">' + s.msg + '</span>';
+    }
+    // 动画效果
+    var car = document.getElementById('simCar');
+    if (car && type === 'emergency') {
+      car.style.left = '10%';
+    }
+  } catch(e) { console.error('triggerScenario error:', e); }
+}
+
+// ============================================================
+// Section 4: 推荐系统
+// ============================================================
+function toggleTag(el, type) {
+  try {
+    var isActive = el.classList.contains('ring-2');
+    if (isActive) {
+      el.classList.remove('ring-2', 'ring-indigo-400', 'font-bold');
+      if (type === 'music') {
+        selectedMusicTags = selectedMusicTags.filter(function(t) { return t !== el.textContent; });
+      } else {
+        selectedTimeTags = selectedTimeTags.filter(function(t) { return t !== el.textContent; });
+      }
+    } else {
+      el.classList.add('ring-2', 'ring-indigo-400', 'font-bold');
+      if (type === 'music') {
+        selectedMusicTags.push(el.textContent);
+      } else {
+        selectedTimeTags.push(el.textContent);
+      }
+    }
+    updateRecommend();
+  } catch(e) { console.error('toggleTag error:', e); }
+}
+
+var recommendData = {
+  '流行': ['🎵 周杰伦 - 稻香', '🎵 Taylor Swift - Shake It Off', '🎵 薛之谦 - 演员'],
+  '古风': ['🎵 河图 - 倾尽天下', '🎵 银临 - 锦鲤抄', '🎵 周深 - 大鱼'],
+  '摇滚': ['🎵 五月天 - 倔强', '🎵 Beyond - 海阔天空', '🎵 痛仰 - 公路之歌'],
+  '古典': ['🎵 贝多芬 - 月光奏鸣曲', '🎵 肖邦 - 夜曲', '🎵 德彪西 - 月光'],
+  '电子': ['🎵 Alan Walker - Faded', '🎵 Marshmello - Alone', '🎵 Avicii - Wake Me Up'],
+  '民谣': ['🎵 宋冬野 - 安和桥', '🎵 赵雷 - 成都', '🎵 陈鸿宇 - 理想三旬']
+};
+
+function updateRecommend() {
+  try {
+    var result = document.getElementById('recommendResult');
+    if (!result) return;
+    var listenTime = document.getElementById('listenTime');
+    var likeFreq = document.getElementById('likeFreq');
+    var listenTimeVal = document.getElementById('listenTimeVal');
+    var likeFreqVal = document.getElementById('likeFreqVal');
+    var timeLabels = ['几乎不听', '约1小时', '约2小时', '约3小时', '约4小时', '5小时以上'];
+    var likeLabels = ['很少点赞', '偶尔点赞', '经常点赞', '几乎都点赞'];
+    if (listenTime && listenTimeVal) listenTimeVal.textContent = timeLabels[parseInt(listenTime.value)] || '1小时';
+    if (likeFreq && likeFreqVal) likeFreqVal.textContent = likeLabels[parseInt(likeFreq.value)] || '偶尔';
+    if (selectedMusicTags.length === 0) {
+      result.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">请先选择你的音乐偏好标签...</p>';
+      return;
+    }
+    var songs = [];
+    selectedMusicTags.forEach(function(tag) {
+      if (recommendData[tag]) {
+        songs = songs.concat(recommendData[tag].slice(0, 2));
+      }
+    });
+    // 根据活跃时间添加场景推荐
+    var sceneRec = '';
+    if (selectedTimeTags.indexOf('早晨') !== -1) sceneRec += '<span class="tag bg-yellow-100 text-yellow-700">☀️ 早晨活力歌单</span>';
+    if (selectedTimeTags.indexOf('晚上') !== -1) sceneRec += '<span class="tag bg-indigo-100 text-indigo-700">🌙 夜晚放松歌单</span>';
+    if (selectedTimeTags.indexOf('深夜') !== -1) sceneRec += '<span class="tag bg-gray-100 text-gray-700">🌃 深夜治愈歌单</span>';
+    var songsHtml = songs.slice(0, 6).map(function(s) {
+      return '<div class="flex items-center gap-2 py-1.5 border-b border-gray-50 last:border-0">' +
+        '<span class="text-indigo-400">▶</span>' +
+        '<span class="text-sm text-gray-700">' + s + '</span>' +
+        '</div>';
+    }).join('');
+    result.innerHTML = '<div class="mb-3">' +
+      '<p class="text-xs text-gray-500 mb-1">根据你的偏好（' + selectedMusicTags.join('、') + '）推荐：</p>' +
+      songsHtml + '</div>' +
+      (sceneRec ? '<div class="mt-2"><p class="text-xs text-gray-500 mb-1">场景歌单：</p>' + sceneRec + '</div>' : '') +
+      '<p class="text-xs text-indigo-500 mt-3">💡 推荐系统会持续学习你的行为，推荐越来越精准！</p>';
+  } catch(e) { console.error('updateRecommend error:', e); }
+}
+
+function initRecommendChart() {
+  try {
+    var canvas = document.getElementById('recommendChart');
+    if (!canvas) return;
+    if (recommendChartInstance) { recommendChartInstance.destroy(); recommendChartInstance = null; }
+    var ctx = canvas.getContext('2d');
+    recommendChartInstance = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: ['浏览记录', '点赞行为', '搜索历史', '购买记录', '时间规律', '社交关系'],
+        datasets: [
+          {
+            label: '小美的数据权重',
+            data: [85, 70, 60, 40, 75, 50],
+            backgroundColor: 'rgba(236,72,153,0.2)',
+            borderColor: '#ec4899',
+            pointBackgroundColor: '#ec4899'
+          },
+          {
+            label: '妈妈的数据权重',
+            data: [60, 50, 80, 90, 65, 70],
+            backgroundColor: 'rgba(99,102,241,0.2)',
+            borderColor: '#6366f1',
+            pointBackgroundColor: '#6366f1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' } },
+        scales: { r: { beginAtZero: true, max: 100 } }
+      }
+    });
+  } catch(e) { console.error('initRecommendChart error:', e); }
+}
+
+// ============================================================
+// Section 5: 生成式AI
+// ============================================================
+// ============================================================
+// Summary Chart
+// ============================================================
+function initSummaryChart() {
+  try {
+    var canvas = document.getElementById('summaryChart');
+    if (!canvas) return;
+    if (summaryChartInstance) { summaryChartInstance.destroy(); summaryChartInstance = null; }
+    var ctx = canvas.getContext('2d');
+    summaryChartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['智能家居', '自动驾驶', '推荐系统', '生成式AI'],
+        datasets: [{
+          data: [25, 30, 25, 20],
+          backgroundColor: ['#f59e0b', '#0ea5e9', '#ec4899', '#8b5cf6'],
+          borderWidth: 3,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right' },
+          title: { display: true, text: '本章 AI 应用领域分布' }
+        }
+      }
+    });
+  } catch(e) { console.error('initSummaryChart error:', e); }
+}
+
+// ============================================================
+// 初始化
+// ============================================================
+window.addEventListener('load', function() {
+  try {
+    initNavDots();
+    selectLevel(1, document.querySelector('.tab-btn'));
+    // 延迟初始化图表，确保 DOM 就绪
+    setTimeout(function() {
+      initRecommendChart();
+      initSummaryChart();
+    }, 200);
+  } catch(e) { console.error('init error:', e); }
+});
+
+// 窗口大小变化时重绘图表
+window.addEventListener('resize', function() {
+  try {
+    if (recommendChartInstance) recommendChartInstance.resize();
+    if (summaryChartInstance) summaryChartInstance.resize();
+  } catch(e) { console.error('resize error:', e); }
+});
+</script>
+<script>window.parent.postMessage({ action: "ready" }, "*"); 
+ 
+window.console = new Proxy(console, {
+  get(target, prop) {
+    if (['log', 'warn', 'error'].includes(prop)) {
+      return new Proxy(target[prop], {
+        apply(fn, thisArg, args) {
+          fn.apply(thisArg, args);
+          window.parent.postMessage({ action: 'console', 
+            type: prop, 
+            args: args.map((arg) => {
+              try {
+                return JSON.stringify(arg).replace(/^["']|["']$/g, '');
+              } catch (e) {
+                return arg;
+              }
+            }) 
+          }, '*');
+        }
+      });
+    }
+    return target[prop];
+  }
+});
+</script></body>
+</html>

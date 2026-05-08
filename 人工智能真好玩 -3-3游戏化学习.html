@@ -1,0 +1,1722 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>神经网络——聪明的人工智能大脑</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* Tabs */
+  .tab-btn { transition: all 0.3s; border-bottom: 3px solid transparent; }
+  .tab-btn.active { border-bottom-color: #60a5fa; color: #60a5fa; background: rgba(96,165,250,0.1); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Neural Network Canvas */
+  #nn-canvas { background: #1e293b; border-radius: 12px; }
+
+  /* Neuron nodes */
+  .neuron { cursor: pointer; transition: all 0.3s; }
+
+  /* Sliders */
+  input[type=range] { -webkit-appearance: none; height: 6px; border-radius: 3px; background: #334155; outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #60a5fa; cursor: pointer; }
+
+  /* Cards */
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+  .highlight-card { background: linear-gradient(135deg, #1e3a5f, #1e293b); border: 1px solid #3b82f6; border-radius: 12px; }
+
+  /* Toggle switch */
+  .toggle-btn { transition: all 0.2s; cursor: pointer; user-select: none; }
+  .toggle-btn.on { background: #22c55e; }
+  .toggle-btn.off { background: #475569; }
+
+  /* Animated pulse */
+  @keyframes pulse-glow { 0%,100%{box-shadow:0 0 6px rgba(96,165,250,0.4);} 50%{box-shadow:0 0 18px rgba(96,165,250,0.9);} }
+  .pulse-glow { animation: pulse-glow 1.5s infinite; }
+
+  @keyframes signal-flow { 0%{stroke-dashoffset:100;} 100%{stroke-dashoffset:0;} }
+  .signal-line { stroke-dasharray: 8 4; animation: signal-flow 1s linear infinite; }
+  .signal-line-active { stroke: #60a5fa; }
+  .signal-line-inactive { stroke: #334155; }
+
+  /* Backprop animation */
+  @keyframes backprop { 0%{stroke-dashoffset:0;} 100%{stroke-dashoffset:100;} }
+  .backprop-line { stroke-dasharray: 8 4; animation: backprop 1s linear infinite; stroke: #f97316; }
+
+  /* Table */
+  table { border-collapse: collapse; width: 100%; }
+  th { background: #1e3a5f; color: #93c5fd; padding: 8px 12px; text-align: center; font-size: 13px; }
+  td { padding: 7px 12px; text-align: center; font-size: 13px; border-bottom: 1px solid #1e293b; }
+  tr:nth-child(even) td { background: #1a2744; }
+  tr.highlight-row td { background: #1e3a5f; color: #fbbf24; font-weight: bold; }
+
+  /* Badge */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: bold; }
+  .badge-blue { background: #1e3a5f; color: #60a5fa; }
+  .badge-green { background: #14532d; color: #4ade80; }
+  .badge-orange { background: #431407; color: #fb923c; }
+  .badge-purple { background: #2e1065; color: #c084fc; }
+
+  /* Progress bar */
+  .progress-bar { height: 20px; border-radius: 10px; background: #1e293b; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease; }
+
+  /* Tooltip */
+  .tooltip { position: relative; }
+  .tooltip:hover .tooltip-text { display: block; }
+  .tooltip-text { display: none; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background: #0f172a; border: 1px solid #3b82f6; color: #e2e8f0; padding: 6px 10px; border-radius: 8px; font-size: 12px; white-space: nowrap; z-index: 100; }
+
+  /* Section headers */
+  .section-title { font-size: 1.1rem; font-weight: bold; color: #93c5fd; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 8px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .grid-cols-responsive { grid-template-columns: 1fr !important; }
+  }
+
+  /* Backprop step */
+  .step-card { border-left: 4px solid #3b82f6; background: #1e293b; border-radius: 0 8px 8px 0; padding: 12px 16px; margin-bottom: 10px; }
+  .step-card.active-step { border-left-color: #f97316; background: #1c1917; }
+
+  /* Weight badge on edge */
+  .weight-label { font-size: 11px; fill: #94a3b8; }
+  .weight-label-active { fill: #fbbf24; font-weight: bold; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Header -->
+<div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 px-6 py-8 text-center">
+  <div class="text-4xl mb-2">🧠</div>
+  <h1 class="text-2xl font-bold text-white mb-1">神经网络——聪明的人工智能大脑</h1>
+  <p class="text-blue-200 text-sm">从"打伞决策"到"反向传播"，一步步探索神经网络的奥秘</p>
+  <div class="mt-4 flex justify-center gap-3 flex-wrap">
+    <span class="badge badge-blue">🎮 可交互模拟</span>
+    <span class="badge badge-green">📊 实时可视化</span>
+    <span class="badge badge-orange">🔬 自由探索</span>
+    <span class="badge badge-purple">🤔 深度思考</span>
+  </div>
+</div>
+
+<!-- Hook Question -->
+<div class="max-w-4xl mx-auto px-4 mt-6">
+  <div class="highlight-card p-5 text-center">
+    <div class="text-2xl mb-2">🤔</div>
+    <p class="text-blue-200 font-semibold text-lg">探索问题：</p>
+    <p class="text-white mt-1">如果 AI 从来没有被告知"下雨要打伞"，它能自己学会这个规则吗？</p>
+    <p class="text-slate-400 text-sm mt-2">通过下面的模拟，你将亲手"训练"一个神经网络，看看它是如何从错误中学习的！</p>
+  </div>
+</div>
+
+<!-- Navigation Tabs -->
+<div class="max-w-5xl mx-auto px-4 mt-6">
+  <div class="flex gap-1 bg-slate-800 rounded-xl p-1 flex-wrap">
+    <button class="tab-btn active flex-1 py-2 px-3 rounded-lg text-sm font-medium text-slate-300 min-w-max" onclick="switchTab('tab1')">
+      🌧️ 第一关：打伞决策
+    </button>
+    <button class="tab-btn flex-1 py-2 px-3 rounded-lg text-sm font-medium text-slate-300 min-w-max" onclick="switchTab('tab2')">
+      🍰 第二关：权重与阈值
+    </button>
+    <button class="tab-btn flex-1 py-2 px-3 rounded-lg text-sm font-medium text-slate-300 min-w-max" onclick="switchTab('tab3')">
+      🔄 第三关：反向传播
+    </button>
+    <button class="tab-btn flex-1 py-2 px-3 rounded-lg text-sm font-medium text-slate-300 min-w-max" onclick="switchTab('tab4')">
+      🏫 第四关：自由设计
+    </button>
+  </div>
+</div>
+
+<!-- ===== TAB 1: 打伞决策 ===== -->
+<div id="tab1" class="tab-content active max-w-5xl mx-auto px-4 mt-6 pb-10">
+  <div class="section-title">🌧️ 最简单的神经网络：打伞决策</div>
+  <p class="text-slate-400 text-sm mb-4">拨动开关，观察神经网络如何根据天气条件决定是否打伞。注意信号如何从输入层流向输出层！</p>
+
+  <div class="grid gap-4" style="grid-template-columns: 1fr 1fr;">
+    <!-- Controls -->
+    <div class="card p-5">
+      <div class="section-title">🎛️ 输入条件</div>
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="font-semibold text-white">🌧️ 下雨 (X₁)</div>
+            <div class="text-slate-400 text-xs">是否正在下雨？</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span id="rain-val" class="text-slate-400 text-sm">0 (No)</span>
+            <div id="rain-toggle" class="toggle-btn off w-14 h-7 rounded-full flex items-center px-1" onclick="toggleInput('rain')">
+              <div id="rain-knob" class="w-5 h-5 bg-white rounded-full transition-all duration-200"></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="font-semibold text-white">❄️ 下雪 (X₂)</div>
+            <div class="text-slate-400 text-xs">是否正在下雪？</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span id="snow-val" class="text-slate-400 text-sm">0 (No)</span>
+            <div id="snow-toggle" class="toggle-btn off w-14 h-7 rounded-full flex items-center px-1" onclick="toggleInput('snow')">
+              <div id="snow-knob" class="w-5 h-5 bg-white rounded-full transition-all duration-200"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calculation steps -->
+      <div class="mt-5 bg-slate-900 rounded-lg p-4">
+        <div class="section-title text-sm">📐 隐藏层运算过程</div>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-slate-400">X₁ + X₂ =</span>
+            <span id="calc-sum" class="text-yellow-400 font-bold">0 + 0 = 0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">判断条件：总和 > 0？</span>
+            <span id="calc-judge" class="font-bold text-red-400">不成立</span>
+          </div>
+          <div class="flex justify-between border-t border-slate-700 pt-2 mt-2">
+            <span class="text-slate-400">输出结果：</span>
+            <span id="calc-output" class="font-bold text-2xl">☀️ 不打伞</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Truth table -->
+      <div class="mt-4">
+        <div class="section-title text-sm">📋 全部可能性一览</div>
+        <table class="rounded-lg overflow-hidden">
+          <thead><tr><th>下雨X₁</th><th>下雪X₂</th><th>总和</th><th>>0?</th><th>输出</th></tr></thead>
+          <tbody id="truth-table-1">
+            <tr id="row-00"><td>0</td><td>0</td><td>0</td><td>❌</td><td>☀️ 不打伞</td></tr>
+            <tr id="row-10"><td>1</td><td>0</td><td>1</td><td>✅</td><td>☂️ 打伞</td></tr>
+            <tr id="row-01"><td>0</td><td>1</td><td>1</td><td>✅</td><td>☂️ 打伞</td></tr>
+            <tr id="row-11"><td>1</td><td>1</td><td>2</td><td>✅</td><td>☂️ 打伞</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Neural Network Visualization -->
+    <div class="card p-4">
+      <div class="section-title">🕸️ 神经网络结构图</div>
+      <svg id="nn1-svg" width="100%" viewBox="0 0 320 280" style="min-height:260px;">
+        <!-- Layer labels -->
+        <text x="50" y="20" text-anchor="middle" fill="#64748b" font-size="11">输入层</text>
+        <text x="160" y="20" text-anchor="middle" fill="#64748b" font-size="11">隐藏层</text>
+        <text x="270" y="20" text-anchor="middle" fill="#64748b" font-size="11">输出层</text>
+
+        <!-- Connections input->hidden -->
+        <line id="e-r-h" x1="80" y1="100" x2="140" y2="140" stroke="#334155" stroke-width="2" class="signal-line"/>
+        <line id="e-s-h" x1="80" y1="180" x2="140" y2="140" stroke="#334155" stroke-width="2" class="signal-line"/>
+        <!-- Connection hidden->output -->
+        <line id="e-h-o" x1="180" y1="140" x2="240" y2="140" stroke="#334155" stroke-width="2" class="signal-line"/>
+
+        <!-- Edge labels -->
+        <text x="105" y="112" fill="#64748b" font-size="10" text-anchor="middle">权重=1</text>
+        <text x="105" y="175" fill="#64748b" font-size="10" text-anchor="middle">权重=1</text>
+
+        <!-- Input neurons -->
+        <circle id="n-rain" cx="50" cy="100" r="28" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+        <text x="50" y="96" text-anchor="middle" fill="#93c5fd" font-size="11" font-weight="bold">🌧️</text>
+        <text x="50" y="110" text-anchor="middle" fill="#93c5fd" font-size="10">X₁=0</text>
+
+        <circle id="n-snow" cx="50" cy="180" r="28" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+        <text x="50" y="176" text-anchor="middle" fill="#93c5fd" font-size="11" font-weight="bold">❄️</text>
+        <text x="50" y="190" text-anchor="middle" fill="#93c5fd" font-size="10">X₂=0</text>
+
+        <!-- Hidden neuron -->
+        <circle id="n-hidden" cx="160" cy="140" r="32" fill="#1e293b" stroke="#6366f1" stroke-width="2"/>
+        <text x="160" y="135" text-anchor="middle" fill="#a5b4fc" font-size="10">Σ=0</text>
+        <text x="160" y="150" text-anchor="middle" fill="#a5b4fc" font-size="10">>0?</text>
+
+        <!-- Output neuron -->
+        <circle id="n-output" cx="270" cy="140" r="32" fill="#1e293b" stroke="#6366f1" stroke-width="2"/>
+        <text id="n-output-emoji" x="270" y="135" text-anchor="middle" font-size="16">☀️</text>
+        <text id="n-output-text" x="270" y="155" text-anchor="middle" fill="#94a3b8" font-size="9">不打伞</text>
+
+        <!-- Threshold label -->
+        <text x="160" y="195" text-anchor="middle" fill="#64748b" font-size="9">阈值 θ=0</text>
+
+        <!-- Signal particles (animated dots) -->
+        <circle id="p1" cx="50" cy="100" r="4" fill="#60a5fa" opacity="0"/>
+        <circle id="p2" cx="50" cy="180" r="4" fill="#60a5fa" opacity="0"/>
+      </svg>
+
+      <!-- Concept explanation -->
+      <div class="bg-slate-900 rounded-lg p-3 mt-2 text-xs text-slate-400 space-y-1">
+        <div>🔵 <span class="text-blue-300">输入层</span>：接收外部信号（下雨/下雪）</div>
+        <div>🟣 <span class="text-purple-300">隐藏层</span>：对信号进行加权求和并判断</div>
+        <div>⚪ <span class="text-slate-300">输出层</span>：给出最终决策结果</div>
+        <div>➡️ <span class="text-yellow-300">连线</span>：信号传递路径（权重=1表示同等重要）</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insight box -->
+  <div class="highlight-card p-4 mt-4">
+    <div class="flex gap-3 items-start">
+      <div class="text-2xl">💡</div>
+      <div>
+        <div class="font-bold text-blue-300 mb-1">关键洞察</div>
+        <p class="text-slate-300 text-sm">这个神经网络实现了一个简单的"OR逻辑"：只要有任何一种恶劣天气（下雨<strong>或</strong>下雪），就打伞。隐藏层的运算 X₁+X₂>0 就是这个逻辑的数学表达。</p>
+        <p class="text-slate-400 text-sm mt-1">🤔 <em>想一想：如果要实现"下雨<strong>且</strong>下雪才打伞"，判断条件应该改成什么？</em></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: 权重与阈值 ===== -->
+<div id="tab2" class="tab-content max-w-5xl mx-auto px-4 mt-6 pb-10">
+  <div class="section-title">🍰 权重与阈值：甜点决策网络</div>
+  <p class="text-slate-400 text-sm mb-4">调整权重和阈值，观察神经网络如何做出更复杂的决策。不同的权重代表不同条件的"重要程度"！</p>
+
+  <div class="grid gap-4" style="grid-template-columns: 1fr 1fr;">
+    <!-- Left: Controls -->
+    <div class="space-y-4">
+      <!-- Input toggles -->
+      <div class="card p-4">
+        <div class="section-title text-sm">🎛️ 输入条件（今天的情况）</div>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <div><div class="text-white text-sm font-medium">🎂 甜点是蛋糕 (X₁)</div></div>
+            <div class="flex items-center gap-2">
+              <span id="d1-val" class="text-slate-400 text-xs w-12 text-right">0(No)</span>
+              <div id="d1-toggle" class="toggle-btn off w-12 h-6 rounded-full flex items-center px-1" onclick="toggleDessert(1)">
+                <div id="d1-knob" class="w-4 h-4 bg-white rounded-full transition-all duration-200"></div>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div><div class="text-white text-sm font-medium">🍓 甜点是水果 (X₂)</div></div>
+            <div class="flex items-center gap-2">
+              <span id="d2-val" class="text-slate-400 text-xs w-12 text-right">0(No)</span>
+              <div id="d2-toggle" class="toggle-btn off w-12 h-6 rounded-full flex items-center px-1" onclick="toggleDessert(2)">
+                <div id="d2-knob" class="w-4 h-4 bg-white rounded-full transition-all duration-200"></div>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div><div class="text-white text-sm font-medium">🥦 吃了蔬菜 (X₃)</div></div>
+            <div class="flex items-center gap-2">
+              <span id="d3-val" class="text-slate-400 text-xs w-12 text-right">0(No)</span>
+              <div id="d3-toggle" class="toggle-btn off w-12 h-6 rounded-full flex items-center px-1" onclick="toggleDessert(3)">
+                <div id="d3-knob" class="w-4 h-4 bg-white rounded-full transition-all duration-200"></div>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div><div class="text-white text-sm font-medium">🏃 适量运动 (X₄)</div></div>
+            <div class="flex items-center gap-2">
+              <span id="d4-val" class="text-slate-400 text-xs w-12 text-right">0(No)</span>
+              <div id="d4-toggle" class="toggle-btn off w-12 h-6 rounded-full flex items-center px-1" onclick="toggleDessert(4)">
+                <div id="d4-knob" class="w-4 h-4 bg-white rounded-full transition-all duration-200"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weight & Threshold sliders -->
+      <div class="card p-4">
+        <div class="section-title text-sm">⚖️ 调整权重与阈值</div>
+        <div class="space-y-3">
+          <div>
+            <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">W₁（蛋糕权重）</span><span id="w1-display" class="text-yellow-400 font-bold">1</span></div>
+            <input type="range" id="w1-slider" min="0" max="5" step="1" value="1" class="w-full" oninput="updateDessertCalc()">
+          </div>
+          <div>
+            <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">W₂（水果权重）</span><span id="w2-display" class="text-yellow-400 font-bold">4</span></div>
+            <input type="range" id="w2-slider" min="0" max="5" step="1" value="4" class="w-full" oninput="updateDessertCalc()">
+          </div>
+          <div>
+            <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">W₃（蔬菜权重）</span><span id="w3-display" class="text-yellow-400 font-bold">2</span></div>
+            <input type="range" id="w3-slider" min="0" max="5" step="1" value="2" class="w-full" oninput="updateDessertCalc()">
+          </div>
+          <div>
+            <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">W₄（运动权重）</span><span id="w4-display" class="text-yellow-400 font-bold">2</span></div>
+            <input type="range" id="w4-slider" min="0" max="5" step="1" value="2" class="w-full" oninput="updateDessertCalc()">
+          </div>
+          <div class="border-t border-slate-700 pt-3">
+            <div class="flex justify-between text-xs mb-1"><span class="text-orange-400 font-bold">θ（阈值）</span><span id="thresh-display" class="text-orange-400 font-bold">3</span></div>
+            <input type="range" id="thresh-slider" min="0" max="8" step="1" value="3" class="w-full" oninput="updateDessertCalc()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Visualization & Result -->
+    <div class="space-y-4">
+      <!-- Result card -->
+      <div class="card p-4">
+        <div class="section-title text-sm">📐 运算过程</div>
+        <div class="bg-slate-900 rounded-lg p-3 text-sm space-y-2">
+          <div class="text-slate-400">不等式：</div>
+          <div id="dessert-formula" class="text-blue-300 font-mono text-xs break-all">1×0 + 4×0 + 2×0 + 2×0 = 0</div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">总和：</span>
+            <span id="dessert-sum" class="text-yellow-400 font-bold">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">判断（总和 > 阈值θ）：</span>
+            <span id="dessert-judge" class="font-bold text-red-400">不成立</span>
+          </div>
+          <div class="border-t border-slate-700 pt-2 flex justify-between items-center">
+            <span class="text-slate-400">结论：</span>
+            <span id="dessert-result" class="text-2xl font-bold">😢 不能吃甜点</span>
+          </div>
+        </div>
+
+        <!-- Progress visualization -->
+        <div class="mt-3">
+          <div class="flex justify-between text-xs text-slate-400 mb-1">
+            <span>信号强度</span>
+            <span id="signal-ratio">0 / 阈值 3</span>
+          </div>
+          <div class="progress-bar">
+            <div id="signal-bar" class="progress-fill bg-blue-500" style="width:0%"></div>
+          </div>
+          <div class="flex justify-between text-xs mt-1">
+            <span class="text-slate-500">0</span>
+            <span id="thresh-marker" class="text-orange-400">▲ θ=3</span>
+            <span class="text-slate-500">8</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scenario checker -->
+      <div class="card p-4">
+        <div class="section-title text-sm">✅ 验证四种情况</div>
+        <div class="space-y-2 text-xs" id="scenario-checks">
+          <!-- filled by JS -->
+        </div>
+        <div class="mt-3 text-xs text-slate-500">💡 绿色✅表示当前权重/阈值设置能正确处理该情况</div>
+      </div>
+
+      <!-- Neural network mini viz -->
+      <div class="card p-3">
+        <svg width="100%" viewBox="0 0 300 200" style="min-height:180px;">
+          <text x="40" y="15" text-anchor="middle" fill="#64748b" font-size="9">输入层</text>
+          <text x="160" y="15" text-anchor="middle" fill="#64748b" font-size="9">隐藏层</text>
+          <text x="265" y="15" text-anchor="middle" fill="#64748b" font-size="9">输出层</text>
+
+          <!-- Connections -->
+          <line x1="65" y1="50" x2="135" y2="100" id="dw1-line" stroke="#334155" stroke-width="1.5"/>
+          <line x1="65" y1="83" x2="135" y2="100" id="dw2-line" stroke="#334155" stroke-width="1.5"/>
+          <line x1="65" y1="117" x2="135" y2="100" id="dw3-line" stroke="#334155" stroke-width="1.5"/>
+          <line x1="65" y1="150" x2="135" y2="100" id="dw4-line" stroke="#334155" stroke-width="1.5"/>
+          <line x1="185" y1="100" x2="240" y2="100" id="dout-line" stroke="#334155" stroke-width="2"/>
+
+          <!-- Weight labels on edges -->
+          <text id="dw1-lbl" x="95" y="68" fill="#64748b" font-size="8" text-anchor="middle">W₁=1</text>
+          <text id="dw2-lbl" x="95" y="87" fill="#64748b" font-size="8" text-anchor="middle">W₂=4</text>
+          <text id="dw3-lbl" x="95" y="110" fill="#64748b" font-size="8" text-anchor="middle">W₃=2</text>
+          <text id="dw4-lbl" x="95" y="133" fill="#64748b" font-size="8" text-anchor="middle">W₄=2</text>
+
+          <!-- Input nodes -->
+          <circle id="dn1" cx="40" cy="50" r="20" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="40" y="47" text-anchor="middle" fill="#93c5fd" font-size="9">🎂</text>
+          <text id="dn1-val" x="40" y="59" text-anchor="middle" fill="#93c5fd" font-size="8">X₁=0</text>
+
+          <circle id="dn2" cx="40" cy="83" r="20" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="40" y="80" text-anchor="middle" fill="#93c5fd" font-size="9">🍓</text>
+          <text id="dn2-val" x="40" y="92" text-anchor="middle" fill="#93c5fd" font-size="8">X₂=0</text>
+
+          <circle id="dn3" cx="40" cy="117" r="20" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="40" y="114" text-anchor="middle" fill="#93c5fd" font-size="9">🥦</text>
+          <text id="dn3-val" x="40" y="126" text-anchor="middle" fill="#93c5fd" font-size="8">X₃=0</text>
+
+          <circle id="dn4" cx="40" cy="150" r="20" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="40" y="147" text-anchor="middle" fill="#93c5fd" font-size="9">🏃</text>
+          <text id="dn4-val" x="40" y="159" text-anchor="middle" fill="#93c5fd" font-size="8">X₄=0</text>
+
+          <!-- Hidden node -->
+          <circle id="dnh" cx="160" cy="100" r="28" fill="#1e293b" stroke="#6366f1" stroke-width="2"/>
+          <text id="dnh-sum" x="160" y="97" text-anchor="middle" fill="#a5b4fc" font-size="9">Σ=0</text>
+          <text id="dnh-thresh" x="160" y="110" text-anchor="middle" fill="#a5b4fc" font-size="8">>θ?</text>
+
+          <!-- Output node -->
+          <circle id="dno" cx="265" cy="100" r="24" fill="#1e293b" stroke="#6366f1" stroke-width="2"/>
+          <text id="dno-emoji" x="265" y="97" text-anchor="middle" font-size="14">😢</text>
+          <text id="dno-text" x="265" y="113" text-anchor="middle" fill="#94a3b8" font-size="7">不能吃</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insight -->
+  <div class="highlight-card p-4 mt-4">
+    <div class="flex gap-3 items-start">
+      <div class="text-2xl">💡</div>
+      <div>
+        <div class="font-bold text-blue-300 mb-1">权重 vs 阈值的直觉理解</div>
+        <p class="text-slate-300 text-sm"><strong class="text-yellow-300">权重</strong>就像"投票权"——权重越大，这个条件对结果的影响越大。水果权重=4，意味着"甜点是水果"这一条件的影响力是蛋糕的4倍。</p>
+        <p class="text-slate-300 text-sm mt-1"><strong class="text-orange-300">阈值</strong>就像"门槛"——只有总分超过门槛，神经元才会"激活"并输出1。</p>
+        <p class="text-slate-400 text-sm mt-1">🤔 <em>试试把水果权重调到5，阈值调到4，看看结果有什么变化？</em></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: 反向传播 ===== -->
+<div id="tab3" class="tab-content max-w-5xl mx-auto px-4 mt-6 pb-10">
+  <div class="section-title">🔄 反向传播：AI如何从错误中学习</div>
+  <p class="text-slate-400 text-sm mb-4">模拟一个问答机器人的训练过程。观察AI如何通过"猜测→计算误差→调整权重"来不断改进！</p>
+
+  <!-- Training scenario selector -->
+  <div class="card p-4 mb-4">
+    <div class="section-title text-sm">📚 选择训练样本</div>
+    <div class="flex gap-3 flex-wrap">
+      <button onclick="selectTrainSample(0)" id="sample-btn-0" class="px-4 py-2 rounded-lg bg-blue-800 text-blue-200 text-sm font-medium border border-blue-600">
+        🍖 "它平时吃什么？"（食物类）
+      </button>
+      <button onclick="selectTrainSample(1)" id="sample-btn-1" class="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 text-sm font-medium border border-slate-600">
+        🌿 "在草原常见吗？"（栖息地类）
+      </button>
+      <button onclick="selectTrainSample(2)" id="sample-btn-2" class="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 text-sm font-medium border border-slate-600">
+        ⏳ "它能活多久？"（寿命类）
+      </button>
+    </div>
+  </div>
+
+  <div class="grid gap-4" style="grid-template-columns: 1fr 1fr;">
+    <!-- Left: Step-by-step -->
+    <div class="space-y-3">
+      <div class="section-title text-sm">📋 训练步骤</div>
+
+      <div id="bp-step-1" class="step-card active-step">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="badge badge-orange">步骤 1</span>
+          <span class="text-white font-medium text-sm">随机初始化权重，进行预测</span>
+        </div>
+        <div class="text-slate-400 text-xs">AI随机猜测一个运算方式，得到初始预测结果（通常是错的）</div>
+        <div class="mt-2 bg-slate-900 rounded p-2 text-xs">
+          <div class="text-slate-400">当前问题：<span id="bp-question" class="text-blue-300">"它平时吃什么？"</span></div>
+          <div class="text-slate-400 mt-1">正确答案：<span id="bp-correct" class="text-green-400">食物类</span></div>
+        </div>
+      </div>
+
+      <div id="bp-step-2" class="step-card">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="badge badge-blue">步骤 2</span>
+          <span class="text-white font-medium text-sm">计算预测误差</span>
+        </div>
+        <div class="text-slate-400 text-xs">比较预测结果与正确答案，计算每个输出的误差值</div>
+        <div class="mt-2" id="error-table-container">
+          <table class="rounded overflow-hidden text-xs">
+            <thead><tr><th>类别</th><th>预测%</th><th>正确%</th><th>误差</th></tr></thead>
+            <tbody id="error-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="bp-step-3" class="step-card">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="badge badge-purple">步骤 3</span>
+          <span class="text-white font-medium text-sm">误差反向传播，调整权重</span>
+        </div>
+        <div class="text-slate-400 text-xs">AI将误差信号反向传回隐藏层，自动微调每个连接的权重</div>
+        <div class="mt-2 bg-slate-900 rounded p-2 text-xs text-slate-400" id="bp-adjust-info">
+          等待计算误差...
+        </div>
+      </div>
+
+      <div id="bp-step-4" class="step-card">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="badge badge-green">步骤 4</span>
+          <span class="text-white font-medium text-sm">重复训练，误差逐渐减小</span>
+        </div>
+        <div class="text-slate-400 text-xs">换下一个训练样本，重复步骤1-3，直到所有样本都能正确预测</div>
+        <div class="mt-2">
+          <div class="text-xs text-slate-400 mb-1">训练轮次：<span id="train-epoch" class="text-blue-300">0</span> 轮</div>
+          <div class="progress-bar">
+            <div id="train-progress" class="progress-fill bg-green-500" style="width:0%"></div>
+          </div>
+          <div class="text-xs text-slate-500 mt-1">总体准确率：<span id="train-accuracy" class="text-green-400">0%</span></div>
+        </div>
+      </div>
+
+      <!-- Control buttons -->
+      <div class="flex gap-2 flex-wrap">
+        <button onclick="runBackpropStep()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors">
+          ▶ 执行下一步
+        </button>
+        <button onclick="runFullTraining()" class="px-4 py-2 bg-green-700 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors">
+          ⚡ 快速训练10轮
+        </button>
+        <button onclick="resetTraining()" class="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg text-sm font-medium transition-colors">
+          🔄 重置
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: Network visualization -->
+    <div class="space-y-4">
+      <div class="card p-3">
+        <div class="section-title text-sm">🕸️ 网络状态可视化</div>
+        <svg id="bp-svg" width="100%" viewBox="0 0 320 260" style="min-height:240px;">
+          <!-- Layer labels -->
+          <text x="40" y="15" text-anchor="middle" fill="#64748b" font-size="9">输入层</text>
+          <text x="160" y="15" text-anchor="middle" fill="#64748b" font-size="9">隐藏层</text>
+          <text x="280" y="15" text-anchor="middle" fill="#64748b" font-size="9">输出层</text>
+
+          <!-- Input to hidden connections (forward) -->
+          <line id="bp-e1" x1="65" y1="130" x2="130" y2="90" stroke="#334155" stroke-width="1.5"/>
+          <line id="bp-e2" x1="65" y1="130" x2="130" y2="130" stroke="#334155" stroke-width="1.5"/>
+          <line id="bp-e3" x1="65" y1="130" x2="130" y2="170" stroke="#334155" stroke-width="1.5"/>
+
+          <!-- Hidden to output connections -->
+          <line id="bp-h-food" x1="190" y1="90" x2="250" y2="70" stroke="#334155" stroke-width="1.5"/>
+          <line id="bp-h-habitat" x1="190" y1="130" x2="250" y2="130" stroke="#334155" stroke-width="1.5"/>
+          <line id="bp-h-life" x1="190" y1="170" x2="250" y2="190" stroke="#334155" stroke-width="1.5"/>
+
+          <!-- Input node -->
+          <circle cx="40" cy="130" r="24" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+          <text id="bp-input-text" x="40" y="127" text-anchor="middle" fill="#93c5fd" font-size="8">问题</text>
+          <text id="bp-input-sub" x="40" y="139" text-anchor="middle" fill="#93c5fd" font-size="7">输入</text>
+
+          <!-- Hidden nodes -->
+          <circle id="bp-h1" cx="160" cy="90" r="22" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="160" y="87" text-anchor="middle" fill="#a5b4fc" font-size="8">特征</text>
+          <text x="160" y="99" text-anchor="middle" fill="#a5b4fc" font-size="7">提取1</text>
+
+          <circle id="bp-h2" cx="160" cy="130" r="22" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="160" y="127" text-anchor="middle" fill="#a5b4fc" font-size="8">特征</text>
+          <text x="160" y="139" text-anchor="middle" fill="#a5b4fc" font-size="7">提取2</text>
+
+          <circle id="bp-h3" cx="160" cy="170" r="22" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="160" y="167" text-anchor="middle" fill="#a5b4fc" font-size="8">特征</text>
+          <text x="160" y="179" text-anchor="middle" fill="#a5b4fc" font-size="7">提取3</text>
+
+          <!-- Output nodes -->
+          <circle id="bp-o-food" cx="275" cy="70" r="22" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="275" y="67" text-anchor="middle" fill="#94a3b8" font-size="9">🍖</text>
+          <text id="bp-food-pct" x="275" y="80" text-anchor="middle" fill="#94a3b8" font-size="8">3%</text>
+
+          <circle id="bp-o-habitat" cx="275" cy="130" r="22" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="275" y="127" text-anchor="middle" fill="#94a3b8" font-size="9">🌿</text>
+          <text id="bp-habitat-pct" x="275" y="140" text-anchor="middle" fill="#94a3b8" font-size="8">67%</text>
+
+          <circle id="bp-o-life" cx="275" cy="190" r="22" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="275" y="187" text-anchor="middle" fill="#94a3b8" font-size="9">⏳</text>
+          <text id="bp-life-pct" x="275" y="200" text-anchor="middle" fill="#94a3b8" font-size="8">30%</text>
+
+          <!-- Backprop arrows (hidden by default) -->
+          <line id="bp-back1" x1="250" y1="70" x2="190" y2="90" stroke="#f97316" stroke-width="2" opacity="0" stroke-dasharray="5 3"/>
+          <line id="bp-back2" x1="250" y1="130" x2="190" y2="130" stroke="#f97316" stroke-width="2" opacity="0" stroke-dasharray="5 3"/>
+          <line id="bp-back3" x1="250" y1="190" x2="190" y2="170" stroke="#f97316" stroke-width="2" opacity="0" stroke-dasharray="5 3"/>
+          <line id="bp-back4" x1="130" y1="90" x2="65" y2="130" stroke="#f97316" stroke-width="2" opacity="0" stroke-dasharray="5 3"/>
+          <line id="bp-back5" x1="130" y1="130" x2="65" y2="130" stroke="#f97316" stroke-width="2" opacity="0" stroke-dasharray="5 3"/>
+          <line id="bp-back6" x1="130" y1="170" x2="65" y2="130" stroke="#f97316" stroke-width="2" opacity="0" stroke-dasharray="5 3"/>
+
+          <!-- Legend -->
+          <line x1="10" y1="245" x2="30" y2="245" stroke="#60a5fa" stroke-width="2"/>
+          <text x="35" y="249" fill="#64748b" font-size="8">正向传播</text>
+          <line x1="90" y1="245" x2="110" y2="245" stroke="#f97316" stroke-width="2" stroke-dasharray="4 2"/>
+          <text x="115" y="249" fill="#64748b" font-size="8">误差反向传播</text>
+        </svg>
+      </div>
+
+      <!-- Error trend chart -->
+      <div class="card p-4">
+        <div class="section-title text-sm">📉 误差变化趋势</div>
+        <div style="position:relative; min-height:140px; max-height:180px;">
+          <canvas id="error-chart" style="width:100%; height:140px;"></canvas>
+        </div>
+        <div class="text-xs text-slate-500 mt-1 text-center">随着训练轮次增加，误差逐渐减小 → AI越来越准确</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key insight -->
+  <div class="highlight-card p-4 mt-4">
+    <div class="flex gap-3 items-start">
+      <div class="text-2xl">🔑</div>
+      <div>
+        <div class="font-bold text-blue-300 mb-1">"授人以鱼不如授人以渔"</div>
+        <p class="text-slate-300 text-sm">AI工程师只规定了<strong class="text-yellow-300">运算的步骤和方法</strong>（反向传播算法），并没有具体给出每个权重和阈值的值。权重是AI通过大量训练<strong class="text-green-300">自己调整出来的</strong>！</p>
+        <p class="text-slate-300 text-sm mt-1">这就是为什么深度学习的隐藏层对专业研究人员来说也难以解释——里面有数百万个权重，都是AI自己"摸索"出来的。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 4: 自由设计 ===== -->
+<div id="tab4" class="tab-content max-w-5xl mx-auto px-4 mt-6 pb-10">
+  <div class="section-title">🏫 自由设计：科技特长班选拔神经网络</div>
+  <p class="text-slate-400 text-sm mb-4">根据练习5的要求，设计你自己的神经网络！调整权重和阈值，让网络能正确判断学生是否通过选拔。</p>
+
+  <!-- Problem statement -->
+  <div class="card p-4 mb-4 border-l-4 border-yellow-500">
+    <div class="section-title text-sm text-yellow-400">📋 题目要求</div>
+    <div class="text-slate-300 text-sm space-y-1">
+      <p>某学校科技特长班选拔规则：</p>
+      <ul class="list-disc list-inside text-slate-400 space-y-1 ml-2">
+        <li>数学成绩<strong class="text-white">最重要</strong>，语文次之，英语最弱</li>
+        <li>数学超过90分 + 语文超过85分 + 英语超过80分 → <span class="text-green-400">通过</span></li>
+        <li>数学超过90分，但语文或英语未达标 → <span class="text-red-400">不通过</span></li>
+        <li>数学未超过90分 → <span class="text-red-400">不通过</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid gap-4" style="grid-template-columns: 1fr 1fr;">
+    <!-- Left: Design panel -->
+    <div class="space-y-4">
+      <!-- Student input -->
+      <div class="card p-4">
+        <div class="section-title text-sm">👨‍🎓 输入学生成绩</div>
+        <div class="space-y-3">
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-white">📐 数学成绩</span>
+              <span id="math-score-display" class="text-yellow-400 font-bold">85分</span>
+            </div>
+            <input type="range" id="math-score" min="0" max="100" step="5" value="85" class="w-full" oninput="updateSchoolCalc()">
+            <div class="flex justify-between text-xs text-slate-500 mt-1"><span>0</span><span class="text-orange-400">90↑通过线</span><span>100</span></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-white">📖 语文成绩</span>
+              <span id="chinese-score-display" class="text-yellow-400 font-bold">80分</span>
+            </div>
+            <input type="range" id="chinese-score" min="0" max="100" step="5" value="80" class="w-full" oninput="updateSchoolCalc()">
+            <div class="flex justify-between text-xs text-slate-500 mt-1"><span>0</span><span class="text-orange-400">85↑通过线</span><span>100</span></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-white">🔤 英语成绩</span>
+              <span id="english-score-display" class="text-yellow-400 font-bold">75分</span>
+            </div>
+            <input type="range" id="english-score" min="0" max="100" step="5" value="75" class="w-full" oninput="updateSchoolCalc()">
+            <div class="flex justify-between text-xs text-slate-500 mt-1"><span>0</span><span class="text-orange-400">80↑通过线</span><span>100</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weight design -->
+      <div class="card p-4">
+        <div class="section-title text-sm">⚖️ 设计你的权重与阈值</div>
+        <div class="space-y-3">
+          <div>
+            <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">W₁（数学权重）</span><span id="sw1-display" class="text-yellow-400 font-bold">3</span></div>
+            <input type="range" id="sw1" min="1" max="6" step="1" value="3" class="w-full" oninput="updateSchoolCalc()">
+          </div>
+          <div>
+            <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">W₂（语文权重）</span><span id="sw2-display" class="text-yellow-400 font-bold">1</span></div>
+            <input type="range" id="sw2" min="1" max="6" step="1" value="1" class="w-full" oninput="updateSchoolCalc()">
+          </div>
+          <div>
+            <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">W₃（英语权重）</span><span id="sw3-display" class="text-yellow-400 font-bold">1</span></div>
+            <input type="range" id="sw3" min="1" max="6" step="1" value="1" class="w-full" oninput="updateSchoolCalc()">
+          </div>
+          <div class="border-t border-slate-700 pt-3">
+            <div class="flex justify-between text-xs mb-1"><span class="text-orange-400 font-bold">θ（阈值）</span><span id="sthresh-display" class="text-orange-400 font-bold">4</span></div>
+            <input type="range" id="sthresh" min="1" max="10" step="1" value="4" class="w-full" oninput="updateSchoolCalc()">
+          </div>
+        </div>
+
+        <!-- Reference answer -->
+        <div class="mt-3 bg-slate-900 rounded p-2 text-xs">
+          <div class="text-slate-500 mb-1">📖 参考答案（答案不唯一）：</div>
+          <div class="text-slate-400">W₁=3, W₂=1, W₃=1, θ=4</div>
+          <button onclick="applyReferenceAnswer()" class="mt-2 px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-xs">应用参考答案</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Result & Verification -->
+    <div class="space-y-4">
+      <!-- Current result -->
+      <div class="card p-4">
+        <div class="section-title text-sm">📊 当前计算结果</div>
+        <div class="bg-slate-900 rounded-lg p-3 text-sm space-y-2">
+          <div class="text-slate-400 text-xs">二值化输入（超过分数线=1，否则=0）：</div>
+          <div class="flex gap-2 flex-wrap">
+            <span id="s-math-bin" class="badge badge-blue">数学: 0</span>
+            <span id="s-chinese-bin" class="badge badge-blue">语文: 0</span>
+            <span id="s-english-bin" class="badge badge-blue">英语: 0</span>
+          </div>
+          <div id="school-formula" class="text-blue-300 font-mono text-xs break-all mt-2">3×0 + 1×0 + 1×0 = 0</div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">总和：</span>
+            <span id="school-sum" class="text-yellow-400 font-bold">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">判断（总和 > θ）：</span>
+            <span id="school-judge" class="font-bold text-red-400">不成立</span>
+          </div>
+          <div class="border-t border-slate-700 pt-2 flex justify-between items-center">
+            <span class="text-slate-400">选拔结果：</span>
+            <span id="school-result" class="text-xl font-bold">❌ 未通过</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- All cases verification -->
+      <div class="card p-4">
+        <div class="section-title text-sm">✅ 验证所有关键情况</div>
+        <table class="text-xs rounded overflow-hidden">
+          <thead><tr><th>数学</th><th>语文</th><th>英语</th><th>期望</th><th>实际</th><th>✓?</th></tr></thead>
+          <tbody id="school-verify-table"></tbody>
+        </table>
+        <div class="mt-2 text-xs text-slate-500">全部✅说明你的权重设计是正确的！</div>
+      </div>
+
+      <!-- Neural network viz -->
+      <div class="card p-3">
+        <svg width="100%" viewBox="0 0 300 200" style="min-height:180px;">
+          <text x="40" y="15" text-anchor="middle" fill="#64748b" font-size="9">输入层</text>
+          <text x="160" y="15" text-anchor="middle" fill="#64748b" font-size="9">隐藏层</text>
+          <text x="265" y="15" text-anchor="middle" fill="#64748b" font-size="9">输出层</text>
+
+          <line x1="65" y1="50" x2="135" y2="100" stroke="#334155" stroke-width="1.5"/>
+          <line x1="65" y1="100" x2="135" y2="100" stroke="#334155" stroke-width="1.5"/>
+          <line x1="65" y1="150" x2="135" y2="100" stroke="#334155" stroke-width="1.5"/>
+          <line x1="185" y1="100" x2="240" y2="100" stroke="#334155" stroke-width="2"/>
+
+          <text id="ssw1-lbl" x="95" y="58" fill="#64748b" font-size="8" text-anchor="middle">W₁=3</text>
+          <text id="ssw2-lbl" x="95" y="98" fill="#64748b" font-size="8" text-anchor="middle">W₂=1</text>
+          <text id="ssw3-lbl" x="95" y="140" fill="#64748b" font-size="8" text-anchor="middle">W₃=1</text>
+
+          <circle id="sn1" cx="40" cy="50" r="22" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="40" y="47" text-anchor="middle" fill="#93c5fd" font-size="9">📐</text>
+          <text id="sn1-val" x="40" y="59" text-anchor="middle" fill="#93c5fd" font-size="7">数学=0</text>
+
+          <circle id="sn2" cx="40" cy="100" r="22" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="40" y="97" text-anchor="middle" fill="#93c5fd" font-size="9">📖</text>
+          <text id="sn2-val" x="40" y="109" text-anchor="middle" fill="#93c5fd" font-size="7">语文=0</text>
+
+          <circle id="sn3" cx="40" cy="150" r="22" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="40" y="147" text-anchor="middle" fill="#93c5fd" font-size="9">🔤</text>
+          <text id="sn3-val" x="40" y="159" text-anchor="middle" fill="#93c5fd" font-size="7">英语=0</text>
+
+          <circle id="snh" cx="160" cy="100" r="28" fill="#1e293b" stroke="#6366f1" stroke-width="2"/>
+          <text id="snh-sum" x="160" y="97" text-anchor="middle" fill="#a5b4fc" font-size="9">Σ=0</text>
+          <text id="snh-thresh" x="160" y="110" text-anchor="middle" fill="#a5b4fc" font-size="8">>θ=4?</text>
+
+          <circle id="sno" cx="265" cy="100" r="24" fill="#1e293b" stroke="#6366f1" stroke-width="2"/>
+          <text id="sno-emoji" x="265" y="97" text-anchor="middle" font-size="14">❌</text>
+          <text id="sno-text" x="265" y="113" text-anchor="middle" fill="#94a3b8" font-size="7">未通过</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="highlight-card p-4 mt-4">
+    <div class="flex gap-3 items-start">
+      <div class="text-2xl">🎓</div>
+      <div>
+        <div class="font-bold text-blue-300 mb-1">总结：神经网络的三层结构</div>
+        <div class="grid gap-3 mt-2" style="grid-template-columns: 1fr 1fr 1fr;">
+          <div class="bg-blue-900 bg-opacity-40 rounded-lg p-3 text-center">
+            <div class="text-2xl mb-1">📥</div>
+            <div class="text-blue-300 font-bold text-sm">输入层</div>
+            <div class="text-slate-400 text-xs mt-1">接收外部数据<br>（传感器/用户输入）</div>
+          </div>
+          <div class="bg-purple-900 bg-opacity-40 rounded-lg p-3 text-center">
+            <div class="text-2xl mb-1">⚙️</div>
+            <div class="text-purple-300 font-bold text-sm">隐藏层</div>
+            <div class="text-slate-400 text-xs mt-1">加权求和+阈值判断<br>（深度学习有多层）</div>
+          </div>
+          <div class="bg-green-900 bg-opacity-40 rounded-lg p-3 text-center">
+            <div class="text-2xl mb-1">📤</div>
+            <div class="text-green-300 font-bold text-sm">输出层</div>
+            <div class="text-slate-400 text-xs mt-1">给出最终决策<br>（分类/预测结果）</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// GLOBAL STATE
+// ============================================================
+const state = {
+  rain: 0,
+  snow: 0,
+  dessert: [0, 0, 0, 0], // X1-X4
+  bp: {
+    currentSample: 0,
+    currentStep: 0,
+    epoch: 0,
+    errorHistory: [],
+    predictions: [
+      { food: 3, habitat: 67, life: 30 },
+      { food: 45, habitat: 43, life: 12 },
+      { food: 20, habitat: 30, life: 50 }
+    ]
+  }
+};
+
+// Training samples for backprop demo
+const trainSamples = [
+  { question: '"它平时吃什么？"', correct: '食物类', correctIdx: 0, label: '食物' },
+  { question: '"在草原常见吗？"', correct: '栖息地类', correctIdx: 1, label: '栖息地' },
+  { question: '"它能活多久？"', correct: '寿命类', correctIdx: 2, label: '寿命' }
+];
+
+// Simulated predictions that improve over training
+function getSimulatedPrediction(sampleIdx, epoch) {
+  try {
+    const base = [
+      [3, 67, 30],
+      [45, 43, 12],
+      [20, 30, 50]
+    ];
+    const target = [
+      [100, 0, 0],
+      [0, 100, 0],
+      [0, 0, 100]
+    ];
+    const progress = Math.min(epoch / 20, 1);
+    const eased = 1 - Math.pow(1 - progress, 2);
+    const b = base[sampleIdx] || [33, 33, 34];
+    const t = target[sampleIdx] || [33, 33, 34];
+    const noise = () => (Math.random() - 0.5) * 10 * (1 - eased);
+    let vals = [
+      Math.max(0, Math.min(100, b[0] + (t[0] - b[0]) * eased + noise())),
+      Math.max(0, Math.min(100, b[1] + (t[1] - b[1]) * eased + noise())),
+      Math.max(0, Math.min(100, b[2] + (t[2] - b[2]) * eased + noise()))
+    ];
+    // Normalize to sum to 100
+    const sum = vals[0] + vals[1] + vals[2];
+    if (sum > 0) vals = vals.map(v => Math.round(v / sum * 100));
+    return { food: vals[0], habitat: vals[1], life: vals[2] };
+  } catch (e) {
+    console.error('getSimulatedPrediction error:', e);
+    return { food: 33, habitat: 33, life: 34 };
+  }
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(tabId) {
+  try {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    const idx = ['tab1','tab2','tab3','tab4'].indexOf(tabId);
+    document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+
+    if (tabId === 'tab3') {
+      setTimeout(() => initErrorChart(), 100);
+    }
+    if (tabId === 'tab4') {
+      setTimeout(() => updateSchoolCalc(), 50);
+    }
+  } catch (e) {
+    console.error('switchTab error:', e);
+  }
+}
+
+// ============================================================
+// TAB 1: UMBRELLA LOGIC
+// ============================================================
+function toggleInput(type) {
+  try {
+    if (type === 'rain') {
+      state.rain = state.rain === 0 ? 1 : 0;
+      updateToggleUI('rain', state.rain);
+    } else if (type === 'snow') {
+      state.snow = state.snow === 0 ? 1 : 0;
+      updateToggleUI('snow', state.snow);
+    }
+    updateUmbrellaCalc();
+  } catch (e) {
+    console.error('toggleInput error:', e);
+  }
+}
+
+function updateToggleUI(name, val) {
+  try {
+    const toggle = document.getElementById(name + '-toggle');
+    const knob = document.getElementById(name + '-knob');
+    const valEl = document.getElementById(name + '-val');
+    if (!toggle || !knob || !valEl) return;
+    if (val === 1) {
+      toggle.classList.remove('off'); toggle.classList.add('on');
+      knob.style.transform = 'translateX(28px)';
+      valEl.textContent = '1 (Yes)';
+      valEl.className = 'text-green-400 text-sm font-bold';
+    } else {
+      toggle.classList.remove('on'); toggle.classList.add('off');
+      knob.style.transform = 'translateX(0)';
+      valEl.textContent = '0 (No)';
+      valEl.className = 'text-slate-400 text-sm';
+    }
+  } catch (e) {
+    console.error('updateToggleUI error:', e);
+  }
+}
+
+function updateUmbrellaCalc() {
+  try {
+    const r = state.rain, s = state.snow;
+    const sum = r + s;
+    const result = sum > 0 ? 1 : 0;
+
+    // Update calc display
+    const calcSum = document.getElementById('calc-sum');
+    const calcJudge = document.getElementById('calc-judge');
+    const calcOutput = document.getElementById('calc-output');
+    if (calcSum) calcSum.textContent = r + ' + ' + s + ' = ' + sum;
+    if (calcJudge) {
+      calcJudge.textContent = sum > 0 ? '成立 ✅' : '不成立 ❌';
+      calcJudge.className = sum > 0 ? 'font-bold text-green-400' : 'font-bold text-red-400';
+    }
+    if (calcOutput) {
+      calcOutput.textContent = result === 1 ? '☂️ 打伞' : '☀️ 不打伞';
+      calcOutput.className = result === 1 ? 'font-bold text-2xl text-blue-300' : 'font-bold text-2xl text-yellow-300';
+    }
+
+    // Highlight truth table row
+    const rowKey = r + '' + s;
+    ['00','10','01','11'].forEach(k => {
+      const row = document.getElementById('row-' + k);
+      if (row) row.classList.remove('highlight-row');
+    });
+    const activeRow = document.getElementById('row-' + rowKey);
+    if (activeRow) activeRow.classList.add('highlight-row');
+
+    // Update SVG
+    updateNN1SVG(r, s, sum, result);
+  } catch (e) {
+    console.error('updateUmbrellaCalc error:', e);
+  }
+}
+
+function updateNN1SVG(r, s, sum, result) {
+  try {
+    // Update neuron values
+    const nRain = document.getElementById('n-rain');
+    const nSnow = document.getElementById('n-snow');
+    const nHidden = document.getElementById('n-hidden');
+    const nOutput = document.getElementById('n-output');
+    const nOutputEmoji = document.getElementById('n-output-emoji');
+    const nOutputText = document.getElementById('n-output-text');
+
+    if (nRain) nRain.setAttribute('fill', r === 1 ? '#1e4d8c' : '#1e3a5f');
+    if (nSnow) nSnow.setAttribute('fill', s === 1 ? '#1e4d8c' : '#1e3a5f');
+
+    // Update hidden node text
+    if (nHidden) {
+      nHidden.setAttribute('fill', sum > 0 ? '#2d1b69' : '#1e293b');
+      nHidden.setAttribute('stroke', sum > 0 ? '#818cf8' : '#6366f1');
+    }
+    const hiddenTexts = nHidden ? nHidden.parentElement.querySelectorAll('text') : [];
+
+    // Update X values in SVG
+    const svgEl = document.getElementById('nn1-svg');
+    if (svgEl) {
+      const texts = svgEl.querySelectorAll('text');
+      texts.forEach(t => {
+        if (t.textContent.includes('X₁=')) t.textContent = 'X₁=' + r;
+        if (t.textContent.includes('X₂=')) t.textContent = 'X₂=' + s;
+        if (t.textContent.includes('Σ=')) t.textContent = 'Σ=' + sum;
+      });
+    }
+
+    // Update output
+    if (nOutput) nOutput.setAttribute('fill', result === 1 ? '#1a3a2a' : '#1e293b');
+    if (nOutputEmoji) nOutputEmoji.textContent = result === 1 ? '☂️' : '☀️';
+    if (nOutputText) nOutputText.textContent = result === 1 ? '打伞' : '不打伞';
+
+    // Update edge colors
+    const eRH = document.getElementById('e-r-h');
+    const eSH = document.getElementById('e-s-h');
+    const eHO = document.getElementById('e-h-o');
+    if (eRH) eRH.setAttribute('stroke', r === 1 ? '#60a5fa' : '#334155');
+    if (eSH) eSH.setAttribute('stroke', s === 1 ? '#60a5fa' : '#334155');
+    if (eHO) eHO.setAttribute('stroke', result === 1 ? '#60a5fa' : '#334155');
+  } catch (e) {
+    console.error('updateNN1SVG error:', e);
+  }
+}
+
+// ============================================================
+// TAB 2: DESSERT WEIGHTS
+// ============================================================
+function toggleDessert(idx) {
+  try {
+    const i = idx - 1;
+    if (i < 0 || i >= state.dessert.length) return;
+    state.dessert[i] = state.dessert[i] === 0 ? 1 : 0;
+    const val = state.dessert[i];
+    const toggle = document.getElementById('d' + idx + '-toggle');
+    const knob = document.getElementById('d' + idx + '-knob');
+    const valEl = document.getElementById('d' + idx + '-val');
+    if (toggle) { toggle.classList.toggle('on', val === 1); toggle.classList.toggle('off', val === 0); }
+    if (knob) knob.style.transform = val === 1 ? 'translateX(24px)' : 'translateX(0)';
+    if (valEl) { valEl.textContent = val === 1 ? '1(Yes)' : '0(No)'; valEl.className = val === 1 ? 'text-green-400 text-xs w-12 text-right font-bold' : 'text-slate-400 text-xs w-12 text-right'; }
+    updateDessertCalc();
+  } catch (e) {
+    console.error('toggleDessert error:', e);
+  }
+}
+
+function updateDessertCalc() {
+  try {
+    const w1 = parseInt(document.getElementById('w1-slider').value) || 1;
+    const w2 = parseInt(document.getElementById('w2-slider').value) || 4;
+    const w3 = parseInt(document.getElementById('w3-slider').value) || 2;
+    const w4 = parseInt(document.getElementById('w4-slider').value) || 2;
+    const thresh = parseInt(document.getElementById('thresh-slider').value) || 3;
+    const [x1, x2, x3, x4] = state.dessert;
+
+    // Update displays
+    ['w1','w2','w3','w4'].forEach((id, i) => {
+      const el = document.getElementById(id + '-display');
+      if (el) el.textContent = [w1,w2,w3,w4][i];
+    });
+    const threshEl = document.getElementById('thresh-display');
+    if (threshEl) threshEl.textContent = thresh;
+
+    const sum = w1*x1 + w2*x2 + w3*x3 + w4*x4;
+    const result = sum > thresh ? 1 : 0;
+
+    // Formula
+    const formulaEl = document.getElementById('dessert-formula');
+    if (formulaEl) formulaEl.textContent = w1+'x'+x1+' + '+w2+'x'+x2+' + '+w3+'x'+x3+' + '+w4+'x'+x4+' = '+sum;
+
+    const sumEl = document.getElementById('dessert-sum');
+    if (sumEl) sumEl.textContent = sum;
+
+    const judgeEl = document.getElementById('dessert-judge');
+    if (judgeEl) {
+      judgeEl.textContent = result === 1 ? '成立 ✅' : '不成立 ❌';
+      judgeEl.className = result === 1 ? 'font-bold text-green-400' : 'font-bold text-red-400';
+    }
+
+    const resultEl = document.getElementById('dessert-result');
+    if (resultEl) {
+      resultEl.textContent = result === 1 ? '😋 可以吃甜点！' : '😢 不能吃甜点';
+      resultEl.className = result === 1 ? 'text-2xl font-bold text-green-400' : 'text-2xl font-bold text-red-400';
+    }
+
+    // Progress bar
+    const maxVal = Math.max(w1+w2+w3+w4, thresh+1, 8);
+    const pct = Math.min(sum / maxVal * 100, 100);
+    const bar = document.getElementById('signal-bar');
+    if (bar) {
+      bar.style.width = pct + '%';
+      bar.className = 'progress-fill ' + (result === 1 ? 'bg-green-500' : 'bg-blue-500');
+    }
+    const ratioEl = document.getElementById('signal-ratio');
+    if (ratioEl) ratioEl.textContent = sum + ' / 阈值 ' + thresh;
+    const markerEl = document.getElementById('thresh-marker');
+    if (markerEl) markerEl.textContent = '▲ θ=' + thresh;
+
+    // Update mini SVG
+    updateDessertSVG(x1, x2, x3, x4, w1, w2, w3, w4, thresh, sum, result);
+
+    // Scenario checks
+    updateScenarioChecks(w1, w2, w3, w4, thresh);
+  } catch (e) {
+    console.error('updateDessertCalc error:', e);
+  }
+}
+
+function updateDessertSVG(x1, x2, x3, x4, w1, w2, w3, w4, thresh, sum, result) {
+  try {
+    const vals = [x1, x2, x3, x4];
+    const weights = [w1, w2, w3, w4];
+    const ids = ['dn1','dn2','dn3','dn4'];
+    const valIds = ['dn1-val','dn2-val','dn3-val','dn4-val'];
+    const lblIds = ['dw1-lbl','dw2-lbl','dw3-lbl','dw4-lbl'];
+    const lineIds = ['dw1-line','dw2-line','dw3-line','dw4-line'];
+    const xLabels = ['X₁','X₂','X₃','X₄'];
+
+    ids.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute('fill', vals[i] === 1 ? '#1e4d8c' : '#1e3a5f');
+    });
+    valIds.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = xLabels[i] + '=' + vals[i];
+    });
+    lblIds.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = 'W' + (i+1) + '=' + weights[i];
+    });
+    lineIds.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute('stroke', vals[i] === 1 ? '#60a5fa' : '#334155');
+    });
+
+    const nhSum = document.getElementById('dnh-sum');
+    const nhThresh = document.getElementById('dnh-thresh');
+    const dnh = document.getElementById('dnh');
+    if (nhSum) nhSum.textContent = 'Σ=' + sum;
+    if (nhThresh) nhThresh.textContent = '>θ=' + thresh + '?';
+    if (dnh) dnh.setAttribute('fill', result === 1 ? '#2d1b69' : '#1e293b');
+
+    const dno = document.getElementById('dno');
+    const dnoEmoji = document.getElementById('dno-emoji');
+    const dnoText = document.getElementById('dno-text');
+    if (dno) dno.setAttribute('fill', result === 1 ? '#1a3a2a' : '#1e293b');
+    if (dnoEmoji) dnoEmoji.textContent = result === 1 ? '😋' : '😢';
+    if (dnoText) dnoText.textContent = result === 1 ? '可以吃' : '不能吃';
+
+    const doutLine = document.getElementById('dout-line');
+    if (doutLine) doutLine.setAttribute('stroke', result === 1 ? '#60a5fa' : '#334155');
+  } catch (e) {
+    console.error('updateDessertSVG error:', e);
+  }
+}
+
+function updateScenarioChecks(w1, w2, w3, w4, thresh) {
+  try {
+    // Scenarios: [x1,x2,x3,x4, expected, description]
+    const scenarios = [
+      [1, 0, 0, 0, 0, '🎂蛋糕，无蔬菜，无运动 → 不能吃'],
+      [1, 0, 1, 1, 1, '🎂蛋糕，有蔬菜，有运动 → 可以吃'],
+      [1, 0, 1, 0, 0, '🎂蛋糕，有蔬菜，无运动 → 不能吃'],
+      [0, 1, 0, 0, 1, '🍓水果，无蔬菜，无运动 → 可以吃']
+    ];
+
+    const container = document.getElementById('scenario-checks');
+    if (!container) return;
+    container.innerHTML = '';
+
+    scenarios.forEach(([x1s, x2s, x3s, x4s, expected, desc]) => {
+      const sum = w1*x1s + w2*x2s + w3*x3s + w4*x4s;
+      const actual = sum > thresh ? 1 : 0;
+      const correct = actual === expected;
+      const div = document.createElement('div');
+      div.className = 'flex items-center gap-2 p-2 rounded ' + (correct ? 'bg-green-900 bg-opacity-30' : 'bg-red-900 bg-opacity-30');
+      div.innerHTML = '<span class="text-lg">' + (correct ? '✅' : '❌') + '</span><span class="text-slate-300 flex-1">' + desc + '</span><span class="text-xs text-slate-500">Σ=' + sum + '</span>';
+      container.appendChild(div);
+    });
+  } catch (e) {
+    console.error('updateScenarioChecks error:', e);
+  }
+}
+
+// ============================================================
+// TAB 3: BACKPROPAGATION
+// ============================================================
+let errorChartInstance = null;
+
+function initErrorChart() {
+  try {
+    const canvas = document.getElementById('error-chart');
+    if (!canvas) return;
+    if (typeof Chart === 'undefined') {
+      // Chart.js not loaded, draw simple canvas chart
+      drawSimpleErrorChart(canvas);
+      return;
+    }
+    if (errorChartInstance) { errorChartInstance.destroy(); errorChartInstance = null; }
+    const ctx = canvas.getContext('2d');
+    errorChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: state.bp.errorHistory.map((_, i) => '第' + (i+1) + '轮'),
+        datasets: [{
+          label: '平均误差',
+          data: state.bp.errorHistory,
+          borderColor: '#f97316',
+          backgroundColor: 'rgba(249,115,22,0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: '#1e293b' } },
+          y: { min: 0, max: 100, ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: '#1e293b' } }
+        }
+      }
+    });
+  } catch (e) {
+    console.error('initErrorChart error:', e);
+    // Fallback: draw simple chart
+    try {
+      const canvas = document.getElementById('error-chart');
+      if (canvas) drawSimpleErrorChart(canvas);
+    } catch (e2) {}
+  }
+}
+
+function drawSimpleErrorChart(canvas) {
+  try {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.offsetWidth || 300;
+    const h = 140;
+    canvas.width = w;
+    canvas.height = h;
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, w, h);
+
+    const data = state.bp.errorHistory;
+    if (data.length < 2) {
+      ctx.fillStyle = '#64748b';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('开始训练后显示误差曲线', w/2, h/2);
+      return;
+    }
+
+    ctx.strokeStyle = '#f97316';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    data.forEach((val, i) => {
+      const x = (i / (data.length - 1)) * (w - 20) + 10;
+      const y = h - 10 - (val / 100) * (h - 20);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('误差', 2, 12);
+    ctx.textAlign = 'right';
+    ctx.fillText('轮次', w - 2, h - 2);
+  } catch (e) {
+    console.error('drawSimpleErrorChart error:', e);
+  }
+}
+
+function updateErrorChart() {
+  try {
+    if (errorChartInstance) {
+      errorChartInstance.data.labels = state.bp.errorHistory.map((_, i) => '第' + (i+1) + '轮');
+      errorChartInstance.data.datasets[0].data = state.bp.errorHistory;
+      errorChartInstance.update();
+    } else {
+      const canvas = document.getElementById('error-chart');
+      if (canvas) drawSimpleErrorChart(canvas);
+    }
+  } catch (e) {
+    console.error('updateErrorChart error:', e);
+  }
+}
+
+function selectTrainSample(idx) {
+  try {
+    state.bp.currentSample = idx;
+    state.bp.currentStep = 0;
+    // Update button styles
+    [0,1,2].forEach(i => {
+      const btn = document.getElementById('sample-btn-' + i);
+      if (btn) {
+        btn.className = i === idx
+          ? 'px-4 py-2 rounded-lg bg-blue-800 text-blue-200 text-sm font-medium border border-blue-600'
+          : 'px-4 py-2 rounded-lg bg-slate-700 text-slate-300 text-sm font-medium border border-slate-600';
+      }
+    });
+    updateBPDisplay();
+    resetStepHighlights();
+    highlightStep(1);
+  } catch (e) {
+    console.error('selectTrainSample error:', e);
+  }
+}
+
+function updateBPDisplay() {
+  try {
+    const sample = trainSamples[state.bp.currentSample];
+    if (!sample) return;
+    const pred = getSimulatedPrediction(state.bp.currentSample, state.bp.epoch);
+
+    const qEl = document.getElementById('bp-question');
+    const cEl = document.getElementById('bp-correct');
+    if (qEl) qEl.textContent = sample.question;
+    if (cEl) cEl.textContent = sample.correct;
+
+    // Update output percentages in SVG
+    const foodPct = document.getElementById('bp-food-pct');
+    const habitatPct = document.getElementById('bp-habitat-pct');
+    const lifePct = document.getElementById('bp-life-pct');
+    if (foodPct) foodPct.textContent = pred.food + '%';
+    if (habitatPct) habitatPct.textContent = pred.habitat + '%';
+    if (lifePct) lifePct.textContent = pred.life + '%';
+
+    // Color output nodes based on prediction
+    const pcts = [pred.food, pred.habitat, pred.life];
+    const nodeIds = ['bp-o-food', 'bp-o-habitat', 'bp-o-life'];
+    const maxPct = Math.max(...pcts);
+    nodeIds.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute('stroke', pcts[i] === maxPct ? '#22c55e' : '#6366f1');
+    });
+
+    // Update error table
+    updateErrorTable(sample, pred);
+  } catch (e) {
+    console.error('updateBPDisplay error:', e);
+  }
+}
+
+function updateErrorTable(sample, pred) {
+  try {
+    const tbody = document.getElementById('error-table-body');
+    if (!tbody) return;
+    const categories = [
+      { name: '🍖食物', pct: pred.food, correct: sample.correctIdx === 0 ? 100 : 0 },
+      { name: '🌿栖息地', pct: pred.habitat, correct: sample.correctIdx === 1 ? 100 : 0 },
+      { name: '⏳寿命', pct: pred.life, correct: sample.correctIdx === 2 ? 100 : 0 }
+    ];
+    tbody.innerHTML = '';
+    categories.forEach(cat => {
+      const error = cat.correct - cat.pct;
+      const tr = document.createElement('tr');
+      const errorClass = Math.abs(error) < 20 ? 'text-green-400' : (error > 0 ? 'text-red-400' : 'text-orange-400');
+      tr.innerHTML = '<td>' + cat.name + '</td><td class="text-blue-300">' + cat.pct + '%</td><td class="text-green-400">' + cat.correct + '%</td><td class="' + errorClass + '">' + (error > 0 ? '+' : '') + error + '%</td>';
+      tbody.appendChild(tr);
+    });
+
+    // Update adjust info
+    const adjustEl = document.getElementById('bp-adjust-info');
+    if (adjustEl) {
+      const totalError = Math.abs(pred.food - (sample.correctIdx === 0 ? 100 : 0)) +
+                         Math.abs(pred.habitat - (sample.correctIdx === 1 ? 100 : 0)) +
+                         Math.abs(pred.life - (sample.correctIdx === 2 ? 100 : 0));
+      adjustEl.textContent = '总误差: ' + totalError + '% → AI正在调整权重，使误差减小...';
+    }
+  } catch (e) {
+    console.error('updateErrorTable error:', e);
+  }
+}
+
+function resetStepHighlights() {
+  try {
+    [1,2,3,4].forEach(i => {
+      const el = document.getElementById('bp-step-' + i);
+      if (el) el.classList.remove('active-step');
+    });
+  } catch (e) {}
+}
+
+function highlightStep(n) {
+  try {
+    resetStepHighlights();
+    const el = document.getElementById('bp-step-' + n);
+    if (el) el.classList.add('active-step');
+  } catch (e) {}
+}
+
+function showBackpropArrows(show) {
+  try {
+    const ids = ['bp-back1','bp-back2','bp-back3','bp-back4','bp-back5','bp-back6'];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute('opacity', show ? '1' : '0');
+    });
+  } catch (e) {}
+}
+
+function runBackpropStep() {
+  try {
+    state.bp.currentStep = (state.bp.currentStep % 4) + 1;
+    highlightStep(state.bp.currentStep);
+
+    if (state.bp.currentStep === 1) {
+      showBackpropArrows(false);
+      updateBPDisplay();
+    } else if (state.bp.currentStep === 2) {
+      showBackpropArrows(false);
+      updateBPDisplay();
+    } else if (state.bp.currentStep === 3) {
+      showBackpropArrows(true);
+    } else if (state.bp.currentStep === 4) {
+      showBackpropArrows(false);
+      state.bp.epoch++;
+      // Calculate error for this epoch
+      const pred = getSimulatedPrediction(state.bp.currentSample, state.bp.epoch);
+      const sample = trainSamples[state.bp.currentSample];
+      const totalError = (Math.abs(pred.food - (sample.correctIdx === 0 ? 100 : 0)) +
+                          Math.abs(pred.habitat - (sample.correctIdx === 1 ? 100 : 0)) +
+                          Math.abs(pred.life - (sample.correctIdx === 2 ? 100 : 0))) / 3;
+      state.bp.errorHistory.push(Math.round(totalError));
+
+      const epochEl = document.getElementById('train-epoch');
+      if (epochEl) epochEl.textContent = state.bp.epoch;
+
+      const accuracy = Math.min(Math.round(state.bp.epoch / 20 * 100), 100);
+      const progressEl = document.getElementById('train-progress');
+      if (progressEl) progressEl.style.width = accuracy + '%';
+      const accEl = document.getElementById('train-accuracy');
+      if (accEl) accEl.textContent = accuracy + '%';
+
+      updateErrorChart();
+      updateBPDisplay();
+    }
+  } catch (e) {
+    console.error('runBackpropStep error:', e);
+  }
+}
+
+function runFullTraining() {
+  try {
+    for (let i = 0; i < 10; i++) {
+      state.bp.epoch++;
+      const pred = getSimulatedPrediction(state.bp.currentSample, state.bp.epoch);
+      const sample = trainSamples[state.bp.currentSample];
+      const totalError = (Math.abs(pred.food - (sample.correctIdx === 0 ? 100 : 0)) +
+                          Math.abs(pred.habitat - (sample.correctIdx === 1 ? 100 : 0)) +
+                          Math.abs(pred.life - (sample.correctIdx === 2 ? 100 : 0))) / 3;
+      state.bp.errorHistory.push(Math.round(totalError));
+    }
+
+    const epochEl = document.getElementById('train-epoch');
+    if (epochEl) epochEl.textContent = state.bp.epoch;
+    const accuracy = Math.min(Math.round(state.bp.epoch / 20 * 100), 100);
+    const progressEl = document.getElementById('train-progress');
+    if (progressEl) progressEl.style.width = accuracy + '%';
+    const accEl = document.getElementById('train-accuracy');
+    if (accEl) accEl.textContent = accuracy + '%';
+
+    showBackpropArrows(false);
+    highlightStep(4);
+    updateErrorChart();
+    updateBPDisplay();
+  } catch (e) {
+    console.error('runFullTraining error:', e);
+  }
+}
+
+function resetTraining() {
+  try {
+    state.bp.epoch = 0;
+    state.bp.currentStep = 0;
+    state.bp.errorHistory = [];
+    showBackpropArrows(false);
+    resetStepHighlights();
+    highlightStep(1);
+
+    const epochEl = document.getElementById('train-epoch');
+    if (epochEl) epochEl.textContent = '0';
+    const progressEl = document.getElementById('train-progress');
+    if (progressEl) progressEl.style.width = '0%';
+    const accEl = document.getElementById('train-accuracy');
+    if (accEl) accEl.textContent = '0%';
+
+    updateErrorChart();
+    updateBPDisplay();
+  } catch (e) {
+    console.error('resetTraining error:', e);
+  }
+}
+
+// ============================================================
+// TAB 4: SCHOOL SELECTION
+// ============================================================
+function updateSchoolCalc() {
+  try {
+    const mathScore = parseInt(document.getElementById('math-score').value) || 0;
+    const chineseScore = parseInt(document.getElementById('chinese-score').value) || 0;
+    const englishScore = parseInt(document.getElementById('english-score').value) || 0;
+    const sw1 = parseInt(document.getElementById('sw1').value) || 3;
+    const sw2 = parseInt(document.getElementById('sw2').value) || 1;
+    const sw3 = parseInt(document.getElementById('sw3').value) || 1;
+    const sthresh = parseInt(document.getElementById('sthresh').value) || 4;
+
+    // Update score displays
+    const mathDisp = document.getElementById('math-score-display');
+    const chineseDisp = document.getElementById('chinese-score-display');
+    const englishDisp = document.getElementById('english-score-display');
+    if (mathDisp) mathDisp.textContent = mathScore + '分';
+    if (chineseDisp) chineseDisp.textContent = chineseScore + '分';
+    if (englishDisp) englishDisp.textContent = englishScore + '分';
+
+    // Update weight displays
+    const sw1Disp = document.getElementById('sw1-display');
+    const sw2Disp = document.getElementById('sw2-display');
+    const sw3Disp = document.getElementById('sw3-display');
+    const sthreshDisp = document.getElementById('sthresh-display');
+    if (sw1Disp) sw1Disp.textContent = sw1;
+    if (sw2Disp) sw2Disp.textContent = sw2;
+    if (sw3Disp) sw3Disp.textContent = sw3;
+    if (sthreshDisp) sthreshDisp.textContent = sthresh;
+
+    // Binarize inputs
+    const x1 = mathScore > 90 ? 1 : 0;
+    const x2 = chineseScore > 85 ? 1 : 0;
+    const x3 = englishScore > 80 ? 1 : 0;
+
+    // Update binary badges
+    const mathBin = document.getElementById('s-math-bin');
+    const chineseBin = document.getElementById('s-chinese-bin');
+    const englishBin = document.getElementById('s-english-bin');
+    if (mathBin) { mathBin.textContent = '数学: ' + x1 + (x1 ? '✅' : '❌'); mathBin.className = 'badge ' + (x1 ? 'badge-green' : 'badge-blue'); }
+    if (chineseBin) { chineseBin.textContent = '语文: ' + x2 + (x2 ? '✅' : '❌'); chineseBin.className = 'badge ' + (x2 ? 'badge-green' : 'badge-blue'); }
+    if (englishBin) { englishBin.textContent = '英语: ' + x3 + (x3 ? '✅' : '❌'); englishBin.className = 'badge ' + (x3 ? 'badge-green' : 'badge-blue'); }
+
+    const sum = sw1*x1 + sw2*x2 + sw3*x3;
+    const result = sum > sthresh ? 1 : 0;
+
+    const formulaEl = document.getElementById('school-formula');
+    if (formulaEl) formulaEl.textContent = sw1+'x'+x1+' + '+sw2+'x'+x2+' + '+sw3+'x'+x3+' = '+sum;
+
+    const sumEl = document.getElementById('school-sum');
+    if (sumEl) sumEl.textContent = sum;
+
+    const judgeEl = document.getElementById('school-judge');
+    if (judgeEl) {
+      judgeEl.textContent = result === 1 ? '成立 ✅' : '不成立 ❌';
+      judgeEl.className = result === 1 ? 'font-bold text-green-400' : 'font-bold text-red-400';
+    }
+
+    const resultEl = document.getElementById('school-result');
+    if (resultEl) {
+      resultEl.textContent = result === 1 ? '🎉 通过选拔！' : '❌ 未通过';
+      resultEl.className = result === 1 ? 'text-xl font-bold text-green-400' : 'text-xl font-bold text-red-400';
+    }
+
+    // Update SVG
+    updateSchoolSVG(x1, x2, x3, sw1, sw2, sw3, sthresh, sum, result);
+
+    // Update verification table
+    updateSchoolVerifyTable(sw1, sw2, sw3, sthresh);
+
+    // Update weight labels in SVG
+    const ssw1Lbl = document.getElementById('ssw1-lbl');
+    const ssw2Lbl = document.getElementById('ssw2-lbl');
+    const ssw3Lbl = document.getElementById('ssw3-lbl');
+    if (ssw1Lbl) ssw1Lbl.textContent = 'W₁=' + sw1;
+    if (ssw2Lbl) ssw2Lbl.textContent = 'W₂=' + sw2;
+    if (ssw3Lbl) ssw3Lbl.textContent = 'W₃=' + sw3;
+  } catch (e) {
+    console.error('updateSchoolCalc error:', e);
+  }
+}
+
+function updateSchoolSVG(x1, x2, x3, w1, w2, w3, thresh, sum, result) {
+  try {
+    const vals = [x1, x2, x3];
+    const nodeIds = ['sn1','sn2','sn3'];
+    const valIds = ['sn1-val','sn2-val','sn3-val'];
+    const labels = ['数学=','语文=','英语='];
+
+    nodeIds.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute('fill', vals[i] === 1 ? '#1e4d8c' : '#1e3a5f');
+    });
+    valIds.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = labels[i] + vals[i];
+    });
+
+    const snh = document.getElementById('snh');
+    const snhSum = document.getElementById('snh-sum');
+    const snhThresh = document.getElementById('snh-thresh');
+    if (snh) snh.setAttribute('fill', result === 1 ? '#2d1b69' : '#1e293b');
+    if (snhSum) snhSum.textContent = 'Σ=' + sum;
+    if (snhThresh) snhThresh.textContent = '>θ=' + thresh + '?';
+
+    const sno = document.getElementById('sno');
+    const snoEmoji = document.getElementById('sno-emoji');
+    const snoText = document.getElementById('sno-text');
+    if (sno) sno.setAttribute('fill', result === 1 ? '#1a3a2a' : '#1e293b');
+    if (snoEmoji) snoEmoji.textContent = result === 1 ? '🎉' : '❌';
+    if (snoText) snoText.textContent = result === 1 ? '通过' : '未通过';
+  } catch (e) {
+    console.error('updateSchoolSVG error:', e);
+  }
+}
+
+function updateSchoolVerifyTable(w1, w2, w3, thresh) {
+  try {
+    // Key test cases: [math>90, chinese>85, english>80, expected, description]
+    const cases = [
+      [1, 1, 1, 1, '数学✅语文✅英语✅'],
+      [1, 1, 0, 0, '数学✅语文✅英语❌'],
+      [1, 0, 1, 0, '数学✅语文❌英语✅'],
+      [1, 0, 0, 0, '数学✅语文❌英语❌'],
+      [0, 1, 1, 0, '数学❌语文✅英语✅'],
+      [0, 0, 0, 0, '数学❌语文❌英语❌']
+    ];
+
+    const tbody = document.getElementById('school-verify-table');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    cases.forEach(([x1, x2, x3, expected, desc]) => {
+      const sum = w1*x1 + w2*x2 + w3*x3;
+      const actual = sum > thresh ? 1 : 0;
+      const correct = actual === expected;
+      const tr = document.createElement('tr');
+      tr.className = correct ? '' : 'highlight-row';
+      tr.innerHTML = '<td>' + x1 + '</td><td>' + x2 + '</td><td>' + x3 + '</td>' +
+        '<td class="' + (expected ? 'text-green-400' : 'text-red-400') + '">' + (expected ? '通过' : '不通过') + '</td>' +
+        '<td class="' + (actual ? 'text-green-400' : 'text-red-400') + '">' + (actual ? '通过' : '不通过') + '</td>' +
+        '<td>' + (correct ? '✅' : '❌') + '</td>';
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    console.error('updateSchoolVerifyTable error:', e);
+  }
+}
+
+function applyReferenceAnswer() {
+  try {
+    document.getElementById('sw1').value = 3;
+    document.getElementById('sw2').value = 1;
+    document.getElementById('sw3').value = 1;
+    document.getElementById('sthresh').value = 4;
+    updateSchoolCalc();
+  } catch (e) {
+    console.error('applyReferenceAnswer error:', e);
+  }
+}
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    // Init tab 1
+    updateUmbrellaCalc();
+    // Init tab 2
+    updateDessertCalc();
+    // Init tab 3 display
+    updateBPDisplay();
+    highlightStep(1);
+    // Init tab 4
+    updateSchoolCalc();
+    console.log('Neural Network Explorer initialized successfully');
+  } catch (e) {
+    console.error('Initialization error:', e);
+  }
+});
+</script>
+<script>window.parent.postMessage({ action: "ready" }, "*"); 
+ 
+window.console = new Proxy(console, {
+  get(target, prop) {
+    if (['log', 'warn', 'error'].includes(prop)) {
+      return new Proxy(target[prop], {
+        apply(fn, thisArg, args) {
+          fn.apply(thisArg, args);
+          window.parent.postMessage({ action: 'console', 
+            type: prop, 
+            args: args.map((arg) => {
+              try {
+                return JSON.stringify(arg).replace(/^["']|["']$/g, '');
+              } catch (e) {
+                return arg;
+              }
+            }) 
+          }, '*');
+        }
+      });
+    }
+    return target[prop];
+  }
+});
+</script></body>
+</html>
